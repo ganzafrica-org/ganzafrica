@@ -14,6 +14,69 @@ import { ViewEditDeleteDrawer } from "./ViewEditDeleteDrawer";
 import { ChevronDown, Flag, Plus, Umbrella } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getInitialsFromName } from "@/lib/helpers/employee-util";
+
+// Same tokens as leave-utils.tsx's getLeaveStatusBadge — approved is the only one this ticket
+// asks to change (green); pending/rejected keep the existing status-badge convention rather than
+// the calendar's previous, unrelated orange.
+const STATUS_BG: Record<string, string> = {
+  approved: "bg-green-100 border-green-300 text-green-900",
+  pending: "bg-amber-100 border-amber-300 text-amber-900",
+  rejected: "bg-red-100 border-red-300 text-red-900",
+};
+
+/**
+ * A single leave entry's calendar chip: owner avatar (falling back to initials), and a background
+ * keyed off status — only "approved" gets the green treatment (punch-list #6); pending/rejected
+ * keep the existing status-badge tokens (leave-utils.tsx's getLeaveStatusBadge) rather than the
+ * calendar's old, unrelated orange. Exported as its own component (rather than inlined in
+ * renderEventContent) so it's testable without mounting FullCalendar, which doesn't render its
+ * event content in jsdom.
+ */
+export function LeaveEventChip({
+  leave,
+  employee,
+}: {
+  leave: LeaveRequest;
+  employee?: { name: string; avatar: string };
+}) {
+  const statusKey = (leave.status as string)?.toLowerCase();
+  const bg = STATUS_BG[statusKey] ?? "bg-slate-100 border-slate-300 text-slate-900";
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={`flex flex-col w-full rounded-lg shadow-sm border-l-4 overflow-hidden cursor-pointer ${bg}`}
+          >
+            <div className="flex items-center gap-1.5 font-bold text-xs px-0.5 pt-0.5">
+              <Avatar className="h-4 w-4 shrink-0">
+                <AvatarImage src={employee?.avatar || undefined} alt={employee?.name} />
+                <AvatarFallback className="text-[8px]">
+                  {getInitialsFromName(employee?.name)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate">{employee?.name}</span>
+            </div>
+            <div className="text-[10px] opacity-90 truncate mt-0.5 px-0.5">{leave.leaveType}</div>
+            {leave.notes && (
+              <div className="text-[9px] opacity-80 truncate italic mt-1 border-t border-current/20 pt-1 px-0.5 pb-0.5">
+                {leave.notes.length > 40 ? `${leave.notes.substring(0, 40)}...` : leave.notes}
+              </div>
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">
+          <p className="font-bold">{employee?.name}</p>
+          <p className="text-xs">{leave.leaveType}</p>
+          {leave.notes && <p className="text-xs mt-1 italic">{leave.notes}</p>}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 // Data constants
 const balances = [
@@ -137,42 +200,7 @@ export function LeaveCalendar() {
       );
     }
 
-    const emojiMap: Record<string, string> = {
-      "Annual Leave": "🌴",
-      "Sick Leave": "🤒",
-      Sick: "🤒",
-      Emergency: "⚡",
-      Paid: "💰",
-      Casual: "🏖️",
-    };
-
-    const emoji = emojiMap[leave.leaveType] || "📅";
-
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex flex-col w-full bg-orange-500 text-white rounded-lg shadow-sm border-l-4 border-orange-700 overflow-hidden cursor-pointer">
-              <div className="flex items-center gap-1 font-bold text-xs">
-                <span>{emoji}</span>
-                <span className="truncate">{employee?.name}</span>
-              </div>
-              <div className="text-[10px] opacity-90 truncate mt-0.5">{leave.leaveType}</div>
-              {leave.notes && (
-                <div className="text-[9px] opacity-80 truncate italic mt-1 border-t border-orange-400/30 pt-1">
-                  {leave.notes.length > 40 ? `${leave.notes.substring(0, 40)}...` : leave.notes}
-                </div>
-              )}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-xs">
-            <p className="font-bold">{employee?.name}</p>
-            <p className="text-xs">{leave.leaveType}</p>
-            {leave.notes && <p className="text-xs mt-1 italic">{leave.notes}</p>}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
+    return <LeaveEventChip leave={leave} employee={employee} />;
   };
 
   return (

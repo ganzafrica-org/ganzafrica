@@ -642,38 +642,74 @@ export interface CalendarRange {
   to: Date;
 }
 
+export interface CalendarLeave {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  employeePicture: string | null;
+  type: LeaveTypeName;
+  startDate: Date;
+  endDate: Date;
+  status: string;
+  reason: string;
+}
+
 /**
- * Approved leave in range: org-wide for HR/admin, otherwise the viewer's own team — their
+ * Leave in range, any status: org-wide for HR/admin, otherwise the viewer's own team — their
  * manager's reports plus anyone beneath them — so people see coverage without seeing the org.
+ * All statuses are included (punch-list #6 — the calendar shows pending/rejected too, only the
+ * background color is approved-specific, decided by the caller); includes the employee's picture
+ * so the calendar can render an avatar without a second round trip.
  */
-export async function getLeaveCalendar(actorUserId: number, range: CalendarRange) {
-  const overlapping = and(
-    lte(hr_leaves.start_date, range.to),
-    gte(hr_leaves.end_date, range.from),
-    eq(hr_leaves.status, "APPROVED"),
-  );
+export async function getLeaveCalendar(
+  actorUserId: number,
+  range: CalendarRange,
+): Promise<CalendarLeave[]> {
+  const overlapping = and(lte(hr_leaves.start_date, range.to), gte(hr_leaves.end_date, range.from));
 
-  if (await isHrOrAdmin(actorUserId)) {
-    return db.select().from(hr_leaves).where(overlapping).orderBy(asc(hr_leaves.start_date));
-  }
+  const select = () =>
+    db
+      .select({
+        leave: hr_leaves,
+        employeeName: employeeFullName,
+        employeePicture: employees.picture,
+      })
+      .from(hr_leaves)
+      .leftJoin(employees, eq(employees.id, hr_leaves.employee_id));
 
-  const actor = await employeeForUser(actorUserId);
-  if (!actor) return [];
+  const rows = await (async () => {
+    if (await isHrOrAdmin(actorUserId)) {
+      return select().where(overlapping).orderBy(asc(hr_leaves.start_date));
+    }
 
-  const visible = new Set<string>([actor.id, ...(await reportIdsUnder(actor.id))]);
-  if (actor.manager_id) {
-    const peers = await db
-      .select({ id: employees.id })
-      .from(employees)
-      .where(eq(employees.manager_id, actor.manager_id));
-    peers.forEach((p) => visible.add(p.id));
-  }
+    const actor = await employeeForUser(actorUserId);
+    if (!actor) return [];
 
-  return db
-    .select()
-    .from(hr_leaves)
-    .where(and(overlapping, inArray(hr_leaves.employee_id, [...visible])))
-    .orderBy(asc(hr_leaves.start_date));
+    const visible = new Set<string>([actor.id, ...(await reportIdsUnder(actor.id))]);
+    if (actor.manager_id) {
+      const peers = await db
+        .select({ id: employees.id })
+        .from(employees)
+        .where(eq(employees.manager_id, actor.manager_id));
+      peers.forEach((p) => visible.add(p.id));
+    }
+
+    return select()
+      .where(and(overlapping, inArray(hr_leaves.employee_id, [...visible])))
+      .orderBy(asc(hr_leaves.start_date));
+  })();
+
+  return rows.map((r) => ({
+    id: r.leave.id,
+    employeeId: r.leave.employee_id ?? "",
+    employeeName: r.employeeName ?? "—",
+    employeePicture: r.employeePicture,
+    type: r.leave.type as LeaveTypeName,
+    startDate: r.leave.start_date,
+    endDate: r.leave.end_date,
+    status: titleCaseStatus(r.leave.status),
+    reason: r.leave.reason,
+  }));
 }
 
 /** An employee's balances plus their request history — the self-service view. */

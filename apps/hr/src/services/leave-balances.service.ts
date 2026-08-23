@@ -50,6 +50,19 @@ export interface LeaveAttachment {
   created_at: string;
 }
 
+/** GET /hr/leave/calendar row — any status, in range, scoped to the viewer's team (or org for HR). */
+export interface CalendarLeaveEvent {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  employeePicture: string | null;
+  type: LeaveTypeName;
+  startDate: string;
+  endDate: string;
+  status: "Pending" | "Approved" | "Rejected" | "Cancelled";
+  reason: string;
+}
+
 export interface LeaveDraft {
   type: LeaveTypeName;
   startDate: string;
@@ -135,7 +148,7 @@ export const leaveBalancesService = {
   },
 
   async calendar(from: string, to: string) {
-    const { data } = await httpClient.get<{ events: LeaveRequest[] }>("/hr/leave/calendar", {
+    const { data } = await httpClient.get<{ events: CalendarLeaveEvent[] }>("/hr/leave/calendar", {
       params: { from, to },
     });
     return data.events;

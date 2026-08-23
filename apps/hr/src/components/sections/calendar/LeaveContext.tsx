@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
   LeaveContextType,
   LeaveRequest,
@@ -10,13 +10,73 @@ import {
   PublicHoliday,
 } from "@/types/leave";
 import { doRangesOverlap } from "@/lib/date-utils";
-import { mock_holidays, mock_leaves, mock_team_members } from "@/data/leave-data";
+import { mock_holidays } from "@/data/leave-data";
+import { useLeaveCalendar } from "@/hooks/useLeaveBalances";
+import type { CalendarLeaveEvent } from "@/services/leave-balances.service";
 
 const LeaveContext = createContext<LeaveContextType | undefined>(undefined);
 
+// The mock LeaveType/LeaveStatus unions predate the real leave model — map the real backend
+// values onto the closest existing display label rather than widening the union everywhere it's
+// used purely for a name/badge/emoji lookup.
+const TYPE_LABELS: Record<string, LeaveType> = {
+  ANNUAL: "Annual Leave",
+  SICK: "Sick Leave",
+  MATERNITY: "Maternity Leave",
+  PATERNITY: "Personal Leave",
+  UNPAID: "Casual",
+  OTHER: "Study Leave",
+};
+
+function toMockLeave(e: CalendarLeaveEvent): LeaveRequest | null {
+  // Cancelled requests aren't a meaningful "away" event — leave them off the calendar, same as
+  // they'd never have shown up under the old approved-only query.
+  if (e.status !== "Pending" && e.status !== "Approved" && e.status !== "Rejected") return null;
+  return {
+    id: e.id,
+    employeeId: e.employeeId,
+    leaveType: TYPE_LABELS[e.type] ?? "Casual",
+    startDate: new Date(e.startDate),
+    endDate: new Date(e.endDate),
+    notes: e.reason,
+    status: e.status as LeaveStatus,
+    requestedAt: new Date(e.startDate),
+  };
+}
+
+function toTeamMember(e: CalendarLeaveEvent): TeamMember {
+  return {
+    id: e.employeeId,
+    name: e.employeeName,
+    department: "",
+    avatar: e.employeePicture ?? "",
+  };
+}
+
 export function LeaveProvider({ children }: { children: React.ReactNode }) {
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(mock_leaves);
+  // A generously wide, fixed window rather than tracking FullCalendar's live visible range as the
+  // user navigates — simpler, and comfortably covers normal month/week browsing either direction.
+  const { from, to } = useMemo(() => {
+    const start = new Date();
+    start.setUTCFullYear(start.getUTCFullYear() - 1);
+    const end = new Date();
+    end.setUTCFullYear(end.getUTCFullYear() + 1);
+    return { from: start.toISOString().slice(0, 10), to: end.toISOString().slice(0, 10) };
+  }, []);
+
+  const { data: events } = useLeaveCalendar(from, to);
+
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [publicHolidays, setPublicHolidays] = useState<PublicHoliday[]>(mock_holidays);
+
+  useEffect(() => {
+    if (!events) return;
+    setLeaveRequests(events.map(toMockLeave).filter((l): l is LeaveRequest => l !== null));
+    const byEmployee = new Map<string, TeamMember>();
+    events.forEach((e) => byEmployee.set(e.employeeId, toTeamMember(e)));
+    setTeamMembers([...byEmployee.values()]);
+  }, [events]);
 
   const addLeaveRequest = (
     employeeId: string,
@@ -98,11 +158,11 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getTeamMemberById = (id: string): TeamMember | undefined => {
-    return mock_team_members.find((member) => member.id === id);
+    return teamMembers.find((member) => member.id === id);
   };
 
   const value: LeaveContextType = {
-    teamMembers: mock_team_members,
+    teamMembers,
     leaveRequests,
     publicHolidays,
     addLeaveRequest,
