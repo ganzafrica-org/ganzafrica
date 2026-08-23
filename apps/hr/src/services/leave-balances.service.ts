@@ -40,6 +40,8 @@ export interface OrgHoliday {
   id: number;
   date: string;
   name: string;
+  /** "" = universal (applies regardless of country); otherwise matches employees.home_country. */
+  country: string;
 }
 
 /** Lightweight attachment metadata — open it via documentsService.getDocument(id) + DocumentViewer. */
@@ -180,7 +182,15 @@ export const leaveBalancesService = {
     return data.holidays;
   },
 
-  async createHoliday(payload: { date: string; name: string }) {
+  /** Union of universal + every represented country's holidays — the Leave Calendar's display. */
+  async listRelevantHolidays(year?: number) {
+    const { data } = await httpClient.get<{ holidays: OrgHoliday[] }>("/hr/holidays", {
+      params: { scope: "relevant", ...(year ? { year } : undefined) },
+    });
+    return data.holidays;
+  },
+
+  async createHoliday(payload: { date: string; name: string; country?: string }) {
     const { data } = await httpClient.post<{ holiday: OrgHoliday }>("/hr/holidays", payload);
     return data.holiday;
   },

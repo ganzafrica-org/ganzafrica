@@ -80,9 +80,17 @@ export const hr_org_holidays = pgTable(
     id: serial("id").primaryKey(),
     date: date("date").notNull(),
     name: text("name").notNull(),
+    // Punch-list #7: "" (the default) means universal — applies regardless of country, exactly
+    // like every holiday did before this column existed, so existing rows and single-country orgs
+    // see identical behavior. A real value (matching employees.home_country's free-text
+    // convention, e.g. "Rwanda") scopes the holiday to employees in that country. A `text` default
+    // of "" rather than a nullable column so the (date, country) unique index below keeps
+    // enforcing "one holiday per date" for universal rows too — Postgres treats every NULL in a
+    // unique index as distinct from every other NULL, which would silently drop that guarantee.
+    country: text("country").notNull().default(""),
     ...timestampFields,
   },
-  (t) => ({ uniq: uniqueIndex("org_holiday_date_uniq").on(t.date) }),
+  (t) => ({ uniq: uniqueIndex("org_holiday_date_uniq").on(t.date, t.country) }),
 );
 
 // Idempotent record of leave-flow emails: one row per (leave, email_type, recipient). Keyed by

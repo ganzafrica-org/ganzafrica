@@ -239,6 +239,8 @@ export interface MakeEmployeeOptions {
   firstName?: string;
   lastName?: string;
   department?: string | null;
+  homeCountry?: string | null;
+  picture?: string | null;
 }
 
 /** Insert an employees row (MOD-06 / LCM-01 tests). */
@@ -254,6 +256,8 @@ export async function makeEmployee(opts: MakeEmployeeOptions) {
       status: opts.status ?? "active",
       manager_id: opts.managerId ?? null,
       department: opts.department ?? "Programs",
+      home_country: opts.homeCountry ?? null,
+      picture: opts.picture ?? null,
     })
     .returning();
   return row;

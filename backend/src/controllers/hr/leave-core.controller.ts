@@ -212,10 +212,20 @@ export const deletePolicy = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Default: every configured holiday (Settings admin CRUD needs to see/manage all of them,
+ * including ones for countries the org has no employees in right now). ?scope=relevant (punch-list
+ * #7, the Leave Calendar's Public Holidays section) narrows to the union of universal holidays
+ * plus whichever countries are actually represented among active employees.
+ */
 export const listHolidays = async (req: Request, res: Response) => {
   try {
     const year = req.query.year ? Number(req.query.year) : undefined;
-    return res.json({ holidays: await leave.listHolidays(year) });
+    const holidays =
+      req.query.scope === "relevant"
+        ? await leave.listRelevantHolidays(year)
+        : await leave.listHolidays(year);
+    return res.json({ holidays });
   } catch (e) {
     return handleError(res, e, "List Holidays Error");
   }

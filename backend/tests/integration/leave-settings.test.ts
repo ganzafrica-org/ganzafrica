@@ -10,6 +10,7 @@ import {
   updatePolicy,
   deletePolicy,
   listHolidays,
+  listRelevantHolidays,
   createHoliday,
   deleteHoliday,
   adjustBalance,
@@ -106,6 +107,31 @@ describe("MOD-06 holidays", () => {
 
     expect(renamed.name).toBe("Liberation Day (obs.)");
     expect(await listHolidays(2026)).toHaveLength(1);
+  });
+
+  it("a single-country org (no holiday ever tagged) sees every holiday — identical to today's behavior (regression)", async () => {
+    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
+    await createHoliday({ date: "2026-01-01", name: "New Year" });
+    await createHoliday({ date: "2026-07-01", name: "Independence Day" });
+
+    const relevant = await listRelevantHolidays(2026);
+    expect(relevant.map((h) => h.name).sort()).toEqual(["Independence Day", "New Year"]);
+  });
+
+  it("a two-country org sees the union: universal holidays plus each represented country's own", async () => {
+    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
+    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Kenya" });
+    await createHoliday({ date: "2026-01-01", name: "New Year" }); // universal
+    await createHoliday({ date: "2026-07-01", name: "Rwanda Independence Day", country: "Rwanda" });
+    await createHoliday({ date: "2026-12-12", name: "Kenya Jamhuri Day", country: "Kenya" });
+    await createHoliday({ date: "2026-05-25", name: "Ghana Republic Day", country: "Ghana" }); // no employee there
+
+    const relevant = await listRelevantHolidays(2026);
+    expect(relevant.map((h) => h.name).sort()).toEqual([
+      "Kenya Jamhuri Day",
+      "New Year",
+      "Rwanda Independence Day",
+    ]);
   });
 });
 

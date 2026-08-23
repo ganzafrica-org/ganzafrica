@@ -60,11 +60,17 @@ export const createHolidaySchema = z.object({
   body: z.object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD"),
     name: z.string().min(1).max(200),
+    // "" (default) = universal, applies regardless of country — matches employees.home_country's
+    // free-text convention (e.g. "Rwanda") when scoping to one country.
+    country: z.string().max(100).optional(),
   }),
 });
 
 export const holidayQuerySchema = z.object({
-  query: z.object({ year: z.coerce.number().int().min(2000).max(2100).optional() }),
+  query: z.object({
+    year: z.coerce.number().int().min(2000).max(2100).optional(),
+    scope: z.enum(["all", "relevant"]).optional(),
+  }),
 });
 
 export const adjustBalanceSchema = z.object({

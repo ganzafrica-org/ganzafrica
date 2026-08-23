@@ -791,6 +791,7 @@ export async function deletePolicy(id: number) {
   return row;
 }
 
+/** Every configured holiday, any country — the Settings admin CRUD view. */
 export function listHolidays(year?: number) {
   const query = db.select().from(hr_org_holidays);
   if (year == null) return query.orderBy(asc(hr_org_holidays.date));
@@ -801,12 +802,45 @@ export function listHolidays(year?: number) {
     .orderBy(asc(hr_org_holidays.date));
 }
 
-export async function createHoliday(input: { date: string; name: string }) {
+/**
+ * Punch-list #7 — the union of holidays relevant to the org: every universal (country = "")
+ * holiday, plus every country-scoped one whose country matches an active employee's
+ * home_country. A single-country org (or one that has never tagged a holiday with a country)
+ * sees every holiday, identical to today's behavior, since untagged holidays default to "".
+ */
+export async function listRelevantHolidays(year?: number) {
+  const countries = await db
+    .selectDistinct({ country: employees.home_country })
+    .from(employees)
+    .where(eq(employees.is_active, true));
+  const represented = countries.map((c) => c.country).filter((c): c is string => !!c);
+
+  const scopeMatch = represented.length
+    ? or(eq(hr_org_holidays.country, ""), inArray(hr_org_holidays.country, represented))
+    : eq(hr_org_holidays.country, "");
+
+  const conditions =
+    year == null
+      ? [scopeMatch]
+      : [
+          scopeMatch,
+          gte(hr_org_holidays.date, `${year}-01-01`),
+          lte(hr_org_holidays.date, `${year}-12-31`),
+        ];
+
+  return db
+    .select()
+    .from(hr_org_holidays)
+    .where(and(...conditions))
+    .orderBy(asc(hr_org_holidays.date));
+}
+
+export async function createHoliday(input: { date: string; name: string; country?: string }) {
   const [row] = await db
     .insert(hr_org_holidays)
-    .values(input)
+    .values({ date: input.date, name: input.name, country: input.country ?? "" })
     .onConflictDoUpdate({
-      target: hr_org_holidays.date,
+      target: [hr_org_holidays.date, hr_org_holidays.country],
       set: { name: input.name, updated_at: new Date() },
     })
     .returning();

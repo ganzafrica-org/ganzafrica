@@ -152,6 +152,14 @@ export function useHolidays(year?: number) {
   });
 }
 
+/** Union of universal + every represented country's holidays — Leave Calendar's Public Holidays. */
+export function useRelevantHolidays(year?: number) {
+  return useQuery({
+    queryKey: [HOLIDAYS, "relevant", year],
+    queryFn: () => leaveBalancesService.listRelevantHolidays(year),
+  });
+}
+
 export function useCreateHoliday() {
   const qc = useQueryClient();
   return useMutation({
