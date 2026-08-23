@@ -251,7 +251,8 @@ export const Overview = ({
                 onClick={() => onNavigateTab("contracts")}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-[color:var(--color-border-tertiary)] bg-[color:var(--color-background-secondary)] px-2 py-2 text-[12px] text-[color:var(--color-text-primary)]"
               >
-                <Plus className="h-3.5 w-3.5" /> Add contract
+                <Plus className="h-3.5 w-3.5" />{" "}
+                {contracts?.length ? "Add new contract" : "Add contract"}
               </button>
             </div>
           )}
@@ -552,7 +553,8 @@ export const Contracts = ({ employee, isHr, isSelf }: TabProps) => {
               setSheetOpen(true);
             }}
           >
-            <Plus className="h-3.5 w-3.5 mr-1.5" /> Add Contract
+            <Plus className="h-3.5 w-3.5 mr-1.5" />{" "}
+            {contracts?.length ? "Add New Contract" : "Add Contract"}
           </Button>
         )}
       </div>
