@@ -178,6 +178,15 @@ export const calendar = async (req: Request, res: Response) => {
   }
 };
 
+export const summary = async (req: Request, res: Response) => {
+  try {
+    const window = (req.query.window as "week" | "month" | "year" | undefined) ?? "month";
+    return res.json(await leave.getLeaveSummary(window));
+  } catch (e) {
+    return handleError(res, e, "Leave Summary Error");
+  }
+};
+
 // --- Settings (leave:manage) ---
 
 export const listPolicies = async (_req: Request, res: Response) => {

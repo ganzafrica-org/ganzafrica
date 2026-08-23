@@ -66,6 +66,10 @@ export const createHolidaySchema = z.object({
   }),
 });
 
+export const summaryQuerySchema = z.object({
+  query: z.object({ window: z.enum(["week", "month", "year"]).optional() }),
+});
+
 export const holidayQuerySchema = z.object({
   query: z.object({
     year: z.coerce.number().int().min(2000).max(2100).optional(),

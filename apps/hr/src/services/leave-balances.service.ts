@@ -52,6 +52,17 @@ export interface LeaveAttachment {
   created_at: string;
 }
 
+export type SummaryWindow = "week" | "month" | "year";
+
+/** GET /hr/leave/summary — historical (APPROVED-only) totals for a window (HR home page card). */
+export interface LeaveSummaryTotals {
+  window: SummaryWindow;
+  from: string;
+  to: string;
+  requestCount: number;
+  totalDays: number;
+}
+
 /** GET /hr/leave/calendar row — any status, in range, scoped to the viewer's team (or org for HR). */
 export interface CalendarLeaveEvent {
   id: string;
@@ -147,6 +158,13 @@ export const leaveBalancesService = {
       form,
     );
     return data.document;
+  },
+
+  async getSummary(window: SummaryWindow) {
+    const { data } = await httpClient.get<LeaveSummaryTotals>("/hr/leave/summary", {
+      params: { window },
+    });
+    return data;
   },
 
   async calendar(from: string, to: string) {

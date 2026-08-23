@@ -6,6 +6,7 @@ import {
   type EmploymentType,
   type LeaveDraft,
   type LeaveTypeName,
+  type SummaryWindow,
 } from "@/services/leave-balances.service";
 import { toast } from "@/lib/toast";
 
@@ -103,6 +104,14 @@ export function useUploadLeaveAttachment() {
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ["leave-attachments", variables.leaveId] });
     },
+  });
+}
+
+/** HR home page's leave history card (punch-list #8). */
+export function useLeaveSummary(window: SummaryWindow) {
+  return useQuery({
+    queryKey: ["leave-summary", window],
+    queryFn: () => leaveBalancesService.getSummary(window),
   });
 }
 

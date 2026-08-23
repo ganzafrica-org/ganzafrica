@@ -51,6 +51,9 @@ router.get(
 
 router.get("/leave/calendar", authenticate, validate(v.calendarQuerySchema), c.calendar);
 
+// HR home page's leave history card (punch-list #8).
+router.get("/leave/summary", ...manage, validate(v.summaryQuerySchema), c.summary);
+
 // HR filing on someone's behalf
 router.post(
   "/employees/:employeeId/leave",

@@ -11,6 +11,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { LeaveSummaryCard } from "@/components/sections/home-cards/LeaveSummaryCard";
+import { LeaveHistoryCard } from "@/components/sections/home-cards/LeaveHistoryCard";
 import { ScheduleCard } from "@/components/sections/home-cards/ScheduleCard";
 import { EmploymentStatusCard } from "@/components/sections/home-cards/EmploymentStatusCard";
 import { ApplicantsCard } from "@/components/sections/home-cards/ApplicantsCard";
@@ -117,6 +118,7 @@ export default function Dashboard() {
         <div className="flex flex-col xl:flex-row gap-6">
           <div className="grid gap-6 md:grid-cols-2 flex-1">
             <LeaveSummaryCard />
+            <LeaveHistoryCard />
             <EmploymentStatusCard />
             <OngoingOnboardingCard />
             <ApplicantsCard />

@@ -3,7 +3,7 @@
  * unit-fast; the DB-backed variant is covered in the integration suite.
  */
 import { describe, it, expect } from "vitest";
-import { countWorkingDays } from "../../src/services/hr/leave-days";
+import { countWorkingDays, windowBounds, toIsoDate } from "../../src/services/hr/leave-days";
 
 const d = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
 
@@ -42,5 +42,49 @@ describe("countWorkingDays", () => {
   it("handles a span crossing a year boundary", () => {
     // Wed 2026-12-30, Thu 12-31, Fri 2027-01-01 → 3 working days (no holidays configured).
     expect(countWorkingDays(d("2026-12-30"), d("2027-01-01"), new Set())).toBe(3);
+  });
+});
+
+describe("windowBounds (punch-list #8)", () => {
+  it("week: Monday through Sunday of the containing ISO week", () => {
+    // 2026-03-04 is a Wednesday.
+    const { from, to } = windowBounds("week", d("2026-03-04"));
+    expect(toIsoDate(from)).toBe("2026-03-02"); // Monday
+    expect(toIsoDate(to)).toBe("2026-03-08"); // Sunday
+  });
+
+  it("week: a Sunday belongs to the week that just ended, not the next one", () => {
+    const { from, to } = windowBounds("week", d("2026-03-08")); // Sunday
+    expect(toIsoDate(from)).toBe("2026-03-02");
+    expect(toIsoDate(to)).toBe("2026-03-08");
+  });
+
+  it("week: crossing a month boundary", () => {
+    // 2026-03-01 is a Sunday, so its week is Mon 2026-02-23 through Sun 2026-03-01.
+    const { from, to } = windowBounds("week", d("2026-03-01"));
+    expect(toIsoDate(from)).toBe("2026-02-23");
+    expect(toIsoDate(to)).toBe("2026-03-01");
+  });
+
+  it("month: first through last calendar day, including a 31-day and a 28-day month", () => {
+    const march = windowBounds("month", d("2026-03-15"));
+    expect(toIsoDate(march.from)).toBe("2026-03-01");
+    expect(toIsoDate(march.to)).toBe("2026-03-31");
+
+    const feb = windowBounds("month", d("2026-02-10")); // 2026 is not a leap year
+    expect(toIsoDate(feb.from)).toBe("2026-02-01");
+    expect(toIsoDate(feb.to)).toBe("2026-02-28");
+  });
+
+  it("month: December stays in the same year (no rollover bug from month + 1)", () => {
+    const dec = windowBounds("month", d("2026-12-15"));
+    expect(toIsoDate(dec.from)).toBe("2026-12-01");
+    expect(toIsoDate(dec.to)).toBe("2026-12-31");
+  });
+
+  it("year: January 1 through December 31", () => {
+    const { from, to } = windowBounds("year", d("2026-06-15"));
+    expect(toIsoDate(from)).toBe("2026-01-01");
+    expect(toIsoDate(to)).toBe("2026-12-31");
   });
 });

@@ -25,7 +25,7 @@ import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
 import { sendEmail } from "../email.service";
 import { leaveSubmittedEmail, leaveDecidedEmail } from "./leave-emails";
-import { countWorkingDays, toIsoDate } from "./leave-days";
+import { countWorkingDays, toIsoDate, windowBounds, type SummaryWindow } from "./leave-days";
 import { getManagerUserId, isManagerOf } from "./employee-context";
 import { createDocument } from "./document.service";
 
@@ -710,6 +710,48 @@ export async function getLeaveCalendar(
     status: titleCaseStatus(r.leave.status),
     reason: r.leave.reason,
   }));
+}
+
+export interface LeaveSummary {
+  window: SummaryWindow;
+  from: string;
+  to: string;
+  requestCount: number;
+  totalDays: number;
+}
+
+/**
+ * Punch-list #8 — historical leave totals for the HR home page's summary card. APPROVED only:
+ * "total leave taken" should reflect leave that actually happened, not requests still pending or
+ * ones that were rejected. A leave is counted in the window if its range overlaps it at all
+ * (boundary case: a leave spanning the edge of the window is counted with its FULL days total,
+ * not prorated to the overlapping portion — hr_leaves.days is a single precomputed total for the
+ * whole request, not a per-day breakdown, so splitting it at a window edge isn't available data).
+ */
+export async function getLeaveSummary(window: SummaryWindow, now?: Date): Promise<LeaveSummary> {
+  const { from, to } = windowBounds(window, now);
+
+  const [row] = await db
+    .select({
+      requestCount: sql<number>`count(*)::int`,
+      totalDays: sql<string>`coalesce(sum(${hr_leaves.days}), 0)`,
+    })
+    .from(hr_leaves)
+    .where(
+      and(
+        eq(hr_leaves.status, "APPROVED"),
+        lte(hr_leaves.start_date, to),
+        gte(hr_leaves.end_date, from),
+      ),
+    );
+
+  return {
+    window,
+    from: toIsoDate(from),
+    to: toIsoDate(to),
+    requestCount: row?.requestCount ?? 0,
+    totalDays: Number(row?.totalDays ?? 0),
+  };
 }
 
 /** An employee's balances plus their request history — the self-service view. */
