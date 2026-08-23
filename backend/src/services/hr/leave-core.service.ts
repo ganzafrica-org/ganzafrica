@@ -14,11 +14,16 @@ import {
   hr_leave_policies,
   hr_leaves,
   hr_org_holidays,
+  leave_emails,
   user_roles,
   roles,
+  users,
+  type Leave,
 } from "@/db/schema";
 import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
+import { sendEmail } from "../email.service";
+import { leaveSubmittedEmail, leaveDecidedEmail } from "./leave-emails";
 import { countWorkingDays, toIsoDate } from "./leave-days";
 import { getManagerUserId, isManagerOf } from "./employee-context";
 
@@ -209,7 +214,7 @@ export async function requestLeave(
     })
     .returning();
 
-  await notifyApprover(created.id, employeeId, input.type, days);
+  await notifyApprover(created, input.type, days);
   return created;
 }
 
@@ -222,13 +227,61 @@ async function hrUserIds(): Promise<number[]> {
   return rows.map((r) => r.userId);
 }
 
-/** Notify the manager, or the HR queue when the requester sits at the top of the tree. */
-async function notifyApprover(
+function isUniqueViolation(err: unknown): boolean {
+  return typeof err === "object" && err !== null && (err as { code?: string }).code === "23505";
+}
+
+/** userId -> {email, firstName}, firstName null when the account has no employees row (HR/admin). */
+async function userMailInfo(
+  userIds: number[],
+): Promise<Map<number, { email: string; firstName: string | null }>> {
+  if (!userIds.length) return new Map();
+  const rows = await db
+    .select({ id: users.id, email: users.email, firstName: employees.first_name })
+    .from(users)
+    .leftJoin(employees, eq(employees.user_id, users.id))
+    .where(inArray(users.id, userIds));
+  return new Map(rows.map((r) => [r.id, { email: r.email, firstName: r.firstName ?? null }]));
+}
+
+/**
+ * Sends `render()`'s email to `recipientUserId` exactly once per (leave, type, recipient).
+ * Insert-first, unique-violation => already sent, skip — mirrors recruitment_emails
+ * (recruitment/pipeline.ts sendApplicantEmail). A send failure must never fail the leave action
+ * itself, same as the in-app notification it accompanies.
+ */
+/** Exported for direct idempotency testing — production callers are notifyApprover/decideLeave. */
+export async function sendLeaveEmailOnce(
   leaveId: string,
-  employeeId: string,
-  type: LeaveTypeName,
-  days: number,
+  emailType: "submitted" | "decided",
+  recipientUserId: number,
+  render: () => { subject: string; html: string; text: string },
 ) {
+  try {
+    await db
+      .insert(leave_emails)
+      .values({ leave_id: leaveId, email_type: emailType, recipient_user_id: recipientUserId });
+  } catch (err) {
+    if (isUniqueViolation(err)) return;
+    throw err;
+  }
+
+  const [info] = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.id, recipientUserId));
+  if (!info) return;
+  const { subject, html, text } = render();
+  try {
+    await sendEmail(info.email, subject, html, text);
+  } catch {
+    // A send failure must not fail the leave action that triggered it.
+  }
+}
+
+/** Notify the manager, or the HR queue when the requester sits at the top of the tree. */
+async function notifyApprover(leave: Leave, type: LeaveTypeName, days: number) {
+  const employeeId = leave.employee_id!;
   const managerUserId = await getManagerUserId(employeeId);
   const recipients = managerUserId != null ? [managerUserId] : await hrUserIds();
   if (!recipients.length) return;
@@ -237,7 +290,7 @@ async function notifyApprover(
     await sendNotification({
       type: "LEAVE_PENDING_APPROVAL",
       triggeredBy: 0,
-      relatedEntity: { leaveId, employeeId },
+      relatedEntity: { leaveId: leave.id, employeeId },
       recipientUserIds: recipients,
       title: "Leave request awaiting your approval",
       message: `A ${type} request for ${days} working day(s) needs a decision.`,
@@ -245,6 +298,22 @@ async function notifyApprover(
     });
   } catch {
     // A notification failure must never fail the request itself.
+  }
+
+  const requester = await requireEmployee(employeeId);
+  const requesterName = `${requester.first_name} ${requester.last_name}`.trim();
+  const mailInfo = await userMailInfo(recipients);
+  for (const recipientUserId of recipients) {
+    await sendLeaveEmailOnce(leave.id, "submitted", recipientUserId, () =>
+      leaveSubmittedEmail({
+        approverFirstName: mailInfo.get(recipientUserId)?.firstName ?? null,
+        requesterName,
+        type,
+        days,
+        startDate: toIsoDate(leave.start_date),
+        endDate: toIsoDate(leave.end_date),
+      }),
+    );
   }
 }
 
@@ -338,12 +407,14 @@ export async function decideLeave(
     return row;
   });
 
+  const requester = await requireEmployee(leave.employee_id!);
+
   try {
     await sendNotification({
       type: decision === "APPROVED" ? "LEAVE_APPROVED" : "LEAVE_REJECTED",
       triggeredBy: actorUserId,
       relatedEntity: { leaveId, employeeId: leave.employee_id! },
-      recipientUserIds: [(await requireEmployee(leave.employee_id!)).user_id],
+      recipientUserIds: [requester.user_id],
       title: decision === "APPROVED" ? "Leave approved" : "Leave rejected",
       message:
         decision === "APPROVED"
@@ -354,6 +425,18 @@ export async function decideLeave(
   } catch {
     // Notification failures must not fail the decision.
   }
+
+  await sendLeaveEmailOnce(leaveId, "decided", requester.user_id, () =>
+    leaveDecidedEmail({
+      firstName: requester.first_name,
+      decision,
+      type: leave.type as LeaveTypeName,
+      days: Number(leave.days ?? 0),
+      startDate: toIsoDate(leave.start_date),
+      endDate: toIsoDate(leave.end_date),
+      approverNote: updated?.approver_note ?? note?.trim() ?? null,
+    }),
+  );
 
   return updated;
 }
