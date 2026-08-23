@@ -32,6 +32,7 @@ import {
   makeEmployee,
   makeEmployeeUser,
   makeContract,
+  makeDocument,
   makeProcessTemplate,
   ensureRole,
 } from "../factories";
@@ -230,6 +231,27 @@ describe("MOD-01 detail and access", () => {
     expect(detail.id).toBe(subject.employee.id);
     expect(detail.counts).toEqual({ assets: 0, open_leave: 0, documents: 0 });
     expect(detail.contract).toBeNull();
+  });
+
+  it("counts documents the employee owns — self-uploaded and contract-linked — not documents belonging to someone else", async () => {
+    const hr = await makeEmployeeUser({ role: "hr", employmentType: "staff" });
+    const subject = await makeEmployeeUser({ employmentType: "staff" });
+    const other = await makeEmployeeUser({ employmentType: "staff" });
+
+    // Self-uploaded by the subject.
+    await makeDocument({ createdById: subject.employee.id });
+    // Uploaded by HR (the common real-world case) but linked to the subject's own contract —
+    // created_by_employee_id alone would miss this one.
+    const contract = await makeContract({ employeeId: subject.employee.id });
+    await makeDocument({ createdById: hr.employee.id, contractId: contract.id });
+    // Belongs entirely to a different employee — must not leak into the subject's count.
+    await makeDocument({ createdById: other.employee.id });
+
+    const detail = await getEmployeeDetail(hr.user.id, subject.employee.id);
+    expect(detail.counts.documents).toBe(2);
+
+    const otherDetail = await getEmployeeDetail(hr.user.id, other.employee.id);
+    expect(otherDetail.counts.documents).toBe(1);
   });
 
   it("lets an employee read their own detail but not another's", async () => {

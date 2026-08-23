@@ -270,10 +270,25 @@ export async function getEmployeeDetail(
       .select({ n: sql<number>`count(*)::int` })
       .from(hr_leaves)
       .where(and(eq(hr_leaves.employee_id, employeeId), eq(hr_leaves.status, "PENDING"))),
+    // A document "belongs to" this employee if they uploaded it themselves, or if it's linked to
+    // one of their own contracts (e.g. HR uploading a signed contract PDF against the employee's
+    // record) — created_by_employee_id alone is just the uploader, almost always HR, not the
+    // employee the document is about.
     db
       .select({ n: sql<number>`count(*)::int` })
       .from(hr_documents)
-      .where(eq(hr_documents.created_by_employee_id, employeeId)),
+      .where(
+        or(
+          eq(hr_documents.created_by_employee_id, employeeId),
+          inArray(
+            hr_documents.contract_id,
+            db
+              .select({ id: hr_contracts.id })
+              .from(hr_contracts)
+              .where(eq(hr_contracts.employee_ref_id, employeeId)),
+          ),
+        ),
+      ),
     db
       .select({
         id: hr_contracts.id,
