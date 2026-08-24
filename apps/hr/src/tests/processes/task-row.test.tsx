@@ -1,5 +1,5 @@
 /**
- * MOD "1E→2C-plus" onboarding surface fix (Things-to-work-on.md, img.png): a contract_signing
+ * MOD "1E→2C-plus" onboarding surface fix (Things-to-work-on.md, my-status.png): a contract_signing
  * task on the onboarding checklist previously showed only a status pill and Skip/Done — no way to
  * read the linked contract before signing, and no way to actually sign from this row even though
  * the signing backend is complete. These tests pin the added View/Sign affordances.

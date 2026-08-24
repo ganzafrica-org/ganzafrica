@@ -35,6 +35,9 @@ export const createEmployeeSchema = z.object({
       .nullable()
       .optional(),
     phone: z.string().max(50).nullable().optional(),
+    citizenship: z.string().max(100).nullable().optional(),
+    home_country: z.string().max(100).nullable().optional(),
+    home_city: z.string().max(100).nullable().optional(),
   }),
 });
 

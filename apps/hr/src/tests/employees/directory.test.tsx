@@ -221,20 +221,20 @@ describe("Employees directory", () => {
     expect(screen.queryByRole("menuitem", { name: /deactivate/i })).not.toBeInTheDocument();
   });
 
-  it("shows a country flag derived from the employee's contract currency, and a dash when there is none", async () => {
+  it("shows a country flag derived from the employee's home country, and a dash when there is none", async () => {
     mockDirectory([
-      employee({ contract_currency: "KES" }),
+      employee({ home_country: "Kenya" }),
       employee({
         id: "44444444-4444-4444-4444-444444444444",
         first_name: "No",
-        last_name: "Contract",
-        contract_currency: null,
+        last_name: "Country",
+        home_country: null,
       }),
       employee({
         id: "55555555-5555-5555-5555-555555555555",
-        first_name: "Uses",
-        last_name: "Dollars",
-        contract_currency: "USD",
+        first_name: "Unlisted",
+        last_name: "Place",
+        home_country: "Atlantis",
       }),
     ]);
 
@@ -243,11 +243,11 @@ describe("Employees directory", () => {
     const adaRow = (await screen.findByText("Ada Lovelace")).closest("tr")!;
     expect(within(adaRow).getByTitle("Kenya")).toHaveTextContent("🇰🇪");
 
-    const noContractRow = screen.getByText("No Contract").closest("tr")!;
-    expect(within(noContractRow).getByTitle("No active contract")).toBeInTheDocument();
+    const noCountryRow = screen.getByText("No Country").closest("tr")!;
+    expect(within(noCountryRow).getByTitle("No home country set")).toBeInTheDocument();
 
-    // USD isn't tied to one country — falls back to a neutral globe rather than a wrong flag.
-    const dollarsRow = screen.getByText("Uses Dollars").closest("tr")!;
-    expect(within(dollarsRow).getByTitle("USD")).toHaveTextContent("🌍");
+    // Unrecognized country names still get a neutral globe rather than disappearing.
+    const unlistedRow = screen.getByText("Unlisted Place").closest("tr")!;
+    expect(within(unlistedRow).getByTitle("Atlantis")).toHaveTextContent("🌍");
   });
 });

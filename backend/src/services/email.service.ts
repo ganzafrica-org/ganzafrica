@@ -9,7 +9,7 @@ const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 const isEmailConfigured = () => !!resend;
 
 // Generic function to send emails
-export async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(to: string, subject: string, html: string, text?: string) {
   if (!resend) {
     // No RESEND_API_KEY (typical for local dev) — nothing gets delivered, so surface every link
     // the email would have contained, otherwise there's no way to click through it locally.
@@ -22,11 +22,15 @@ export async function sendEmail(to: string, subject: string, html: string) {
   }
 
   try {
+    // A text part is included whenever the caller has one — several clients (and inbox preview
+    // snippets) render an html-only email as blank, since they read the text part for the
+    // preview/fallback rather than parsing the html.
     const { data, error } = await resend.emails.send({
       from: env.RESEND_FROM_EMAIL,
       to,
       subject,
       html,
+      ...(text ? { text } : {}),
     });
 
     if (error) {

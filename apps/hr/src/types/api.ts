@@ -125,8 +125,12 @@ export interface CreateEmployeeRequest {
   job_title?: string | null;
   department?: string | null;
   employment_type?: EmploymentType;
+  manager_id?: string | null;
   hired_at?: string | null;
   phone?: string | null;
+  citizenship?: string | null;
+  home_country?: string | null;
+  home_city?: string | null;
 }
 
 /** PATCH /hr/employees/:id body — HR-editable fields only (employees-core.service.ts HR_EDITABLE_FIELDS). */

@@ -34,22 +34,60 @@ export function getInitialsFromName(fullName?: string | null): string {
   return getInitials(first, last);
 }
 
-/**
- * There's no real country column on a contract — currency is the closest proxy available today
- * (hr_contracts.currency). Only the regional currencies map to one specific country; USD/EUR are
- * used across many countries so they get a neutral globe rather than a wrong flag.
- */
-const CURRENCY_COUNTRY: Record<string, { flag: string; country: string }> = {
-  RWF: { flag: "🇷🇼", country: "Rwanda" },
-  KES: { flag: "🇰🇪", country: "Kenya" },
-  UGX: { flag: "🇺🇬", country: "Uganda" },
-  TZS: { flag: "🇹🇿", country: "Tanzania" },
-  GBP: { flag: "🇬🇧", country: "United Kingdom" },
+/** Free-text country names (as entered on the employee's own profile) mapped to ISO 3166-1 alpha-2. */
+const COUNTRY_NAME_TO_CODE: Record<string, string> = {
+  rwanda: "RW",
+  kenya: "KE",
+  uganda: "UG",
+  tanzania: "TZ",
+  burundi: "BI",
+  "democratic republic of congo": "CD",
+  drc: "CD",
+  "republic of congo": "CG",
+  congo: "CG",
+  "south sudan": "SS",
+  sudan: "SD",
+  ethiopia: "ET",
+  somalia: "SO",
+  nigeria: "NG",
+  ghana: "GH",
+  "south africa": "ZA",
+  egypt: "EG",
+  morocco: "MA",
+  senegal: "SN",
+  zambia: "ZM",
+  zimbabwe: "ZW",
+  malawi: "MW",
+  mozambique: "MZ",
+  "united kingdom": "GB",
+  uk: "GB",
+  "united states": "US",
+  "united states of america": "US",
+  usa: "US",
+  canada: "CA",
+  france: "FR",
+  germany: "DE",
+  belgium: "BE",
+  netherlands: "NL",
+  india: "IN",
+  china: "CN",
+  "united arab emirates": "AE",
 };
 
-export function currencyToFlag(currency?: string | null): { flag: string; label: string } | null {
-  if (!currency) return null;
-  const known = CURRENCY_COUNTRY[currency];
-  if (known) return { flag: known.flag, label: known.country };
-  return { flag: "🌍", label: currency };
+/** Regional-indicator flag emoji from an ISO 3166-1 alpha-2 code, e.g. "RW" -> 🇷🇼. */
+function codeToFlagEmoji(code: string): string {
+  return code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
+
+/**
+ * Employees have a real free-text country field (home_country, set from the employee's own
+ * profile) — this is the source of truth for the directory/sheet flag, not the contract currency
+ * (many currencies like USD/EUR aren't tied to one country). Unrecognized/unlisted country names
+ * still show a neutral globe rather than nothing, so a typo doesn't just disappear.
+ */
+export function countryToFlag(country?: string | null): { flag: string; label: string } | null {
+  if (!country) return null;
+  const code = COUNTRY_NAME_TO_CODE[country.trim().toLowerCase()];
+  if (code) return { flag: codeToFlagEmoji(code), label: country };
+  return { flag: "🌍", label: country };
 }

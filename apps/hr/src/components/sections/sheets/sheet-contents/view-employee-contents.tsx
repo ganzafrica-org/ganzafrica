@@ -25,7 +25,7 @@ import { useProcesses, useMyProcess, useProcess } from "@/hooks/useProcesses";
 import { ProcessStatus } from "@/components/processes/process-status";
 import { ContractSigningStatus } from "@/components/processes/contract-signing-status";
 import { remainingDays } from "@/services/leave-balances.service";
-import { getInitials, getStatusBadge } from "@/lib/helpers/employee-util";
+import { getInitials, getStatusBadge, countryToFlag } from "@/lib/helpers/employee-util";
 import { EmployeeHrEditSheet } from "@/components/sections/employee/employee-hr-edit-sheet";
 import { ContractSheet } from "@/components/sections/sheets/add-contract-sheet";
 import { ContractViewSheet } from "@/components/sections/contracts/contract-view-sheet";
@@ -100,6 +100,7 @@ export const Overview = ({
   const selfContracts = useMyContracts(isSelf);
   const { data: contracts } = isSelf ? selfContracts : otherContracts;
   const activeContract = contracts?.find((c) => c.status === "ACTIVE") ?? null;
+  const flag = countryToFlag(employee.home_country);
   // DRAFT is the only status a signature sequence is ever relevant for — ACTIVE is already
   // signed (or activated manually), EXPIRED/TERMINATED don't route through signing at all.
   const pendingContract = contracts?.find((c) => c.status === "DRAFT") ?? null;
@@ -145,7 +146,17 @@ export const Overview = ({
             <Row label="Name" value={`${employee.first_name} ${employee.last_name}`.trim()} />
             <Row label="ID" value={employee.employee_number} />
             <Row label="Role" value={employee.job_title} />
-            <Row label="Country" value={employee.home_country} />
+            <Row
+              label="Country"
+              value={
+                employee.home_country ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    {flag && <span title={flag.label}>{flag.flag}</span>}
+                    {employee.home_country}
+                  </span>
+                ) : null
+              }
+            />
             <Row label="Status" value={getStatusBadge(employee.status)} />
           </div>
         </div>
@@ -206,10 +217,8 @@ export const Overview = ({
           <div>
             <Row label="First name" value={employee.first_name} />
             <Row label="Last name" value={employee.last_name} />
-            <Row
-              label="Home address"
-              value={[employee.home_city, employee.home_country].filter(Boolean).join(", ")}
-            />
+            <Row label="Home city" value={employee.home_city} />
+            <Row label="Home country" value={employee.home_country} />
             <Row label="Personal email" value={employee.personal_email} />
             <Row label="Personal phone" value={employee.phone} />
             <Row label="Citizenship" value={employee.citizenship} />

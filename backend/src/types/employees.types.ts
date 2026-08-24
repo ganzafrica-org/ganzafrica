@@ -109,4 +109,7 @@ export interface CreateEmployeeInput {
   manager_id?: string | null;
   hired_at?: string | null;
   phone?: string | null;
+  citizenship?: string | null;
+  home_country?: string | null;
+  home_city?: string | null;
 }

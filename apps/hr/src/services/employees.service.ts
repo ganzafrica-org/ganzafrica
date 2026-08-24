@@ -23,6 +23,7 @@ export const employeesService = {
     active?: "active" | "inactive" | "all";
   }) {
     const response = await httpClient.get<EmployeeDirectoryResponse>("/hr/employees", { params });
+    console.log("HHHHHHHHHHHHH", response);
     return response.data;
   },
   async getEmployeeById(id: string) {

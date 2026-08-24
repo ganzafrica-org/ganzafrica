@@ -3,7 +3,7 @@ import { openAsRole, HR_URL } from "./support/auth";
 
 /**
  * Coverage for "Add an indicator to show whether a document requires a signature" / view-before-
- * sign / wire the sign action (Things-to-work-on.md, img.png — the onboarding task checklist's
+ * sign / wire the sign action (Things-to-work-on.md, my-status.png — the onboarding task checklist's
  * "Sign employment contract" card). Builds its own fresh employee + contract + signing sequence
  * each run (rather than relying on persistent dev data) so the test is deterministic and
  * repeatable: HR creates an employee (auto-instantiates onboarding with a contract_signing task),

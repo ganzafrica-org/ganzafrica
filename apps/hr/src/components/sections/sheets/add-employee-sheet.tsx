@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { useCreateEmployee } from "@/hooks/useEmployees";
+import { ManagerPicker } from "@/components/sections/employee/manager-picker";
 import {
   ContractFormFields,
   getMissingContractFields,
@@ -63,8 +64,12 @@ interface ProfileFormState {
   job_title: string;
   department: string;
   employment_type: EmploymentType | "";
+  manager_id: string | null;
   hired_at: string;
   phone: string;
+  citizenship: string;
+  home_country: string;
+  home_city: string;
 }
 
 const emptyProfile: ProfileFormState = {
@@ -76,8 +81,12 @@ const emptyProfile: ProfileFormState = {
   job_title: "",
   department: "",
   employment_type: "",
+  manager_id: null,
   hired_at: "",
   phone: "",
+  citizenship: "",
+  home_country: "",
+  home_city: "",
 };
 
 interface AddEmployeeSheetProps {
@@ -159,6 +168,7 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   const createEmployeeMutation = useCreateEmployee();
   const [currentStep, setCurrentStep] = useState<StepType>("profile");
   const [profile, setProfile] = useState<ProfileFormState>(emptyProfile);
+  const [managerName, setManagerName] = useState<string | null>(null);
   const [addContractNow, setAddContractNow] = useState(false);
   const [contract, setContract] = useState<ContractFormState>({ currency: "RWF" });
   const [agreementFile, setAgreementFile] = useState<File | null>(null);
@@ -172,6 +182,7 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   const reset = () => {
     setCurrentStep("profile");
     setProfile(emptyProfile);
+    setManagerName(null);
     setAddContractNow(false);
     setContract({ currency: "RWF" });
     setAgreementFile(null);
@@ -232,8 +243,12 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
       job_title: profile.job_title || undefined,
       department: profile.department || undefined,
       employment_type: profile.employment_type || undefined,
+      manager_id: profile.manager_id || undefined,
       hired_at: profile.hired_at || undefined,
       phone: profile.phone || undefined,
+      citizenship: profile.citizenship || undefined,
+      home_country: profile.home_country || undefined,
+      home_city: profile.home_city || undefined,
     };
 
     try {
@@ -317,7 +332,7 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
         <div className="grid md:grid-cols-[240px_1fr] gap-0 h-full overflow-hidden">
           {/* Stepper sidebar */}
           <div className="hidden md:flex bg-white py-8 flex-col rounded-l-lg overflow-hidden shrink-0 self-stretch">
-            <div className="space-y-8 h-full flex flex-col justify-center items-center border-r border-gray-100">
+            <div className="space-y-8 h-full flex flex-col justify-start items-center border-r border-gray-100">
               {STEPS.map((step, index) => {
                 const completed = isStepCompleted(index);
                 const active = isStepActive(index);
@@ -481,11 +496,47 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
                       </div>
                     </div>
                     <div className="space-y-1.5">
+                      <Label>Manager</Label>
+                      <ManagerPicker
+                        currentName={managerName}
+                        excludeEmployeeId=""
+                        onChange={(id, name) => {
+                          setProfile((p) => ({ ...p, manager_id: id }));
+                          setManagerName(name);
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
                       <Label>Hired Date</Label>
                       <Input
                         type="date"
                         value={profile.hired_at}
                         onChange={(e) => setProfile((p) => ({ ...p, hired_at: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label>Home City</Label>
+                        <Input
+                          value={profile.home_city}
+                          onChange={(e) => setProfile((p) => ({ ...p, home_city: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Home Country</Label>
+                        <Input
+                          value={profile.home_country}
+                          onChange={(e) =>
+                            setProfile((p) => ({ ...p, home_country: e.target.value }))
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Citizenship</Label>
+                      <Input
+                        value={profile.citizenship}
+                        onChange={(e) => setProfile((p) => ({ ...p, citizenship: e.target.value }))}
                       />
                     </div>
                   </>

@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DataTable, ColumnDef } from "../table-component";
 import DepartmentChartPage from "./department-chart";
-import { getInitialsFromName, currencyToFlag } from "@/lib/helpers/employee-util";
+import { getInitialsFromName, countryToFlag } from "@/lib/helpers/employee-util";
 
 interface DisplayEmployeeRow {
   id: string;
@@ -45,7 +45,7 @@ interface DisplayEmployeeRow {
   avatar: string;
   manager: string;
   hasAccount: boolean;
-  contractCurrency: string | null;
+  homeCountry: string | null;
   isActive: boolean;
 }
 
@@ -188,10 +188,29 @@ export const EmployeeManagementContent = ({
         </div>
       ),
     },
+
     {
       key: "position",
       header: "Position",
       className: "text-sm",
+    },
+    {
+      key: "homeCountry",
+      header: "Flag",
+      render: (val) => {
+        const flag = countryToFlag(val as string | null);
+        if (!flag)
+          return (
+            <span className="text-slate-300" title="No home country set">
+              —
+            </span>
+          );
+        return (
+          <span className="text-lg" title={flag.label}>
+            {flag.flag}
+          </span>
+        );
+      },
     },
     {
       key: "department",
@@ -202,24 +221,6 @@ export const EmployeeManagementContent = ({
       key: "manager",
       header: "Manager",
       className: "text-sm",
-    },
-    {
-      key: "contractCurrency",
-      header: "Flag",
-      render: (val) => {
-        const flag = currencyToFlag(val as string | null);
-        if (!flag)
-          return (
-            <span className="text-slate-300" title="No active contract">
-              —
-            </span>
-          );
-        return (
-          <span className="text-lg" title={flag.label}>
-            {flag.flag}
-          </span>
-        );
-      },
     },
     {
       key: "status",

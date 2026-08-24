@@ -53,13 +53,15 @@ export default function OnboardingPage() {
   }, [allRows]);
 
   return (
-    <div className="flex w-full flex-col gap-6">
-      <StatsHeader
-        title="Onboarding Overview"
-        subtitle="Track every new hire's checklist"
-        stats={stats}
-        isLoading={statsLoading}
-      />
+    <div className="min-screen flex flex-col gap-6 bg-slate-950-full bg-[#f6f8fb] dark:bg-slate-950 text-slate-900 dark:text-white">
+      <div className="w-full">
+        <StatsHeader
+          title="Onboarding Overview"
+          subtitle="Track every new hire's checklist"
+          stats={stats}
+          isLoading={statsLoading}
+        />
+      </div>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

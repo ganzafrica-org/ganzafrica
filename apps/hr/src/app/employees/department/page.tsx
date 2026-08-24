@@ -95,58 +95,56 @@ const Page = () => {
   };
 
   return (
-    <div className="min-h-screen py-6 bg-transparent">
-      <div className="max-w-full flex flex-col gap-6">
+    <div className="min-h-screen flex flex-col w-full bg-[#f6f8fb] dark:bg-slate-950 text-slate-900 dark:text-white">
+      <div className="space-y-6">
         <StatsHeader
           title="Departments"
           subtitle="Headcount by department"
           stats={headerStats}
           isLoading={statsLoading}
         />
-        <div className="flex flex-col gap-4">
-          {departmentStats.map((dept) => (
-            <div
-              key={dept.name}
-              className="bg-white dark:bg-neutral-900 flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-all duration-300"
-            >
-              {/* Left: department identity */}
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback
-                    className={deptColors[dept.name] ?? "bg-slate-100 text-slate-600"}
-                  >
-                    {getDeptInitials(dept.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h4 className="text-laj">{dept.name}</h4>
-                  <p className="text-sm text-muted-foreground">{dept.count} total employees</p>
-                </div>
-              </div>
-
-              {/* Right: stats + action */}
-              <div className="flex items-center gap-6 text-sm">
-                <div className="flex items-center gap-1">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span>{dept.active} Active</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4 text-amber-600" />
-                  <span>{dept.onLeave} On Leave</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-200 text-blue-600 hover:bg-blue-50"
-                  onClick={() => handleViewDepartment(dept)}
-                >
-                  <Eye className="mr-1 h-3 w-3" />
-                  View Details
-                </Button>
+      </div>
+      <div className="flex flex-col mt-6 gap-4">
+        {departmentStats.map((dept) => (
+          <div
+            key={dept.name}
+            className="bg-white dark:bg-neutral-900 flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-all duration-300"
+          >
+            {/* Left: department identity */}
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className={deptColors[dept.name] ?? "bg-slate-100 text-slate-600"}>
+                  {getDeptInitials(dept.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h4 className="text-laj">{dept.name}</h4>
+                <p className="text-sm text-muted-foreground">{dept.count} total employees</p>
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* Right: stats + action */}
+            <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-1">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span>{dept.active} Active</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <span>{dept.onLeave} On Leave</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                onClick={() => handleViewDepartment(dept)}
+              >
+                <Eye className="mr-1 h-3 w-3" />
+                View Details
+              </Button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Department detail / edit sheet */}

@@ -430,6 +430,9 @@ export async function createEmployee(input: CreateEmployeeInput, actorUserId: nu
         manager_id: input.manager_id ?? null,
         hired_at: input.hired_at ?? null,
         phone: input.phone ?? null,
+        citizenship: input.citizenship ?? null,
+        home_country: input.home_country ?? null,
+        home_city: input.home_city ?? null,
         status: "pending",
       })
       .returning();

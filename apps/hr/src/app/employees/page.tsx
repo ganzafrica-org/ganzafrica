@@ -36,7 +36,7 @@ const mapEmployeeForDisplay = (emp: Employee) => ({
   avatar: emp.picture ?? "",
   manager: emp.manager ? `${emp.manager.first_name} ${emp.manager.last_name}`.trim() : "—",
   hasAccount: !!emp.account,
-  contractCurrency: emp.contract_currency,
+  homeCountry: emp.home_country,
   isActive: emp.is_active,
 });
 

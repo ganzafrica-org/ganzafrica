@@ -613,16 +613,10 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       throw new AppError("Passwords do not match", 400);
     }
 
-    // Verify token and get user ID
-    let decoded;
-    try {
-      decoded = await authService.verifyToken(token);
-    } catch (error) {
-      throw new AppError(constants.ERROR_MESSAGES.INVALID_TOKEN, 400);
-    }
-
-    // Reset the password
-    await authService.resetPassword(token, Number(decoded.id), password);
+    // The reset token is an opaque random value (see mintPasswordResetToken), not a JWT — it
+    // carries no user id to decode, so resetPassword resolves the user itself by bcrypt-matching
+    // against stored token hashes.
+    await authService.resetPassword(token, password);
 
     res.status(200).json({
       message: constants.SUCCESS_MESSAGES.PASSWORD_RESET_SUCCESS,

@@ -123,12 +123,12 @@ async function sendInviteEmail(params: {
     params.ip ?? "0.0.0.0",
     ONBOARDING_CHECKLIST_PATH,
   );
-  const { subject, html } = welcomeEmail({
+  const { subject, html, text } = welcomeEmail({
     firstName: params.firstName,
     positionTitle: params.jobTitle ?? "your new role",
     setPasswordLink,
   });
-  await sendEmail(params.personalEmail, subject, html);
+  await sendEmail(params.personalEmail, subject, html, text);
 }
 
 /**

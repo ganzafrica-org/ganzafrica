@@ -62,18 +62,17 @@ export function ResetPasswordForm() {
 
     setIsLoading(true);
     try {
-      const response = await apiClient.post("/auth/reset-password", {
+      // A 2xx response here means it succeeded — the backend returns {message: "..."} on success,
+      // not a `success` boolean, so gating the redirect on response.data.success (as this used to)
+      // never actually fired.
+      await apiClient.post("/auth/reset-password", {
         token,
         password: data.password,
-        confirmPassword: data.confirmPassword,
+        confirm_password: data.confirmPassword,
       });
 
-      if (response.data.success) {
-        toast.success("Password reset successfully");
-        router.push(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
-      } else {
-        toast.error("Failed to reset password");
-      }
+      toast.success("Password reset successfully");
+      router.push(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to reset password");
     } finally {

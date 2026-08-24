@@ -582,24 +582,21 @@ export async function verifyEmailToken(token: string, userId: number): Promise<b
 }
 
 /**
- * Reset user password
+ * Reset user password. The token is an opaque random value (mintPasswordResetToken) — it does
+ * not encode the user id, so the only way to find the matching row is to bcrypt-compare against
+ * every unused, unexpired token in the table (the same approach findAccountUserByHandoffCode-style
+ * lookups use). Not a JWT — must not go through verifyToken.
  * @param {string} token - Password reset token
- * @param {number} userId - User ID
  * @param {string} newPassword - New password
  * @returns {Promise<boolean>} - Result of operation
  */
-export async function resetPassword(
-  token: string,
-  userId: number,
-  newPassword: string,
-): Promise<boolean> {
+export async function resetPassword(token: string, newPassword: string): Promise<boolean> {
   return await withDbTransaction(async (txDb) => {
-    // Verify the token first
     let validToken = null;
     const tokens = await txDb
       .select()
       .from(password_reset_tokens)
-      .where(and(eq(password_reset_tokens.user_id, userId), eq(password_reset_tokens.used, false)));
+      .where(eq(password_reset_tokens.used, false));
 
     for (const dbToken of tokens) {
       try {
@@ -620,6 +617,8 @@ export async function resetPassword(
     if (validToken.expires_at < new Date()) {
       throw new AppError("Password reset token has expired", 400);
     }
+
+    const userId = validToken.user_id;
 
     // Hash the new password
     const passwordHash = await hashPassword(newPassword);
