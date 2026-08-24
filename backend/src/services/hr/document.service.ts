@@ -488,7 +488,6 @@ export async function createDocument(input: CreateDocumentInput) {
     }
     await assertLeaveExists(input.leaveId);
   }
-
   const inserted = await db
     .insert(hr_documents)
     .values({

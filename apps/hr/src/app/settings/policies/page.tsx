@@ -93,7 +93,6 @@ export default function PoliciesPage() {
         <div className="mb-4 text-sm text-muted-foreground">
           Total {filteredPolicies.length} items
         </div>
-
         {isLoading && (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
             Loading...

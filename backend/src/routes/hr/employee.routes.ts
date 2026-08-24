@@ -116,4 +116,13 @@ router.get(
   orgController.getReports,
 );
 
+// MOD-04 §4 — LCM-02's offboarding gate query. Response shape (assetId, assignedAt,
+// returnedAt, ...) is frozen once LCM-02 consumes it — see MOD-04 spec §Coordination.
+router.get(
+  "/:id/assets",
+  requirePermission("assets:read", "assets:manage"),
+  validate(assetsValidation.employeeAssetsSchema),
+  assetsController.getEmployeeAssets,
+);
+
 export default router;

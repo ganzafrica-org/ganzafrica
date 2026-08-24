@@ -20,8 +20,10 @@ const router = Router();
 
 router.use("/employees", employeeRoutes);
 router.use("/employees/:employeeId/contracts", contractRoutes);
+
 // MOD-02: full tree + backfill worklist.
 router.use("/org-chart", orgRoutes);
+
 // Self-service: an authenticated employee reads/acts on their own assigned assets at
 // /hr/me/assets — authenticate-only, same self-service pattern as /hr/employees/me. No
 // assets:* permission grant is required (confirmed by
@@ -33,6 +35,7 @@ import * as assetsValidation from "@/validations/hr/assets.validation";
 import { validate } from "@/middlewares";
 import * as documentController from "@/controllers/hr/document.controller";
 import * as contractController from "@/controllers/hr/contract.controller";
+
 router.get("/me/assets", authenticate, assetsController.getMyAssets);
 router.post(
   "/me/assets/:id/report-issue",
