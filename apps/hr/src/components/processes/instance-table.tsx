@@ -23,6 +23,35 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
   cancelled: "outline",
 };
 
+/**
+ * `process_instances.status` only has in_progress|completed|cancelled — there is no "not started"
+ * value in the backend enum. An instance that exists but hasn't had a single task actioned is
+ * still `in_progress` there, which the raw enum badge can't tell apart from one someone's actually
+ * working through. This derives the three-way onboarding-specific label the UI wants (Not Started
+ * / Onboarding / Completed) from status + progress, so the table's Status column and the page's
+ * headerStats tiles (employees/onboarding/page.tsx) count rows the same way.
+ */
+export type OnboardingDisplayStatus = "Not Started" | "Onboarding" | "Completed" | "Cancelled";
+
+export function onboardingDisplayStatus(
+  status: ProcessListRow["status"],
+  progressDone: number,
+): OnboardingDisplayStatus {
+  if (status === "completed") return "Completed";
+  if (status === "cancelled") return "Cancelled";
+  return progressDone > 0 ? "Onboarding" : "Not Started";
+}
+
+const ONBOARDING_STATUS_VARIANT: Record<
+  OnboardingDisplayStatus,
+  "default" | "secondary" | "outline"
+> = {
+  "Not Started": "outline",
+  Onboarding: "default",
+  Completed: "secondary",
+  Cancelled: "outline",
+};
+
 // Onboarding lives nested under Employees; offboarding (LCM-02) hasn't shipped a route yet, so
 // it falls back to a top-level guess until that ships and this gets a real entry.
 const BASE_PATH: Record<ProcessType, string> = {
@@ -125,11 +154,19 @@ export function InstanceTable({ rows, type, isLoading, isError }: Props) {
       key: "status",
       header: "Status",
       sortable: true,
-      render: (status) => (
-        <Badge variant={STATUS_VARIANT[status] ?? "outline"}>
-          {String(status).replace("_", " ")}
-        </Badge>
-      ),
+      render: (status, row) => {
+        // Offboarding (LCM-02) hasn't shipped a UI yet — keep the raw enum badge for it and only
+        // apply the Not Started/Onboarding/Completed split where it's meaningful.
+        if (type !== "onboarding") {
+          return (
+            <Badge variant={STATUS_VARIANT[status] ?? "outline"}>
+              {String(status).replace("_", " ")}
+            </Badge>
+          );
+        }
+        const label = onboardingDisplayStatus(status, row.progressDone);
+        return <Badge variant={ONBOARDING_STATUS_VARIANT[label]}>{label}</Badge>;
+      },
     },
   ];
 
