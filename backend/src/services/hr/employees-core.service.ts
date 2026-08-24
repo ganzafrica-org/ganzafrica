@@ -674,3 +674,49 @@ export async function getEmployeeStatusCounts(): Promise<EmployeeStatusCounts> {
   }
   return counts;
 }
+
+export interface DepartmentStat {
+  department: string;
+  total: number;
+  active: number;
+  on_leave: number;
+}
+
+export interface DepartmentStatsSummary {
+  total_departments: number;
+  total_employees: number;
+  departments: DepartmentStat[];
+}
+
+/**
+ * Per-department headcounts for employees/department's headerStats. `department` is a free-text
+ * column (no departments table — see listDepartments above), so this groups the same active
+ * roster by (department, status) in one query rather than one round trip per department. Scoped
+ * to is_active like getEmployeeStatusCounts, for the same reason.
+ */
+export async function getDepartmentStats(): Promise<DepartmentStatsSummary> {
+  const rows = await db
+    .select({
+      department: employees.department,
+      status: employees.status,
+      n: sql<number>`count(*)::int`,
+    })
+    .from(employees)
+    .where(and(eq(employees.is_active, true), sql`${employees.department} is not null`))
+    .groupBy(employees.department, employees.status);
+
+  const byDept = new Map<string, DepartmentStat>();
+  let total_employees = 0;
+  for (const row of rows) {
+    const dept = row.department as string;
+    const entry = byDept.get(dept) ?? { department: dept, total: 0, active: 0, on_leave: 0 };
+    entry.total += row.n;
+    if (row.status === "active") entry.active += row.n;
+    if (row.status === "on_leave") entry.on_leave += row.n;
+    byDept.set(dept, entry);
+    total_employees += row.n;
+  }
+
+  const departments = [...byDept.values()].sort((a, b) => a.department.localeCompare(b.department));
+  return { total_departments: departments.length, total_employees, departments };
+}

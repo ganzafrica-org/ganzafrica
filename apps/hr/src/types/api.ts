@@ -212,6 +212,21 @@ export interface EmployeeStatusCounts {
   total: number;
 }
 
+/** GET /hr/employees/departments/stats response shape — real per-department counts for the
+ *  employees/department page's headerStats. */
+export interface DepartmentStat {
+  department: string;
+  total: number;
+  active: number;
+  on_leave: number;
+}
+
+export interface DepartmentStatsSummary {
+  total_departments: number;
+  total_employees: number;
+  departments: DepartmentStat[];
+}
+
 // --- CONTRACTS (matches backend/src/types/contract.types.ts — camelCase, unlike Employee above) ---
 export type ContractEmploymentTerm = "indefinite" | "definite";
 export type ContractEmploymentType = "full-time" | "part-time";

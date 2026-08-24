@@ -44,6 +44,12 @@ router.get(
   requirePermission("employees:read", "employees:manage"),
   c.listDepartments,
 );
+// employees/department's headerStats — must precede /:id so "departments" isn't parsed as a uuid.
+router.get(
+  "/departments/stats",
+  requirePermission("employees:read", "employees:manage"),
+  c.getDepartmentStats,
+);
 // Landing-page headerStats/status-circles — must precede /:id so "stats" isn't parsed as a uuid.
 router.get("/stats", requirePermission("employees:read", "employees:manage"), c.getStatusCounts);
 router.post(

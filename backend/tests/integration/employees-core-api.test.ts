@@ -173,6 +173,37 @@ describe("MOD-01 employees API", () => {
     expect((await employee.agent.get(`${API}/stats`)).status).toBe(403);
   });
 
+  it("GET /departments/stats groups the active roster by department, gated like the directory (would 400 if /:id shadowed it)", async () => {
+    const hr = await loginAsEmployee("hr");
+    const employee = await loginAsEmployee();
+    await makeEmployee({
+      userId: (await makeUser({ role: "employee" })).id,
+      department: "Engineering",
+      status: "active",
+    });
+    await makeEmployee({
+      userId: (await makeUser({ role: "employee" })).id,
+      department: "Engineering",
+      status: "on_leave",
+    });
+
+    const res = await hr.agent.get(`${API}/departments/stats`);
+    expect(res.status).toBe(200);
+    expect(res.body.total_departments).toBeGreaterThanOrEqual(2); // Programs (hr+employee) + Engineering
+    expect(res.body.total_employees).toBeGreaterThanOrEqual(4);
+    const engineering = res.body.departments.find(
+      (d: { department: string }) => d.department === "Engineering",
+    );
+    expect(engineering).toMatchObject({
+      department: "Engineering",
+      total: 2,
+      active: 1,
+      on_leave: 1,
+    });
+
+    expect((await employee.agent.get(`${API}/departments/stats`)).status).toBe(403);
+  });
+
   it("lets HR deactivate/reactivate an employee, but 403s a plain employee attempting the same", async () => {
     const hr = await loginAsEmployee("hr");
     const subject = await loginAsEmployee();

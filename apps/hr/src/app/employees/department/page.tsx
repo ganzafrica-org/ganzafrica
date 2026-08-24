@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Eye, AlertCircle, CheckCircle } from "lucide-react";
+import { Eye, AlertCircle, CheckCircle, Building2, Users, UserCheck } from "lucide-react";
 import { DepartmentSheet } from "@/components/sections/sheets/department-sheet";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
+import { StatsHeader } from "@/components/sections/header";
+import { useDepartmentStats } from "@/hooks/useEmployees";
 
 type Department = {
   name: string;
@@ -47,6 +49,22 @@ const getDeptInitials = (name: string) =>
 
 const Page = () => {
   const [departmentStats, setDepartmentStats] = useState<Department[]>(initialDepartmentStats);
+  const { data: realStats, isLoading: statsLoading } = useDepartmentStats();
+
+  const headerStats = useMemo(() => {
+    const active = realStats?.departments.reduce((sum, d) => sum + d.active, 0) ?? 0;
+    const onLeave = realStats?.departments.reduce((sum, d) => sum + d.on_leave, 0) ?? 0;
+    return [
+      {
+        icon: Building2,
+        label: "Total Departments",
+        value: String(realStats?.total_departments ?? 0),
+      },
+      { icon: Users, label: "Total Employees", value: String(realStats?.total_employees ?? 0) },
+      { icon: UserCheck, label: "Active", value: String(active) },
+      { icon: AlertCircle, label: "On Leave", value: String(onLeave) },
+    ];
+  }, [realStats]);
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
@@ -78,47 +96,57 @@ const Page = () => {
 
   return (
     <div className="min-h-screen py-6 bg-transparent">
-      <div className="max-w-full flex flex-col gap-4">
-        {departmentStats.map((dept) => (
-          <div
-            key={dept.name}
-            className="bg-white dark:bg-neutral-900 flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-all duration-300"
-          >
-            {/* Left: department identity */}
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className={deptColors[dept.name] ?? "bg-slate-100 text-slate-600"}>
-                  {getDeptInitials(dept.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h4 className="text-laj">{dept.name}</h4>
-                <p className="text-sm text-muted-foreground">{dept.count} total employees</p>
+      <div className="max-w-full flex flex-col gap-6">
+        <StatsHeader
+          title="Departments"
+          subtitle="Headcount by department"
+          stats={headerStats}
+          isLoading={statsLoading}
+        />
+        <div className="flex flex-col gap-4">
+          {departmentStats.map((dept) => (
+            <div
+              key={dept.name}
+              className="bg-white dark:bg-neutral-900 flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-all duration-300"
+            >
+              {/* Left: department identity */}
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback
+                    className={deptColors[dept.name] ?? "bg-slate-100 text-slate-600"}
+                  >
+                    {getDeptInitials(dept.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h4 className="text-laj">{dept.name}</h4>
+                  <p className="text-sm text-muted-foreground">{dept.count} total employees</p>
+                </div>
               </div>
-            </div>
 
-            {/* Right: stats + action */}
-            <div className="flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-1">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span>{dept.active} Active</span>
+              {/* Right: stats + action */}
+              <div className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <span>{dept.active} Active</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <span>{dept.onLeave} On Leave</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                  onClick={() => handleViewDepartment(dept)}
+                >
+                  <Eye className="mr-1 h-3 w-3" />
+                  View Details
+                </Button>
               </div>
-              <div className="flex items-center gap-1">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <span>{dept.onLeave} On Leave</span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-blue-200 text-blue-600 hover:bg-blue-50"
-                onClick={() => handleViewDepartment(dept)}
-              >
-                <Eye className="mr-1 h-3 w-3" />
-                View Details
-              </Button>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Department detail / edit sheet */}

@@ -1,6 +1,7 @@
 import { httpClient } from "@/services/http.service";
 import type {
   CreateEmployeeRequest,
+  DepartmentStatsSummary,
   Employee,
   EmployeeDirectoryResponse,
   EmployeeStatusCounts,
@@ -43,6 +44,12 @@ export const employeesService = {
   },
   async getStatusCounts() {
     const response = await httpClient.get<EmployeeStatusCounts>("/hr/employees/stats");
+    return response.data;
+  },
+  async getDepartmentStats() {
+    const response = await httpClient.get<DepartmentStatsSummary>(
+      "/hr/employees/departments/stats",
+    );
     return response.data;
   },
   async createEmployee(payload: CreateEmployeeRequest) {

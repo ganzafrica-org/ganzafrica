@@ -58,6 +58,14 @@ export function useEmployeeStatusCounts(enabled = true) {
   });
 }
 
+/** employees/department's headerStats — real per-department counts. */
+export function useDepartmentStats() {
+  return useQuery({
+    queryKey: ["employees", "departments", "stats"],
+    queryFn: () => employeesService.getDepartmentStats(),
+  });
+}
+
 export function useEmployeeLeaves(employeeId: string) {
   return useQuery({
     queryKey: ["employeeLeaves", employeeId],
