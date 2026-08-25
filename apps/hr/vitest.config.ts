@@ -9,7 +9,7 @@ export default defineConfig({
     // wizards, dedupe flows) once V8 coverage instrumentation's per-file overhead is added — they
     // pass reliably standalone but flake past 5s under `--coverage`. All observed failures here
     // were transcript-verified as this pattern (pass clean without --coverage), not real bugs.
-    testTimeout: 10000,
+    testTimeout: 30000,
     // Quarantined: these were written ahead of the implementation and reference symbols that
     // don't exist yet (e.g. `configureHttpService`) / MSW handlers that don't match. They are
     // fixed alongside the HR auth rewrite (FND-06/07). Re-enable once green.
