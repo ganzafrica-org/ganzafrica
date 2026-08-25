@@ -1,2 +1,0 @@
-ALTER TABLE "employees" DROP CONSTRAINT "employees_status_check";--> statement-breakpoint
-ALTER TABLE "employees" ADD CONSTRAINT "employees_status_check" CHECK ("employees"."status" IN ('pending','onboarding','active','on_leave','offboarding','exited'));
