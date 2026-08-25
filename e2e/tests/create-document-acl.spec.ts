@@ -118,13 +118,11 @@ test("Create Document ACL: department-only visibility is enforced end to end", a
   await sheet.getByRole("combobox").first().click();
   await hrPage.getByRole("option", { name: "Policies & Procedures" }).click();
 
-  await sheet
-    .locator('input[type="file"]')
-    .setInputFiles({
-      name: "acl-test.pdf",
-      mimeType: "application/pdf",
-      buffer: Buffer.from("%PDF-1.4 e2e"),
-    });
+  await sheet.locator('input[type="file"]').setInputFiles({
+    name: "acl-test.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4 e2e"),
+  });
 
   // "Who can see this document" — check only the Finance *department* clause. "finance" is also
   // one of the assignable *roles* just above it in the same form, so match the department
