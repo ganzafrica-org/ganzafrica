@@ -22,6 +22,7 @@ export function SignDocument({ token }: { token: string }) {
   const [state, setState] = useState<State>("loading");
   const [subject, setSubject] = useState("");
   const [fields, setFields] = useState<Field[]>([]);
+  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -41,6 +42,18 @@ export function SignDocument({ token }: { token: string }) {
         setSubject(b.request.subject);
         setFields(b.fields ?? []);
         setState("valid");
+
+        // Best-effort: a signer should still be able to fill/sign if the preview fetch fails —
+        // the fields above are the part that actually blocks signing.
+        try {
+          const docRes = await fetch(`${API_URL}/sign/view/${token}/document`);
+          if (docRes.ok) {
+            const docBody = await docRes.json();
+            setDocumentUrl(docBody.url ?? null);
+          }
+        } catch {
+          // no preview available; the form below still works
+        }
       } catch {
         setState("error");
       }
@@ -104,6 +117,14 @@ export function SignDocument({ token }: { token: string }) {
           {state === "valid" && (
             <div className="space-y-5">
               <h2 className="text-lg font-semibold text-slate-900">{subject}</h2>
+
+              {documentUrl && (
+                <iframe
+                  src={documentUrl}
+                  title={subject}
+                  className="h-72 w-full rounded-md border border-slate-300 bg-white"
+                />
+              )}
 
               <div className="space-y-3">
                 {fields.map((f) => (

@@ -67,4 +67,10 @@ export const signingService = {
     });
     return data.requests;
   },
+
+  /** Presigned URL for the base document behind a request. Null when the template has no file. */
+  async getDocumentUrl(id: number): Promise<string | null> {
+    const { data } = await httpClient.get<{ url: string | null }>(`/hr/signing/my/${id}/document`);
+    return data.url;
+  },
 };

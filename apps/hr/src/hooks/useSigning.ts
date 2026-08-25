@@ -20,6 +20,16 @@ export function useSignatureSequence(refKind: string, refId: string | null) {
   });
 }
 
+/** The base document behind a signing request, fetched only while its sign dialog is open. */
+export function useSignatureDocument(requestId: number | null) {
+  return useQuery({
+    queryKey: ["signing", "document", requestId],
+    queryFn: () => signingService.getDocumentUrl(requestId!),
+    enabled: requestId != null,
+    staleTime: 0,
+  });
+}
+
 export function useSignDocument() {
   const queryClient = useQueryClient();
   return useMutation({

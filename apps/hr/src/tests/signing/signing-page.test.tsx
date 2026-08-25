@@ -32,6 +32,9 @@ describe("MySigningPage", () => {
       http.get(`${API}/hr/signing/my`, () =>
         HttpResponse.json({ requests: signed ? [] : [pendingRequest()] }),
       ),
+      http.get(`${API}/hr/signing/my/1/document`, () =>
+        HttpResponse.json({ url: "https://signed.example/tpls/nda.pdf" }),
+      ),
       http.post(`${API}/hr/signing/my/1/sign`, async ({ request }) => {
         const body = (await request.json()) as { field_values: Record<string, unknown> };
         expect(body.field_values.full_name).toBe("Jane Doe");
@@ -49,6 +52,10 @@ describe("MySigningPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /review.*sign/i }));
     expect(await screen.findByLabelText(/Full name/)).toBeInTheDocument();
 
+    // the base document is fetched and shown before signing
+    const preview = await screen.findByTitle("NDA — Employee");
+    expect(preview).toHaveAttribute("src", "https://signed.example/tpls/nda.pdf");
+
     // fill the required field, check the legal agreement, then sign
     fireEvent.change(screen.getByLabelText(/Full name/), { target: { value: "Jane Doe" } });
     fireEvent.click(screen.getByRole("checkbox"));
@@ -61,6 +68,9 @@ describe("MySigningPage", () => {
   it("blocks signing until the agreement is checked", async () => {
     server.use(
       http.get(`${API}/hr/signing/my`, () => HttpResponse.json({ requests: [pendingRequest()] })),
+      http.get(`${API}/hr/signing/my/1/document`, () =>
+        HttpResponse.json({ url: "https://signed.example/tpls/nda.pdf" }),
+      ),
     );
 
     renderWithClient(<MySigningPage />);

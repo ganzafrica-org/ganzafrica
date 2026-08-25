@@ -19,6 +19,7 @@ import {
 import { FileSignature, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useMySignatures, useSignDocument } from "@/hooks/useSigning";
 import { ContractSigningStatus } from "@/components/processes/contract-signing-status";
+import { SignDocumentPreview } from "@/components/signing/sign-document-preview";
 import type { MySignatureRequest, SignatureRequestStatus } from "@/services/signing.service";
 
 const STATUS_STYLES: Record<SignatureRequestStatus, { label: string; className: string }> = {
@@ -190,6 +191,8 @@ function SignDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          <SignDocumentPreview requestId={request.id} title={request.subject} />
+
           {request.fields.map((f) => (
             <div key={f.key} className="space-y-1.5">
               <Label htmlFor={`f-${f.key}`}>

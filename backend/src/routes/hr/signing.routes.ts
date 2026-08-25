@@ -31,6 +31,7 @@ router.get("/requests", authenticate, validate(v.listByRefSchema), c.listByRef);
 
 // Internal signer — any authenticated user sees + signs their own requests.
 router.get("/my", authenticate, c.mySignatures);
+router.get("/my/:id/document", authenticate, validate(v.idSchema), c.myRequestDocument);
 router.post("/my/:id/sign", authenticate, validate(v.signSchema), c.signInternal);
 
 export default router;

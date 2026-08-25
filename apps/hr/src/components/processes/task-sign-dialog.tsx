@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSignDocument } from "@/hooks/useSigning";
+import { SignDocumentPreview } from "@/components/signing/sign-document-preview";
 import type { MySignatureRequest } from "@/services/signing.service";
 
 interface Props {
@@ -72,6 +73,8 @@ export function TaskSignDialog({ request, onClose }: Props) {
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          <SignDocumentPreview requestId={request.id} title={request.subject} />
+
           {request.fields.map((f) => (
             <div key={f.key} className="space-y-1.5">
               <Label htmlFor={`task-sign-${f.key}`}>

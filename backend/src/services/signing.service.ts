@@ -18,8 +18,12 @@ import {
 } from "../db/schema/signing";
 import { mintLink, consumeLink, peekLink, revokeLinks } from "./secure-links.service";
 import { activateViaSignature } from "./hr/contract.service";
+import { getPresignedDownload } from "./storage.service";
 
 const DEFAULT_SIGN_TTL_DAYS = 30;
+// Inline preview needs to outlast a quick glance — the signer may read the document before
+// filling anything in. Mirrors document.service.ts's VIEW_URL_EXPIRY_SECONDS.
+const DOCUMENT_VIEW_URL_EXPIRY_SECONDS = 60 * 15;
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -481,6 +485,45 @@ export async function listForSigner(userId: number) {
       };
     }),
   );
+}
+
+/**
+ * The base document a request's template is signing — what the signer should read before filling
+ * in fields. `file_key` is nullable (a fields-only template has no document to preview).
+ */
+async function requestDocumentUrl(templateId: number): Promise<string | null> {
+  const [tpl] = await db
+    .select({ file_key: signature_templates.file_key })
+    .from(signature_templates)
+    .where(eq(signature_templates.id, templateId))
+    .limit(1);
+  if (!tpl?.file_key) return null;
+  return getPresignedDownload(tpl.file_key, DOCUMENT_VIEW_URL_EXPIRY_SECONDS);
+}
+
+/** Internal signer: the document behind one of their own requests (HR/admin may view any). */
+export async function getRequestDocumentUrl(
+  requestId: number,
+  viewerUserId: number,
+): Promise<{ url: string | null }> {
+  const req = await getRequest(requestId);
+  if (req.signer_user_id !== viewerUserId && !(await hasAnyRole(viewerUserId, ["hr", "admin"]))) {
+    throw new AppError("You cannot view this document", 403);
+  }
+  return { url: await requestDocumentUrl(req.template_id) };
+}
+
+/** External signer: the document behind a token, without consuming it (mirrors viewByToken). */
+export async function getTokenDocumentUrl(
+  rawToken: string,
+): Promise<{ state: SignViewState; url?: string | null }> {
+  const peek = await peekLink("sign_request", rawToken);
+  if (peek.state === "not_found") return { state: "not_found" };
+  if (peek.state === "used") return { state: "signed" };
+  if (peek.state === "expired" || peek.state === "revoked") return { state: "expired" };
+
+  const req = await getRequest(peek.subjectId!);
+  return { state: "valid", url: await requestDocumentUrl(req.template_id) };
 }
 
 /** The full audit trail for a request (HR / signer view). */

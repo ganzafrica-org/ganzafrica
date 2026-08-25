@@ -100,6 +100,7 @@ function mockCommon(
       HttpResponse.json(opts.contractsForEmployee ?? [contract()]),
     ),
     http.get(`${API}/hr/me/contracts`, () => HttpResponse.json(opts.myContracts ?? [contract()])),
+    http.get(`${API}/hr/signing/my/:id/document`, () => HttpResponse.json({ url: null })),
     http.post(`${API}/hr/signing/my/:id/sign`, () =>
       opts.signRequestOk === false
         ? HttpResponse.json({ message: "nope" }, { status: 400 })
@@ -232,6 +233,10 @@ describe("TaskRow — contract_signing: view before sign + sign action", () => {
     await userEvent.click(await screen.findByRole("button", { name: /^sign$/i }));
     // Dialog-only content (the task title text is ambiguous — it's also the row's own heading).
     expect(await screen.findByText(/complete the fields below/i)).toBeInTheDocument();
+    // The document preview is wired in too (this mock template has no file, so the fallback shows).
+    expect(
+      await screen.findByText(/no document file is attached to this template/i),
+    ).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText(/full name/i), "Eli Employee");
     await userEvent.click(screen.getByText(/legally binding/i));

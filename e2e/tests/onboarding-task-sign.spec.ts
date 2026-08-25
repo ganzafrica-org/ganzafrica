@@ -98,6 +98,12 @@ test("onboarding task: view the linked contract read-only, then sign it, from th
   await signButton.click();
 
   await expect(page.getByText(/complete the fields below/i)).toBeVisible();
+  // The document preview loads before the fields — the dev-seeded "Employment Contract" template
+  // has no attached file, so this asserts the no-file fallback rather than an iframe, but it still
+  // proves the preview fetch/render path is wired into the sign dialog.
+  await expect(page.getByText(/no document file is attached to this template/i)).toBeVisible({
+    timeout: 10_000,
+  });
   // The template's full field set travels with every signer's request (see
   // task-sign-dialog.tsx/signing/page.tsx's SignDialog) — required means required to submit,
   // regardless of whose name is on the field, so fill every required text/date input present.
