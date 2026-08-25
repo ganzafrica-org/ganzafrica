@@ -4,7 +4,7 @@
  * read the linked contract before signing, and no way to actually sign from this row even though
  * the signing backend is complete. These tests pin the added View/Sign affordances.
  */
-import { afterEach, describe, it, expect } from "vitest";
+import { beforeEach, afterEach, describe, it, expect } from "vitest";
 import { screen, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
@@ -15,6 +15,18 @@ import type { ProcessTask } from "@/services/processes.service";
 import type { Contract } from "@/types/api";
 
 const API = "http://localhost:3002/api";
+
+beforeEach(() => {
+  server.use(
+    http.get("http://localhost:3002/api/hr/signing/my", () => {
+      return HttpResponse.json([]);
+    }),
+  );
+});
+
+afterEach(() => {
+  server.resetHandlers();
+});
 
 afterEach(() => {
   cleanup();
@@ -103,6 +115,7 @@ describe("TaskRow — contract_signing: view before sign + sign action", () => {
       <TaskRow task={contractSigningTask} canManage isMine={false} employeeId="emp-1" />,
     );
 
+    screen.debug();
     const viewButton = await screen.findByRole("button", { name: /view/i });
     await userEvent.click(viewButton);
 
