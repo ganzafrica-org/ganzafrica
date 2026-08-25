@@ -3,7 +3,7 @@
  * Employees→Onboarding detail page and the employee detail Overview tab's onboarding card — one
  * implementation, two variants (full / summary).
  */
-import { afterEach, describe, it, expect } from "vitest";
+import { beforeEach, afterEach, describe, it, expect } from "vitest";
 import { screen, cleanup } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/mocks/server";
@@ -12,6 +12,15 @@ import { ProcessStatus } from "@/components/processes/process-status";
 import type { ProcessTask } from "@/services/processes.service";
 
 const API = "http://localhost:3002/api";
+
+beforeEach(() => {
+  // Intercept the unhandled request and return a safe mock response
+  server.use(
+    http.get("http://localhost:3002/api/hr/signing/my", () => {
+      return HttpResponse.json([]);
+    }),
+  );
+});
 
 afterEach(() => {
   cleanup();
