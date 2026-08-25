@@ -69,9 +69,6 @@ describe("AddEmployeeSheet — Personal Details dedupe (step 1 -> step 2)", () =
 
     await fillProfileStepFully();
 
-    // Reveal the contract fields.
-    await userEvent.click(screen.getByRole("switch"));
-
     expect(screen.getByPlaceholderText("e.g. Software Engineer")).toHaveValue("Software Engineer");
     expect(screen.getByPlaceholderText("e.g. Engineering")).toHaveValue("Engineering");
     const startDate = document.querySelector('input[type="date"]') as HTMLInputElement;
@@ -86,7 +83,6 @@ describe("AddEmployeeSheet — Personal Details dedupe (step 1 -> step 2)", () =
     renderWithClient(<AddEmployeeSheet open onOpenChange={vi.fn()} />);
 
     await fillProfileStepFully();
-    await userEvent.click(screen.getByRole("switch"));
 
     const contractJobTitle = screen.getByPlaceholderText("e.g. Software Engineer");
     await userEvent.clear(contractJobTitle);
@@ -103,7 +99,6 @@ describe("AddEmployeeSheet — Personal Details dedupe (step 1 -> step 2)", () =
     renderWithClient(<AddEmployeeSheet open onOpenChange={vi.fn()} />);
 
     await fillProfileStepFully();
-    await userEvent.click(screen.getByRole("switch"));
 
     const contractJobTitle = screen.getByPlaceholderText("e.g. Software Engineer");
     await userEvent.clear(contractJobTitle);
@@ -116,23 +111,4 @@ describe("AddEmployeeSheet — Personal Details dedupe (step 1 -> step 2)", () =
       "Contract-only title",
     );
   }, 15000);
-
-  it("skip-contract path is unaffected: no contract fields shown, nothing pre-filled to worry about", async () => {
-    const onOpenChange = vi.fn();
-    server.use(
-      http.post(`${API}/hr/employees`, () =>
-        HttpResponse.json(
-          { employee: { id: "e1", first_name: "New", last_name: "Hire" } },
-          { status: 201 },
-        ),
-      ),
-    );
-    renderWithClient(<AddEmployeeSheet open onOpenChange={onOpenChange} />);
-
-    await fillProfileStepFully();
-    expect(screen.queryByPlaceholderText("e.g. Software Engineer")).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/skipping — the employee will be created without a contract/i),
-    ).toBeInTheDocument();
-  });
 });

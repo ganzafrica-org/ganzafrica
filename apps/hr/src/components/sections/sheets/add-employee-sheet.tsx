@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { useCreateEmployee } from "@/hooks/useEmployees";
 import { ManagerPicker } from "@/components/sections/employee/manager-picker";
@@ -47,8 +46,8 @@ const STEPS: { id: StepType; title: string; subtitle: string; icon: React.ReactN
   },
   {
     id: "contract",
-    title: "Contract (optional)",
-    subtitle: "Add now or skip for later",
+    title: "Contract",
+    subtitle: "Salary, terms, and agreement",
     icon: <FileText className="w-5 h-5" />,
   },
 ];
@@ -169,7 +168,6 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   const [currentStep, setCurrentStep] = useState<StepType>("profile");
   const [profile, setProfile] = useState<ProfileFormState>(emptyProfile);
   const [managerName, setManagerName] = useState<string | null>(null);
-  const [addContractNow, setAddContractNow] = useState(false);
   const [contract, setContract] = useState<ContractFormState>({ currency: "RWF" });
   const [agreementFile, setAgreementFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -183,7 +181,6 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
     setCurrentStep("profile");
     setProfile(emptyProfile);
     setManagerName(null);
-    setAddContractNow(false);
     setContract({ currency: "RWF" });
     setAgreementFile(null);
     setError(null);
@@ -222,13 +219,11 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   };
 
   const handleSubmit = async () => {
-    const missingContractFields = addContractNow
-      ? getMissingContractFields(contract, !!agreementFile)
-      : [];
+    const missingContractFields = getMissingContractFields(contract, !!agreementFile);
     if (missingContractFields.length > 0) {
       setError(
         `Missing required contract field${missingContractFields.length > 1 ? "s" : ""}: ` +
-          `${missingContractFields.join(", ")} — or turn the contract step off.`,
+          `${missingContractFields.join(", ")}.`,
       );
       return;
     }
@@ -254,24 +249,22 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
     try {
       const employee = await createEmployeeMutation.mutateAsync(payload);
 
-      if (addContractNow) {
-        setIsSubmittingContract(true);
-        let createdContract: Contract;
-        try {
-          createdContract = await saveContractWithAgreement({
-            employeeId: employee.id,
-            form: contract,
-            agreementFile,
-          });
-        } finally {
-          setIsSubmittingContract(false);
-        }
-        // Stay open on a DRAFT contract so HR can route it for signature right here — closing
-        // immediately would mean going to find the onboarding task card just to do this.
-        if (createdContract.status === "DRAFT") {
-          setCreatedResult({ employeeId: employee.id, contract: createdContract });
-          return;
-        }
+      setIsSubmittingContract(true);
+      let createdContract: Contract;
+      try {
+        createdContract = await saveContractWithAgreement({
+          employeeId: employee.id,
+          form: contract,
+          agreementFile,
+        });
+      } finally {
+        setIsSubmittingContract(false);
+      }
+      // Stay open on a DRAFT contract so HR can route it for signature right here — closing
+      // immediately would mean going to find the onboarding task card just to do this.
+      if (createdContract.status === "DRAFT") {
+        setCreatedResult({ employeeId: employee.id, contract: createdContract });
+        return;
       }
 
       reset();
@@ -544,32 +537,18 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
 
                 {currentStep === "contract" && (
                   <>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900">Contract</h2>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Optional — can be added later from the employee&apos;s Contract tab.
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 pt-1">
-                        <Label className="text-sm text-gray-600">Add now</Label>
-                        <Switch checked={addContractNow} onCheckedChange={setAddContractNow} />
-                      </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">Contract</h2>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Required so this hire has a contract to route for signature.
+                      </p>
                     </div>
-                    {addContractNow && (
-                      <ContractFormFields
-                        value={contract}
-                        onChange={(patch) => setContract((c) => ({ ...c, ...patch }))}
-                        agreementFile={agreementFile}
-                        onAgreementFileChange={setAgreementFile}
-                      />
-                    )}
-                    {!addContractNow && (
-                      <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500">
-                        <CheckCircle className="w-5 h-5 mx-auto mb-2 text-gray-300" />
-                        Skipping — the employee will be created without a contract.
-                      </div>
-                    )}
+                    <ContractFormFields
+                      value={contract}
+                      onChange={(patch) => setContract((c) => ({ ...c, ...patch }))}
+                      agreementFile={agreementFile}
+                      onAgreementFileChange={setAgreementFile}
+                    />
                   </>
                 )}
               </motion.div>

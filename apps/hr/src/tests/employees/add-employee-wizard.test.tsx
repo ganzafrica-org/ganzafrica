@@ -1,7 +1,7 @@
 /**
- * Unify employee creation, contract, signing, onboarding — the wizard's "Add now" contract step
- * actually attaches a contract (asserted via the real service calls, not just UI state), and the
- * inline signing entry point only appears once a contract exists to route.
+ * Unify employee creation, contract, signing, onboarding — the wizard's contract step (now
+ * mandatory) actually attaches a contract (asserted via the real service calls, not just UI
+ * state), and the signing entry point appears once that contract exists to route.
  */
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { screen, cleanup, waitFor } from "@testing-library/react";
@@ -67,7 +67,6 @@ async function selectOption(triggerText: string, optionText: string) {
 }
 
 async function fillMinimalContract() {
-  await userEvent.click(screen.getByRole("switch"));
   await userEvent.type(screen.getByPlaceholderText("e.g. Software Engineer"), "Analyst");
   const startDate = document.querySelector('input[type="date"]') as HTMLInputElement;
   await userEvent.type(startDate, "2026-03-02");
@@ -77,7 +76,7 @@ async function fillMinimalContract() {
 }
 
 describe("AddEmployeeSheet — contract + signing entry point", () => {
-  it("'Add now' attaches a DRAFT contract via the real contract service call", async () => {
+  it("the contract step attaches a DRAFT contract via the real contract service call", async () => {
     let contractBody: Record<string, unknown> | null = null;
     server.use(
       http.post(`${API}/hr/employees`, () =>
@@ -181,7 +180,7 @@ describe("AddEmployeeSheet — contract + signing entry point", () => {
     expect(await screen.findByRole("button", { name: /sent to hr for signature/i })).toBeDisabled();
   }, 15000);
 
-  it("closes immediately with no signing entry point when the contract step is skipped", async () => {
+  it("blocks submission with a validation error when the now-mandatory contract fields are left empty", async () => {
     const onOpenChange = vi.fn();
     server.use(
       http.post(`${API}/hr/employees`, () =>
@@ -197,7 +196,7 @@ describe("AddEmployeeSheet — contract + signing entry point", () => {
     await fillProfileStep();
     await userEvent.click(screen.getByRole("button", { name: /create employee/i }));
 
-    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
-    expect(screen.queryByText(/route for signature/i)).not.toBeInTheDocument();
+    expect(await screen.findByText(/missing required contract field/i)).toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 });
