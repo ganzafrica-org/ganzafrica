@@ -48,9 +48,7 @@ describe("HR route auth matrix (FND-07)", () => {
       expect(res.status, r.path).not.toBe(403);
       expect(res.status, r.path).not.toBe(401);
     }
-  }, // 5 full resetDb + loginAs cycles routinely take ~19s on their own; under coverage
-  // instrumentation that tips past the global 20s testTimeout.
-  45000);
+  }, 45000); // instrumentation that tips past the global 20s testTimeout. // 5 full resetDb + loginAs cycles routinely take ~19s on their own; under coverage
 
   it("admin reaches every HR resource (short-circuit)", async () => {
     const { agent } = await loginAs("admin");
