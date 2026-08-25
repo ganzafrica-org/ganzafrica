@@ -28,6 +28,7 @@ export const server = setupServer(
       { status: 401 },
     );
   }),
+
   http.post(`${API_URL}/hr/auth/refresh-token`, async ({ request }) => {
     const payload = (await request.json()) as { refreshToken: string };
     if (payload.refreshToken === "refresh-token") {
@@ -38,6 +39,7 @@ export const server = setupServer(
     }
     return HttpResponse.json({ error: "Unauthorized", message: "Invalid token" }, { status: 401 });
   }),
+
   http.get(`${API_URL}/hr/notifications`, ({ request }) => {
     const authHeader = request.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -62,5 +64,13 @@ export const server = setupServer(
       total: 1,
       totalPages: 1,
     });
+  }),
+
+  http.get(`${API_URL}/hr/signing/my`, () => {
+    return HttpResponse.json({ data: [] });
+  }),
+
+  http.get(`${API_URL}/hr/contracts`, () => {
+    return HttpResponse.json({ data: [] });
   }),
 );
