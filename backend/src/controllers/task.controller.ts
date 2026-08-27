@@ -2,22 +2,11 @@ import { Request, Response } from "express";
 import { taskService } from "../services/task.service";
 import * as userService from "../services/user.service";
 import { AppError } from "../middlewares";
-import { constants, Logger, env } from "../config";
+import { constants, Logger } from "../config";
 import { getFileSubdirectory } from "../middlewares/upload";
+import { getPresignedDownload } from "../services/storage.service";
 
 const logger = new Logger("TaskController");
-
-/**
- * Helper function to get the public URL for uploaded files
- * Uses CDN URL if available, otherwise falls back to Spaces direct URL
- */
-function getFileUrl(location: string): string {
-  if (env.DO_SPACES_CDN_URL) {
-    const spacesBaseUrl = `${env.DO_SPACES_ENDPOINT}/${env.DO_SPACES_BUCKET}`;
-    return location.replace(spacesBaseUrl, env.DO_SPACES_CDN_URL.replace(/\/$/, ""));
-  }
-  return location;
-}
 
 /**
  * @swagger
@@ -998,28 +987,17 @@ export const uploadTaskAttachments = async (req: Request, res: Response) => {
     // Get current task to check access and get existing attachments
     const task = await taskService.getTaskById(taskId, userId);
 
-    // Process uploaded files - multer-s3 provides different properties
-    const uploadedFiles = (req.files as any[]).map((file) => {
-      const { key, originalname, size, mimetype, location } = file;
-
-      // Get subdirectory based on file type
-      const subdir = getFileSubdirectory(mimetype);
-
-      // Extract filename from the key
-      const filename = key.split("/").pop();
-
-      // Get the public URL (uses CDN if configured, otherwise direct Spaces URL)
-      const fileUrl = getFileUrl(location);
-
+    // Attachments are private: store the blob key and mint a fresh SAS link on read.
+    const uploadedFiles = (req.files as Express.Multer.File[]).map((file) => {
+      const key = file.key!;
       return {
         id: Math.random().toString(36).slice(2),
-        filename: originalname,
-        url: fileUrl,
-        key, // S3 key for deletion later if needed
-        size,
-        type: mimetype,
-        category: subdir,
-        uploaded_by: userId, // Add uploader information
+        filename: file.originalname,
+        key,
+        size: file.size,
+        type: file.mimetype,
+        category: getFileSubdirectory(file.mimetype),
+        uploaded_by: userId,
         uploaded_at: new Date().toISOString(),
       };
     });
@@ -1031,9 +1009,14 @@ export const uploadTaskAttachments = async (req: Request, res: Response) => {
     // Update task with new attachments
     await taskService.updateTask(taskId, { attachments: allAttachments }, userId);
 
+    // Return each new file with a ready-to-use short-lived download URL.
+    const filesWithUrls = await Promise.all(
+      uploadedFiles.map(async (f) => ({ ...f, url: await getPresignedDownload(f.key, 300) })),
+    );
+
     res.status(200).json({
       message: "Files uploaded successfully",
-      files: uploadedFiles,
+      files: filesWithUrls,
     });
   } catch (error) {
     logger.error("Upload task attachments error", error);

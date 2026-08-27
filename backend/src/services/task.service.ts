@@ -15,6 +15,19 @@ import { Logger } from "../config";
 
 const logger = new Logger("TaskService");
 
+// Task attachments are stored by private blob key; a short-lived SAS `url` is attached on read.
+export type TaskAttachment = {
+  id: string;
+  filename: string;
+  key: string;
+  url?: string;
+  size?: number;
+  type?: string;
+  category?: string;
+  uploaded_by?: number;
+  uploaded_at?: string;
+};
+
 // Type definitions
 export type CreateTaskInput = {
   project_id?: number; // Made optional to allow tasks without projects
@@ -25,7 +38,7 @@ export type CreateTaskInput = {
   priority?: string;
   due_date?: Date;
   labels?: Array<{ id: string; name: string; color: string }>;
-  attachments?: Array<{ id: string; filename: string; url: string }>;
+  attachments?: TaskAttachment[];
   assignees?: number[]; // User IDs
   created_by: number;
 };
@@ -38,7 +51,7 @@ export type UpdateTaskInput = {
   priority?: string;
   due_date?: Date;
   labels?: Array<{ id: string; name: string; color: string }>;
-  attachments?: Array<{ id: string; filename: string; url: string }>;
+  attachments?: TaskAttachment[];
   assignees?: number[];
 };
 

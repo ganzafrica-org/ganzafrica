@@ -45,7 +45,12 @@ export const tasks = pgTable(
         Array<{
           id: string;
           filename: string;
-          url: string;
+          // Private blob key; a short-lived SAS `url` is added when attachments are read.
+          key: string;
+          url?: string;
+          size?: number;
+          type?: string;
+          category?: string;
           uploaded_by: number;
           uploaded_at: string;
         }>

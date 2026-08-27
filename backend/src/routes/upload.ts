@@ -1,23 +1,10 @@
 // src/routes/upload.ts
 import { Router, Request, Response } from "express";
-import upload, { getFileSubdirectory } from "../middlewares/upload";
-import env from "../config/env";
+import upload, { getFileSubdirectory, getFileUrl } from "../middlewares/upload";
 import { Logger } from "../config";
 
 const logger = new Logger("UploadRoute");
 const router: Router = Router();
-
-/**
- * Helper function to get the public URL for uploaded files
- * Uses CDN URL if available, otherwise falls back to Spaces direct URL
- */
-function getFileUrl(location: string): string {
-  if (env.DO_SPACES_CDN_URL) {
-    const spacesBaseUrl = `${env.DO_SPACES_ENDPOINT}/${env.DO_SPACES_BUCKET}`;
-    return location.replace(spacesBaseUrl, env.DO_SPACES_CDN_URL.replace(/\/$/, ""));
-  }
-  return location;
-}
 
 /**
  * @swagger

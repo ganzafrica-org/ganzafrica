@@ -45,7 +45,10 @@ const envSchema = z.object({
   // Payroll - comma-separated emails that receive net salary in USD (Format 1 USD employees)
   USD_SALARY_EMAILS: z.string().optional().default(""),
 
-  // Email (optional - only required if email functionality is used)
+  // Email — Azure Communication Services. Optional so local dev can run without it (unconfigured
+  // sends are logged, not delivered). RESEND_* is kept as a fallback provider for local/dev use.
+  ACS_CONNECTION_STRING: z.string().nullish(),
+  ACS_FROM_EMAIL: z.string().default("GanzAfrica <donotreply@ganzafrica.org>"),
   RESEND_API_KEY: z.string().nullish(),
   RESEND_FROM_EMAIL: z.string().default("GanzAfrica <no-reply@ganzafrica.org>"),
   EMAIL_FROM: z.string().nullish(),
@@ -67,13 +70,12 @@ const envSchema = z.object({
   CORS_ORIGINS: z.string().transform((val) => val.split(",")),
   COOKIE_DOMAIN: z.string().nullish(), // e.g. ".ganzafrica.org" in prod; unset in dev (host-only)
 
-  // Digital Ocean Spaces
-  DO_SPACES_ENDPOINT: z.string().url(),
-  DO_SPACES_REGION: z.string(),
-  DO_SPACES_ACCESS_KEY: z.string(),
-  DO_SPACES_SECRET_KEY: z.string(),
-  DO_SPACES_BUCKET: z.string(),
-  DO_SPACES_CDN_URL: z.string().url().optional(),
+  // Object storage — Azure Blob. Files default to the private container and are read back via
+  // short-lived SAS URLs; only genuinely public assets (website images) go to the public container.
+  AZURE_STORAGE_CONNECTION_STRING: z.string(),
+  AZURE_STORAGE_ACCOUNT: z.string(),
+  AZURE_STORAGE_CONTAINER_PRIVATE: z.string().default("uploads"),
+  AZURE_STORAGE_CONTAINER_PUBLIC: z.string().default("public"),
 
   // Google Calendar (optional - only required if Google Calendar integration is used)
   GOOGLE_CALENDAR_CLIENT_ID: z.string().nullish(),

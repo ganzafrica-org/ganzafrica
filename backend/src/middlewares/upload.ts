@@ -1,18 +1,26 @@
+import type { Request } from "express";
 import multer from "multer";
-import multerS3 from "multer-s3";
-import { S3Client } from "@aws-sdk/client-s3";
+import { BlobServiceClient, type ContainerClient } from "@azure/storage-blob";
 import env from "../config/env";
 
-// Create S3 client for Digital Ocean Spaces
-const s3Client = new S3Client({
-  endpoint: env.DO_SPACES_ENDPOINT,
-  region: env.DO_SPACES_REGION,
-  credentials: {
-    accessKeyId: env.DO_SPACES_ACCESS_KEY,
-    secretAccessKey: env.DO_SPACES_SECRET_KEY,
-  },
-  forcePathStyle: false, // Digital Ocean Spaces uses virtual-hosted-style URLs
-});
+// The Azure storage engine sets these on each uploaded file (mirrors what multer-s3 provided).
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    namespace Multer {
+      interface File {
+        /** Blob key/path within the container, e.g. `uploads/document/123-file.pdf`. */
+        key?: string;
+        /** Absolute blob URL (no SAS). Private objects need `getPresignedDownload` to be readable. */
+        location?: string;
+      }
+    }
+  }
+}
+
+const blobService = BlobServiceClient.fromConnectionString(env.AZURE_STORAGE_CONNECTION_STRING);
+const privateContainer = blobService.getContainerClient(env.AZURE_STORAGE_CONTAINER_PRIVATE);
+const publicContainer = blobService.getContainerClient(env.AZURE_STORAGE_CONTAINER_PUBLIC);
 
 // Define allowed file types
 const allowedImageTypes = [
@@ -37,207 +45,95 @@ const allowedVideoTypes = [
 ];
 const allowedDocumentTypes = [
   "application/pdf",
-  // Word documents
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  // Spreadsheets
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  // Presentations
   "application/vnd.ms-powerpoint",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  // Text files
   "text/plain",
   "text/csv",
   "text/html",
   "text/css",
   "text/javascript",
   "application/json",
-  // Archives
   "application/zip",
   "application/x-zip-compressed",
   "application/x-rar-compressed",
   "application/x-7z-compressed",
-  // Other common formats
   "application/rtf",
   "application/xml",
   "text/xml",
   "application/vnd.oasis.opendocument.text",
   "application/vnd.oasis.opendocument.spreadsheet",
   "application/vnd.oasis.opendocument.presentation",
-  // Additional formats
-  "application/octet-stream", // Generic binary
-  "application/x-binary", // Generic binary
+  "application/octet-stream",
+  "application/x-binary",
 ];
 const allowedFileTypes = [...allowedImageTypes, ...allowedVideoTypes, ...allowedDocumentTypes];
 
-/**
- * Helper function to determine subdirectory based on mimetype
- */
+/** Determine the subdirectory (image / video / document) from a mimetype. */
 export function getFileSubdirectory(mimetype: string): string {
-  if (allowedImageTypes.includes(mimetype)) {
-    return "image";
-  } else if (allowedVideoTypes.includes(mimetype)) {
-    return "video";
-  } else if (allowedDocumentTypes.includes(mimetype)) {
-    return "document";
-  } else if (mimetype.startsWith("image/")) {
-    return "image";
-  } else if (mimetype.startsWith("video/")) {
-    return "video";
-  } else if (mimetype.startsWith("audio/")) {
-    return "document"; // Audio files go to documents
-  } else if (mimetype.startsWith("application/") || mimetype.startsWith("text/")) {
-    return "document";
-  }
-  return "document"; // Default fallback
+  if (allowedImageTypes.includes(mimetype)) return "image";
+  if (allowedVideoTypes.includes(mimetype)) return "video";
+  if (allowedDocumentTypes.includes(mimetype)) return "document";
+  if (mimetype.startsWith("image/")) return "image";
+  if (mimetype.startsWith("video/")) return "video";
+  return "document";
 }
 
+/**
+ * Public URL for an object in the public container. Private objects are never public — read them
+ * back through `getPresignedDownload` (a SAS URL) instead.
+ */
 export function getFileUrl(location: string): string {
-  if (env.DO_SPACES_CDN_URL) {
-    return location.replace(
-      env.DO_SPACES_ENDPOINT.replace(/\/$/, ""),
-      env.DO_SPACES_CDN_URL.replace(/\/$/, ""),
-    );
-  }
   return location;
 }
 
-const spacesStorage = multerS3({
-  s3: s3Client,
-  bucket: env.DO_SPACES_BUCKET,
-  acl: "public-read", // Make files publicly accessible
-  key: function (req, file, cb) {
-    // Determine the appropriate directory based on file type
-    const subdir = getFileSubdirectory(file.mimetype);
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
-    const filename = uniqueSuffix + "-" + originalName;
+const commonExtensions = [
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "ppt",
+  "pptx",
+  "txt",
+  "csv",
+  "rtf",
+  "zip",
+  "rar",
+  "7z",
+  "json",
+  "xml",
+  "html",
+  "css",
+  "js",
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "webp",
+  "svg",
+  "mp4",
+  "webm",
+  "ogg",
+  "mov",
+  "avi",
+  "mkv",
+  "bmp",
+  "tiff",
+  "ico",
+];
 
-    // Create key with subdirectory
-    const key = `uploads/${subdir}/${filename}`;
-    cb(null, key);
-  },
-  contentType: multerS3.AUTO_CONTENT_TYPE,
-  metadata: function (req, file, cb) {
-    cb(null, {
-      originalName: file.originalname,
-      uploadedAt: new Date().toISOString(),
-    });
-  },
-});
-
-interface MulterFile {
-  mimetype: string;
-  originalname: string;
-}
-
-interface MulterRequest extends Express.Request {}
-
-const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterCallback): void => {
-  // NOTE: If production shows "Only images, videos, PDF, DOC, and DOCX" the deployed
-  // backend is outdated. Run: cd backend && npm run build && restart the server.
-  console.log("File upload attempt:", {
-    originalname: file.originalname,
-    mimetype: file.mimetype,
-    allowedTypes: allowedFileTypes.length,
-  });
-
-  // Allow if mimetype is in allowed list (handle undefined/empty from some proxies)
+const fileFilter: multer.Options["fileFilter"] = (_req, file, cb) => {
   const mimetype = file.mimetype || "";
-  if (mimetype && allowedFileTypes.includes(mimetype)) {
-    cb(null, true);
-    return;
-  }
+  if (mimetype && allowedFileTypes.includes(mimetype)) return cb(null, true);
 
-  // Special handling for generic binary types - check file extension
-  if (mimetype === "application/octet-stream" || mimetype === "application/x-binary") {
-    const extension = file.originalname.toLowerCase().split(".").pop();
-    const allowedExtensions = [
-      "pdf",
-      "doc",
-      "docx",
-      "xls",
-      "xlsx",
-      "ppt",
-      "pptx",
-      "txt",
-      "csv",
-      "rtf",
-      "zip",
-      "rar",
-      "7z",
-      "json",
-      "xml",
-      "html",
-      "css",
-      "js",
-      "jpg",
-      "jpeg",
-      "png",
-      "gif",
-      "webp",
-      "svg",
-      "mp4",
-      "webm",
-      "ogg",
-      "mov",
-      "avi",
-      "mkv",
-    ];
-
-    if (extension && allowedExtensions.includes(extension)) {
-      console.log("Allowed file with generic mimetype based on extension:", extension);
-      cb(null, true);
-      return;
-    }
-  }
-
-  // Check for common file extensions even with unknown mimetypes
+  // Some proxies send a generic/absent mimetype; fall back to the file extension.
   const extension = file.originalname.toLowerCase().split(".").pop();
-  const commonExtensions = [
-    "pdf",
-    "doc",
-    "docx",
-    "xls",
-    "xlsx",
-    "ppt",
-    "pptx",
-    "txt",
-    "csv",
-    "rtf",
-    "zip",
-    "rar",
-    "7z",
-    "json",
-    "xml",
-    "html",
-    "css",
-    "js",
-    "jpg",
-    "jpeg",
-    "png",
-    "gif",
-    "webp",
-    "svg",
-    "mp4",
-    "webm",
-    "ogg",
-    "mov",
-    "avi",
-    "mkv",
-    "bmp",
-    "tiff",
-    "ico",
-  ];
+  if (extension && commonExtensions.includes(extension)) return cb(null, true);
 
-  if (extension && commonExtensions.includes(extension)) {
-    console.log("Allowed file based on extension:", extension, "despite mimetype:", mimetype);
-    cb(null, true);
-    return;
-  }
-
-  console.log("Rejected file type:", mimetype, "for file:", file.originalname);
   cb(
     new Error(
       "Invalid file type. Allowed: images, videos, PDF, DOC, DOCX, XLS, XLSX, and other common formats.",
@@ -245,42 +141,75 @@ const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterC
   );
 };
 
-const upload = multer({
-  storage: spacesStorage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB limit
-  },
-});
+function buildKey(file: Express.Multer.File): string {
+  const subdir = getFileSubdirectory(file.mimetype);
+  const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+  const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
+  return `uploads/${subdir}/${uniqueSuffix}-${originalName}`;
+}
 
-// Private upload variant for documents and other sensitive files (ACL: private)
-const privateSpacesStorage = multerS3({
-  s3: s3Client,
-  bucket: env.DO_SPACES_BUCKET,
-  acl: "private", // Private access - no public read
-  key: function (req, file, cb) {
-    const subdir = getFileSubdirectory(file.mimetype);
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
-    const filename = uniqueSuffix + "-" + originalName;
-    const key = `uploads/${subdir}/${filename}`;
-    cb(null, key);
-  },
-  contentType: multerS3.AUTO_CONTENT_TYPE,
-  metadata: function (req, file, cb) {
-    cb(null, {
-      originalName: file.originalname,
-      uploadedAt: new Date().toISOString(),
-    });
-  },
-});
+/**
+ * multer storage engine that streams the upload straight into Azure Blob. It sets the same fields
+ * multer-s3 did — `key`, `location`, `size`, `contentType` — so existing controllers keep working.
+ */
+function azureStorage(container: ContainerClient): multer.StorageEngine {
+  return {
+    _handleFile(req: Request, file, cb) {
+      const key = buildKey(file);
+      const blockBlob = container.getBlockBlobClient(key);
+      const chunks: Buffer[] = [];
+      let size = 0;
 
-export const privateUpload = multer({
-  storage: privateSpacesStorage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB limit
-  },
-});
+      file.stream.on("data", (chunk: Buffer) => {
+        chunks.push(chunk);
+        size += chunk.length;
+      });
+      file.stream.on("error", cb);
+      file.stream.on("end", () => {
+        blockBlob
+          .uploadData(Buffer.concat(chunks), {
+            blobHTTPHeaders: { blobContentType: file.mimetype },
+            metadata: { originalName: file.originalname, uploadedAt: new Date().toISOString() },
+          })
+          .then(() =>
+            cb(null, {
+              key,
+              location: blockBlob.url,
+              size,
+              contentType: file.mimetype,
+            } as Partial<Express.Multer.File>),
+          )
+          .catch(cb);
+      });
+    },
+    _removeFile(_req, file, cb) {
+      const key = (file as Express.Multer.File & { key?: string }).key;
+      if (!key) return cb(null);
+      container
+        .getBlockBlobClient(key)
+        .deleteIfExists()
+        .then(() => cb(null))
+        .catch(cb);
+    },
+  };
+}
+
+const limits = { fileSize: 100 * 1024 * 1024 }; // 100MB
+
+/**
+ * Default upload — PRIVATE by default. Files land in the private container and are read back via
+ * short-lived SAS links (`getPresignedDownload`). This is the safe default for all internal files
+ * (avatars, attachments, project/report files, HR assets).
+ */
+const upload = multer({ storage: azureStorage(privateContainer), fileFilter, limits });
+
+/** Alias kept for existing imports; identical to the default private `upload`. */
+export const privateUpload = upload;
+
+/**
+ * Public upload — ONLY for genuinely public website assets (news images, team/testimonial photos)
+ * that anonymous visitors load directly. Stored in the public container with public read URLs.
+ */
+export const publicUpload = multer({ storage: azureStorage(publicContainer), fileFilter, limits });
 
 export default upload;
