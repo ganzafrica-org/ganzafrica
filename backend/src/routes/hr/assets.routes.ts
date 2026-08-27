@@ -1,6 +1,6 @@
 ﻿import { Router } from "express";
 import { validate, authenticate, requirePermission } from "../../middlewares";
-import upload from "../../middlewares/upload";
+import { publicUpload } from "../../middlewares/upload";
 import * as assetsController from "../../controllers/hr/assets.controller";
 import * as assetsValidation from "../../validations/hr/assets.validation";
 
@@ -64,7 +64,7 @@ router.delete(
 router.post(
   "/",
   manage,
-  upload.array("images", 10),
+  publicUpload.array("images", 10),
   validate(assetsValidation.createAssetSchema),
   assetsController.createAsset,
 );
@@ -73,7 +73,7 @@ router.get("/:id", read, validate(assetsValidation.assetIdParamSchema), assetsCo
 router.patch(
   "/:id",
   manage,
-  upload.array("images", 10),
+  publicUpload.array("images", 10),
   validate(assetsValidation.updateAssetSchema),
   assetsController.updateAsset,
 );

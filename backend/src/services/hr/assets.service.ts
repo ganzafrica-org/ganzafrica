@@ -87,7 +87,7 @@ function mapImage(row: {
 }) {
   return {
     id: row.id,
-    url: row.url,
+    url: row.url, // asset images are public display images
     storageKey: row.storage_key,
     isPrimary: row.is_primary,
     sortOrder: row.sort_order,

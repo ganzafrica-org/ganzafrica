@@ -204,10 +204,8 @@ export const getMe = async (req: Request, res: Response) => {
 
 export const updateMyProfile = async (req: Request, res: Response) => {
   try {
-    // multer-s3 augments the file with `location` (not part of Express.Multer.File) — same
-    // shape assets.controller.ts's buildImageInputs reads from req.files.
-    const file = req.file as (Express.Multer.File & { location?: string }) | undefined;
-    const patch = file ? { ...req.body, picture: getFileUrl(file.location!) } : req.body;
+    // Profile pictures are public display images; store the public blob URL directly.
+    const patch = req.file ? { ...req.body, picture: getFileUrl(req.file.location!) } : req.body;
     return res.json({ me: await employees.updateMyProfile(actorId(req), patch) });
   } catch (e) {
     return handleError(res, e, "Update Profile Error");
