@@ -728,7 +728,10 @@ export async function generateSignedPayslipUrl(
   key: string,
   expiresIn: number = 300, // 5 minutes — payslip links go through the token redirect, not raw SAS
 ): Promise<string> {
-  return getPresignedDownload(key, Math.min(expiresIn, PAYSLIP_URL_EXPIRY_SECONDS));
+  if (expiresIn > PAYSLIP_URL_EXPIRY_SECONDS) {
+    throw new Error("SAS URLs cannot exceed 7 days; use a payslip access token instead");
+  }
+  return getPresignedDownload(key, expiresIn);
 }
 
 export async function generateAndUploadPayslip(data: PayslipData) {

@@ -12,49 +12,34 @@ const { uploadedObjects } = vi.hoisted(() => ({
   uploadedObjects: [] as Array<{ Key?: string }>,
 }));
 
-// Same fake multer-s3 storage engine as create-document-acl.test.ts — buffers in memory instead
-// of hitting real S3/DO Spaces, while still exercising the real route/middleware/controller/service.
-vi.mock("multer-s3", () => {
-  const fakeStorage = () => ({
-    _handleFile(
-      _req: unknown,
-      file: { stream: NodeJS.ReadableStream; originalname: string; mimetype: string },
-      cb: (err: unknown, info?: Record<string, unknown>) => void,
-    ) {
-      const chunks: Buffer[] = [];
-      file.stream.on("data", (chunk: Buffer) => chunks.push(chunk));
-      file.stream.on("error", cb);
-      file.stream.on("end", () => {
-        const buffer = Buffer.concat(chunks);
-        const safeName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
-        const key = `uploads/test/${Date.now()}-${safeName}`;
-        uploadedObjects.push({ Key: key });
-        cb(null, {
-          bucket: "test-bucket",
-          key,
-          acl: "private",
-          contentType: file.mimetype,
-          size: buffer.length,
-          location: `https://test.spaces/${key}`,
-          etag: '"test-etag"',
-        });
-      });
+// Same approach as create-document-acl.test.ts — mock @azure/storage-blob so uploads buffer in
+// memory instead of hitting real Blob, while still exercising the real route/middleware/service.
+vi.mock("@azure/storage-blob", () => {
+  const makeBlockBlobClient = (containerName: string, key: string) => ({
+    url: `https://teststorage.blob.core.windows.net/${containerName}/${key}`,
+    async uploadData(data: Buffer) {
+      uploadedObjects.push({ Key: key });
+      return { requestId: "test", size: data.length };
     },
-    _removeFile(_req: unknown, _file: unknown, cb: (err: unknown) => void) {
-      cb(null);
+    async deleteIfExists() {
+      return { succeeded: true };
+    },
+    async downloadToBuffer() {
+      return Buffer.from("");
     },
   });
-  fakeStorage.AUTO_CONTENT_TYPE = (
-    _req: unknown,
-    file: { mimetype?: string },
-    cb: (err: null, type: string) => void,
-  ) => cb(null, file.mimetype ?? "application/octet-stream");
-  fakeStorage.DEFAULT_CONTENT_TYPE = (
-    _req: unknown,
-    _file: unknown,
-    cb: (err: null, type: string) => void,
-  ) => cb(null, "application/octet-stream");
-  return { default: fakeStorage };
+  return {
+    BlobServiceClient: {
+      fromConnectionString: () => ({
+        getContainerClient: (name: string) => ({
+          getBlockBlobClient: (key: string) => makeBlockBlobClient(name, key),
+        }),
+      }),
+    },
+    BlobSASPermissions: { parse: () => ({}) },
+    generateBlobSASQueryParameters: () => ({ toString: () => "sig=test" }),
+    StorageSharedKeyCredential: class {},
+  };
 });
 
 vi.mock("../../src/services/storage.service", async (importOriginal) => {

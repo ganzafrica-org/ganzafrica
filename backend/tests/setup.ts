@@ -18,21 +18,21 @@ const TEST_ENV: Record<string, string> = {
   JWT_SECRET: "test_jwt_secret_at_least_32_characters_long_xx",
   JWT_REFRESH_SECRET: "test_jwt_refresh_secret_at_least_32_chars_xx",
   CORS_ORIGINS: "http://localhost:3000,http://localhost:3001",
-  DO_SPACES_ENDPOINT: "https://test.digitaloceanspaces.com",
-  DO_SPACES_REGION: "nyc3",
-  DO_SPACES_ACCESS_KEY: "test-key",
-  DO_SPACES_SECRET_KEY: "test-secret",
-  DO_SPACES_BUCKET: "test-bucket",
+  AZURE_STORAGE_CONNECTION_STRING:
+    "DefaultEndpointsProtocol=https;AccountName=teststorage;AccountKey=dGVzdC1rZXk=;EndpointSuffix=core.windows.net",
+  AZURE_STORAGE_ACCOUNT: "teststorage",
+  AZURE_STORAGE_CONTAINER_PRIVATE: "uploads",
+  AZURE_STORAGE_CONTAINER_PUBLIC: "public",
 };
 for (const [k, v] of Object.entries(TEST_ENV)) {
   if (!process.env[k]) process.env[k] = v;
 }
-// Real secrets never touch tests (see file doc above). RESEND_API_KEY needs the same "set it here
-// first" treatment as everything above: config/env.ts's dotenv.config() only fills in vars that
-// aren't already present in process.env, and this file's setupFiles hook runs before that — so
-// pre-setting it to "" here (falsy, same as unset) blocks the developer's real backend/.env value
-// from ever reaching a test run, the same way it would if we'd never run dotenv at all.
+// Real secrets never touch tests (see file doc above). Email provider keys get the same "set it
+// here first" treatment: config/env.ts's dotenv.config() only fills in vars that aren't already
+// present, and this setupFiles hook runs before that — so pre-setting them to "" (falsy, same as
+// unset) blocks a developer's real backend/.env value from reaching a test run.
 if (!process.env.RESEND_API_KEY) process.env.RESEND_API_KEY = "";
+if (!process.env.ACS_CONNECTION_STRING) process.env.ACS_CONNECTION_STRING = "";
 
 // DATABASE_URL comes from global-setup; fall back to the conventional local test DB.
 if (!process.env.DATABASE_URL) {
