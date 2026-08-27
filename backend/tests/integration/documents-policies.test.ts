@@ -5,18 +5,19 @@
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-// Presign is faked so the download test asserts a deterministic X-Amz-Expires=300 (5 min) URL
-// without touching real Spaces credentials — same pattern as payslip-tokens.test.ts.
-vi.mock("@aws-sdk/s3-request-presigner", () => ({
-  getSignedUrl: async (_client: unknown, cmd: any, opts: { expiresIn: number }) =>
-    `https://test-bucket.nyc3.digitaloceanspaces.com/${cmd?.input?.Key ?? "obj"}?X-Amz-Expires=${opts.expiresIn}&X-Amz-Signature=test`,
-}));
-
-// getObjectBuffer hits real S3 (search-indexing + the /content viewer endpoint); stub it so
-// neither path makes a real network call. Individual tests override the resolved value.
+// SAS download is faked so the download test asserts a deterministic URL carrying the requested
+// expiry, without touching real Azure credentials. getObjectBuffer is stubbed so the search-index
+// and /content viewer paths make no real network call. Individual tests override the resolved value.
 vi.mock("../../src/services/storage.service", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/services/storage.service")>();
-  return { ...actual, getObjectBuffer: vi.fn().mockResolvedValue(Buffer.from("")) };
+  return {
+    ...actual,
+    getObjectBuffer: vi.fn().mockResolvedValue(Buffer.from("")),
+    getPresignedDownload: vi.fn(
+      async (key: string, expiresIn = 300) =>
+        `https://teststorage.blob.core.windows.net/uploads/${key}?sig=test&se=exp-${expiresIn}`,
+    ),
+  };
 });
 
 import app from "../../src/app";
@@ -42,7 +43,11 @@ import {
 } from "../../src/services/hr/document.service";
 import * as policyService from "../../src/services/hr/policy.service";
 import * as storageService from "../../src/services/storage.service";
-import { privateUpload, default as publicUpload } from "../../src/middlewares/upload";
+import {
+  privateUpload,
+  publicUpload,
+  default as defaultUpload,
+} from "../../src/middlewares/upload";
 
 const API = "/api/hr";
 
@@ -254,7 +259,7 @@ describe("MOD-05 documents & policies", () => {
       const allowed = await fellow.agent.get(`${API}/documents/${doc.id}/download`);
       expect(allowed.status).toBe(302);
       expect(allowed.headers.location).toContain(`/${doc.file_path}?`);
-      expect(allowed.headers.location).toContain("X-Amz-Expires=300");
+      expect(allowed.headers.location).toContain("se=exp-300");
 
       const [row] = await db.select().from(hr_documents).where(eq(hr_documents.id, doc.id));
       expect(row.downloads).toBe(1);
@@ -278,7 +283,7 @@ describe("MOD-05 documents & policies", () => {
       const allowed = await fellow.agent.get(`${API}/documents/${doc.id}/view-url`);
       expect(allowed.status).toBe(200);
       expect(allowed.body.data.url).toContain(`/${doc.file_path}?`);
-      expect(allowed.body.data.url).toContain("X-Amz-Expires=900");
+      expect(allowed.body.data.url).toContain("se=exp-900");
       // Real stored filename (S3 key basename), not the human document_name — the frontend needs
       // the actual extension to pick a renderer.
       expect(allowed.body.data.fileName).toBe(doc.file_path.split("/").pop());
@@ -310,21 +315,17 @@ describe("MOD-05 documents & policies", () => {
     });
   });
 
-  // ── §6.2 — private storage config (the privacy bug fix) ────────────────────────────────────
-  describe("privateUpload middleware writes with ACL: private", () => {
-    function resolveAcl(uploader: any): Promise<string> {
-      const storage = uploader.storage as any;
-      return new Promise((resolve, reject) => {
-        storage.getAcl({}, {}, (err: unknown, val: string) => (err ? reject(err) : resolve(val)));
-      });
-    }
-
-    it("privateUpload resolves ACL to 'private'", async () => {
-      await expect(resolveAcl(privateUpload)).resolves.toBe("private");
+  // ── §6.2 — private storage config ──────────────────────────────────────────────────────────
+  // On Azure Blob, privacy is enforced by which container an uploader writes to (there are no
+  // per-object ACLs). The default export and privateUpload share the private container; publicUpload
+  // is a distinct engine targeting the public container.
+  describe("upload middleware container wiring", () => {
+    it("the default export is the private uploader", () => {
+      expect(privateUpload).toBe(defaultUpload);
     });
 
-    it("the default (public-facing media) uploader is unchanged at 'public-read'", async () => {
-      await expect(resolveAcl(publicUpload)).resolves.toBe("public-read");
+    it("publicUpload is a separate engine from the private uploader", () => {
+      expect(publicUpload).not.toBe(privateUpload);
     });
   });
 

@@ -35,24 +35,35 @@ export function installExternalMocks() {
     },
   }));
 
-  vi.mock("@aws-sdk/client-s3", async (importActual) => {
-    const actual = await importActual<typeof import("@aws-sdk/client-s3")>();
-    return {
-      ...actual,
-      S3Client: class {
-        async send(cmd: { input?: { Bucket?: string; Key?: string; ACL?: string } }) {
-          uploadedObjects.push({ ...(cmd?.input ?? {}) });
-          return {};
-        }
+  vi.mock("@azure/storage-blob", () => {
+    const makeBlockBlobClient = (containerName: string, key: string) => ({
+      url: `https://teststorage.blob.core.windows.net/${containerName}/${key}`,
+      async uploadData(data: Buffer) {
+        uploadedObjects.push({ Bucket: containerName, Key: key });
+        return { requestId: "test", size: data.length };
       },
+      async deleteIfExists() {
+        return { succeeded: true };
+      },
+      async downloadToBuffer() {
+        return Buffer.from("");
+      },
+    });
+    return {
+      BlobServiceClient: {
+        fromConnectionString: () => ({
+          getContainerClient: (name: string) => ({
+            getBlockBlobClient: (key: string) => makeBlockBlobClient(name, key),
+          }),
+        }),
+      },
+      BlobSASPermissions: { parse: () => ({}) },
+      generateBlobSASQueryParameters: (opts: { blobName?: string }) => {
+        const url = `https://teststorage.blob.core.windows.net/uploads/${opts?.blobName ?? "obj"}?sig=test`;
+        presignedUrls.push(url);
+        return { toString: () => "sig=test" };
+      },
+      StorageSharedKeyCredential: class {},
     };
   });
-
-  vi.mock("@aws-sdk/s3-request-presigner", () => ({
-    getSignedUrl: async (_client: unknown, cmd: { input?: { Key?: string } }) => {
-      const url = `https://test.spaces/${cmd?.input?.Key ?? "obj"}?sig=test`;
-      presignedUrls.push(url);
-      return url;
-    },
-  }));
 }

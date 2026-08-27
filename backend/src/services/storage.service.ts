@@ -1,46 +1,68 @@
 /**
- * Shared object-storage helpers (DO Spaces / S3-compatible). Generalizes the presigned-download
- * pattern (was inline in pdf.service) so private files — offer letters, employee documents, signed
- * copies — are all served via short-lived expiring links rather than public URLs.
+ * Shared object-storage helpers (Azure Blob). Private files — offer letters, employee documents,
+ * signed copies, payslips, avatars, attachments — live in the private container and are served via
+ * short-lived SAS links rather than public URLs. Genuinely public assets (website images) go to the
+ * public container via the upload middleware.
  */
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-import type { Readable } from "stream";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import {
+  BlobServiceClient,
+  BlobSASPermissions,
+  generateBlobSASQueryParameters,
+  StorageSharedKeyCredential,
+} from "@azure/storage-blob";
 import env from "../config/env";
 import { Logger } from "../config";
 
 const logger = new Logger("StorageService");
-const MAX_PRESIGN_SECONDS = 7 * 24 * 60 * 60;
+const MAX_SAS_SECONDS = 7 * 24 * 60 * 60;
 
-const s3Client = new S3Client({
-  endpoint: env.DO_SPACES_ENDPOINT,
-  region: env.DO_SPACES_REGION,
-  credentials: {
-    accessKeyId: env.DO_SPACES_ACCESS_KEY,
-    secretAccessKey: env.DO_SPACES_SECRET_KEY,
-  },
-  forcePathStyle: false,
-});
+const blobService = BlobServiceClient.fromConnectionString(env.AZURE_STORAGE_CONNECTION_STRING);
+const privateContainer = blobService.getContainerClient(env.AZURE_STORAGE_CONTAINER_PRIVATE);
 
-/** Presigned GET for a private object. Default 5 minutes; capped at S3's 7-day ceiling. */
+// The shared-key credential is needed to sign SAS tokens; parse it out of the connection string.
+const accountKey = /AccountKey=([^;]+)/.exec(env.AZURE_STORAGE_CONNECTION_STRING)?.[1];
+const sharedKeyCredential = accountKey
+  ? new StorageSharedKeyCredential(env.AZURE_STORAGE_ACCOUNT, accountKey)
+  : null;
+
+/** Short-lived read URL (SAS) for a private object. Default 5 minutes; capped at Azure's 7-day max. */
 export async function getPresignedDownload(key: string, expiresIn = 300): Promise<string> {
-  if (expiresIn > MAX_PRESIGN_SECONDS) {
-    throw new Error("presigned URLs cannot exceed 7 days");
+  if (expiresIn > MAX_SAS_SECONDS) {
+    throw new Error("SAS URLs cannot exceed 7 days");
   }
-  const command = new GetObjectCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key });
-  const url = await getSignedUrl(s3Client as never, command as never, { expiresIn });
-  logger.info(`Presigned download for ${key}, expires in ${expiresIn}s`);
-  return url;
+  if (!sharedKeyCredential) {
+    throw new Error("AZURE_STORAGE_CONNECTION_STRING must contain an AccountKey to sign SAS URLs");
+  }
+  const blob = privateContainer.getBlockBlobClient(key);
+  const sas = generateBlobSASQueryParameters(
+    {
+      containerName: env.AZURE_STORAGE_CONTAINER_PRIVATE,
+      blobName: key,
+      permissions: BlobSASPermissions.parse("r"),
+      startsOn: new Date(Date.now() - 60_000), // small clock-skew allowance
+      expiresOn: new Date(Date.now() + expiresIn * 1000),
+    },
+    sharedKeyCredential,
+  ).toString();
+  logger.info(`SAS download for ${key}, expires in ${expiresIn}s`);
+  return `${blob.url}?${sas}`;
 }
 
 /** Fetch a private object's full bytes (out-of-band text extraction, never the request path). */
 export async function getObjectBuffer(key: string): Promise<Buffer> {
-  const command = new GetObjectCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key });
-  const response = await s3Client.send(command);
-  const stream = response.Body as Readable;
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-  return Buffer.concat(chunks);
+  return privateContainer.getBlockBlobClient(key).downloadToBuffer();
+}
+
+/** Upload bytes to the private container under `key` (e.g. generated payslip PDFs). */
+export async function putObject(key: string, body: Buffer, contentType: string): Promise<void> {
+  await privateContainer.getBlockBlobClient(key).uploadData(body, {
+    blobHTTPHeaders: { blobContentType: contentType },
+  });
+  logger.info(`Uploaded ${key} (${body.length} bytes) to private storage`);
+}
+
+/** Delete a private object. No-op if it does not exist. */
+export async function deleteObject(key: string): Promise<void> {
+  await privateContainer.getBlockBlobClient(key).deleteIfExists();
+  logger.info(`Deleted ${key} from private storage`);
 }

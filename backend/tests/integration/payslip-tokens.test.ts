@@ -1,10 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-// Presign is faked so redeem returns a deterministic Spaces-shaped URL with X-Amz-Expires.
-vi.mock("@aws-sdk/s3-request-presigner", () => ({
-  getSignedUrl: async (_client: unknown, cmd: any, opts: { expiresIn: number }) =>
-    `https://test-bucket.nyc3.digitaloceanspaces.com/${cmd?.input?.Key ?? "obj"}?X-Amz-Expires=${opts.expiresIn}&X-Amz-Signature=test`,
-}));
+// SAS download is faked so redeem returns a deterministic blob URL carrying the requested expiry.
+vi.mock("../../src/services/storage.service", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/services/storage.service")>();
+  return {
+    ...actual,
+    getPresignedDownload: vi.fn(
+      async (key: string, expiresIn = 300) =>
+        `https://teststorage.blob.core.windows.net/uploads/${key}?sig=test&se=exp-${expiresIn}`,
+    ),
+  };
+});
 
 import supertest from "supertest";
 import { eq } from "drizzle-orm";
@@ -39,13 +45,13 @@ describe("payslip access tokens", () => {
     expect(rows[0].token_hash).not.toContain(raw);
   });
 
-  it("valid token → 302 to a Spaces URL with X-Amz-Expires=300", async () => {
+  it("valid token → 302 to a blob URL with 5-min expiry", async () => {
     const payroll = await seedPayroll();
     const token = await payslipTokenService.mintPayslipToken(payroll.id);
     const res = await supertest(app).get(`/api/payslips/view/${token}`);
     expect(res.status).toBe(302);
-    expect(res.headers.location).toContain("digitaloceanspaces.com");
-    expect(res.headers.location).toContain("X-Amz-Expires=300");
+    expect(res.headers.location).toContain("blob.core.windows.net");
+    expect(res.headers.location).toContain("se=exp-300");
   });
 
   it("redeeming bumps access_count and sets last_accessed_at", async () => {

@@ -1,31 +1,57 @@
+import { EmailClient } from "@azure/communication-email";
 import { Resend } from "resend";
 import { env, Logger } from "../config";
 import { AppError } from "../middlewares";
 
 const logger = new Logger("EmailService");
 
+// Azure Communication Services is the primary provider; Resend stays as an optional fallback for
+// local/dev use where ACS is not configured.
+const acsClient = env.ACS_CONNECTION_STRING ? new EmailClient(env.ACS_CONNECTION_STRING) : null;
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
-const isEmailConfigured = () => !!resend;
+const isEmailConfigured = () => !!acsClient || !!resend;
+
+// ACS wants a bare sender address; RESEND_FROM_EMAIL/ACS_FROM_EMAIL may be "Name <addr>".
+function parseSender(value: string): string {
+  return /<([^>]+)>/.exec(value)?.[1] ?? value;
+}
 
 // Generic function to send emails
 export async function sendEmail(to: string, subject: string, html: string, text?: string) {
-  if (!resend) {
-    // No RESEND_API_KEY (typical for local dev) — nothing gets delivered, so surface every link
-    // the email would have contained, otherwise there's no way to click through it locally.
+  if (!acsClient && !resend) {
+    // No provider configured (typical for local dev) — nothing gets delivered, so surface every
+    // link the email would have contained, otherwise there's no way to click through it locally.
     const links = [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
     logger.warn(
-      `Resend not configured (missing RESEND_API_KEY). Skipping email to ${to} with subject: ${subject}` +
+      `Email not configured (no ACS_CONNECTION_STRING or RESEND_API_KEY). Skipping email to ${to}` +
+        ` with subject: ${subject}` +
         (links.length ? `\nLink(s): ${links.join(", ")}` : ""),
     );
     return null;
   }
 
+  // A text part is included whenever the caller has one — several clients (and inbox preview
+  // snippets) render an html-only email as blank, since they read the text part for the
+  // preview/fallback rather than parsing the html.
+  if (acsClient) {
+    try {
+      const poller = await acsClient.beginSend({
+        senderAddress: parseSender(env.ACS_FROM_EMAIL),
+        content: { subject, html, ...(text ? { plainText: text } : {}) },
+        recipients: { to: [{ address: to }] },
+      });
+      const result = await poller.pollUntilDone();
+      logger.info(`Email sent via ACS: ${result.id}`);
+      return result;
+    } catch (error) {
+      logger.error("ACS email error", error);
+      throw new AppError("Failed to send email", 500);
+    }
+  }
+
   try {
-    // A text part is included whenever the caller has one — several clients (and inbox preview
-    // snippets) render an html-only email as blank, since they read the text part for the
-    // preview/fallback rather than parsing the html.
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await resend!.emails.send({
       from: env.RESEND_FROM_EMAIL,
       to,
       subject,

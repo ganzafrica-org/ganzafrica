@@ -1,23 +1,10 @@
 // src/routes/upload.ts
 import { Router, Request, Response } from "express";
-import upload, { getFileSubdirectory } from "../middlewares/upload";
-import env from "../config/env";
+import { publicUpload, getFileSubdirectory, getFileUrl } from "../middlewares/upload";
 import { Logger } from "../config";
 
 const logger = new Logger("UploadRoute");
 const router: Router = Router();
-
-/**
- * Helper function to get the public URL for uploaded files
- * Uses CDN URL if available, otherwise falls back to Spaces direct URL
- */
-function getFileUrl(location: string): string {
-  if (env.DO_SPACES_CDN_URL) {
-    const spacesBaseUrl = `${env.DO_SPACES_ENDPOINT}/${env.DO_SPACES_BUCKET}`;
-    return location.replace(spacesBaseUrl, env.DO_SPACES_CDN_URL.replace(/\/$/, ""));
-  }
-  return location;
-}
 
 /**
  * @swagger
@@ -51,7 +38,7 @@ function getFileUrl(location: string): string {
  *       500:
  *         description: Server error
  */
-router.post("/file", upload.single("file"), (req: Request, res: Response) => {
+router.post("/file", publicUpload.single("file"), (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -123,7 +110,7 @@ router.post("/file", upload.single("file"), (req: Request, res: Response) => {
  *       500:
  *         description: Server error
  */
-router.post("/files", upload.array("files", 10), (req: Request, res: Response) => {
+router.post("/files", publicUpload.array("files", 10), (req: Request, res: Response) => {
   try {
     if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
       return res.status(400).json({

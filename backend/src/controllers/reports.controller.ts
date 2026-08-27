@@ -14,6 +14,7 @@ import {
 import { eq, and, gte, lte, desc, asc, sql, inArray } from "drizzle-orm";
 import upload from "../middlewares/upload";
 import { getFileSubdirectory, getFileUrl } from "../middlewares/upload";
+import { getPresignedDownload } from "../services/storage.service";
 import { Logger } from "../config";
 import * as userService from "../services/user.service";
 
@@ -70,6 +71,7 @@ export const getReports = async (req: Request, res: Response) => {
         file_type: report_files.file_type,
         file_size: report_files.file_size,
         file_url: report_files.file_url,
+        file_path: report_files.file_path, // private blob key — SAS minted on read
         mime_type: report_files.mime_type,
         uploaded_by: report_files.uploaded_by,
         created_at: report_files.created_at,
@@ -98,6 +100,14 @@ export const getReports = async (req: Request, res: Response) => {
       .limit(Number(limit))
       .offset(offset);
 
+    // Documents are private: mint a fresh SAS download URL from the stored blob key.
+    const filesWithUrls = await Promise.all(
+      files.map(async (f) => ({
+        ...f,
+        file_url: f.file_path ? await getPresignedDownload(f.file_path) : f.file_url,
+      })),
+    );
+
     // Get total count
     const totalCount = await db
       .select({ count: sql<number>`count(*)` })
@@ -107,7 +117,7 @@ export const getReports = async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: {
-        files,
+        files: filesWithUrls,
         pagination: {
           page: Number(page),
           limit: Number(limit),
@@ -359,6 +369,7 @@ export const getProjectFiles = async (req: Request, res: Response) => {
         file_type: report_files.file_type,
         file_size: report_files.file_size,
         file_url: report_files.file_url,
+        file_path: report_files.file_path, // private blob key — SAS is minted on read
         created_at: report_files.created_at,
         metadata: report_files.metadata,
         uploader: {
@@ -482,7 +493,8 @@ export const getProjectFiles = async (req: Request, res: Response) => {
             original_filename: attachment.filename,
             file_type: fileType,
             file_size: fileSize,
-            file_url: attachment.url,
+            file_url: null as string | null,
+            file_path: (attachment as any).key as string | undefined,
             created_at: createdAt,
             metadata: {
               description: `Attachment from task: ${task.title}`,
@@ -507,7 +519,15 @@ export const getProjectFiles = async (req: Request, res: Response) => {
     );
 
     // Apply pagination
-    const paginatedFiles = allFiles.slice(offset, offset + Number(limit));
+    const paginatedFilesRaw = allFiles.slice(offset, offset + Number(limit));
+
+    // Documents are private: mint a fresh SAS download URL from the stored blob key.
+    const paginatedFiles = await Promise.all(
+      paginatedFilesRaw.map(async (f) => ({
+        ...f,
+        file_url: f.file_path ? await getPresignedDownload(f.file_path) : f.file_url,
+      })),
+    );
 
     res.json({
       success: true,

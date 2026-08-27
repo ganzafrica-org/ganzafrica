@@ -1,27 +1,10 @@
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
-import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import env from "../config/env";
 import { Logger } from "../config";
+import { deleteObject, getPresignedDownload, putObject } from "./storage.service";
 
 const logger = new Logger("PDFService");
-
-const s3Client = new S3Client({
-  endpoint: env.DO_SPACES_ENDPOINT,
-  region: env.DO_SPACES_REGION,
-  credentials: {
-    accessKeyId: env.DO_SPACES_ACCESS_KEY,
-    secretAccessKey: env.DO_SPACES_SECRET_KEY,
-  },
-  forcePathStyle: false,
-});
 
 export interface PayslipData {
   name: string;
@@ -721,7 +704,7 @@ export async function uploadPayslipToSpaces(
   pdfBuffer: Buffer,
   employeeName: string,
   period: string,
-): Promise<{ url: string; key: string }> {
+): Promise<{ key: string }> {
   try {
     const cleanName = employeeName.replace(/[^a-zA-Z0-9]/g, "_");
     const monthMatch = period.match(/(\d{2})\.(\d{2})$/);
@@ -730,46 +713,33 @@ export async function uploadPayslipToSpaces(
       : period.replace(/[^a-zA-Z0-9-]/g, "_");
     const key = `hr/${cleanName}/${month}/payslip.pdf`;
 
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: env.DO_SPACES_BUCKET,
-        Key: key,
-        Body: pdfBuffer,
-        ACL: "private",
-        ContentType: "application/pdf",
-        Metadata: { employeeName, period, generatedAt: new Date().toISOString() },
-      }),
-    );
+    await putObject(key, pdfBuffer, "application/pdf");
 
-    const permanentUrl = `${env.DO_SPACES_ENDPOINT.replace(/\/$/, "")}/${env.DO_SPACES_BUCKET}/${key}`;
-    logger.info(`Payslip uploaded to Spaces: ${key}`);
-    return { url: permanentUrl, key };
+    // Payslips are private; there is no permanent public URL. Callers store the key and mint a
+    // fresh SAS link on demand via generateSignedPayslipUrl.
+    logger.info(`Payslip uploaded to storage: ${key}`);
+    return { key };
   } catch (error) {
-    logger.error("Error uploading payslip to Spaces:", error);
+    logger.error("Error uploading payslip to storage:", error);
     throw error;
   }
 }
 
+// Azure SAS links cap at 7 days; payslip links live for the full week.
+const PAYSLIP_URL_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
+
 export async function generateSignedPayslipUrl(
   key: string,
-  expiresIn: number = 30 * 24 * 60 * 60,
+  expiresIn: number = PAYSLIP_URL_EXPIRY_SECONDS,
 ): Promise<string> {
-  try {
-    const command = new GetObjectCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key });
-    const signedUrl = await getSignedUrl(s3Client as any, command as any, { expiresIn });
-    logger.info(`Generated signed URL for ${key}, expires in ${expiresIn}s`);
-    return signedUrl;
-  } catch (error) {
-    logger.error("Error generating signed URL:", error);
-    throw error;
-  }
+  return getPresignedDownload(key, Math.min(expiresIn, PAYSLIP_URL_EXPIRY_SECONDS));
 }
 
 export async function generateAndUploadPayslip(data: PayslipData) {
   try {
     const pdfBuffer = await generatePayslipPDF(data);
-    const { url, key } = await uploadPayslipToSpaces(pdfBuffer, data.name, data.payroll_period);
-    return { url, key, buffer: pdfBuffer };
+    const { key } = await uploadPayslipToSpaces(pdfBuffer, data.name, data.payroll_period);
+    return { key, buffer: pdfBuffer };
   } catch (error) {
     logger.error("Error generating and uploading payslip:", error);
     throw error;
@@ -777,11 +747,5 @@ export async function generateAndUploadPayslip(data: PayslipData) {
 }
 
 export async function deletePayslipFromSpaces(key: string): Promise<void> {
-  try {
-    await s3Client.send(new DeleteObjectCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key }));
-    logger.info(`Payslip deleted from Spaces: ${key}`);
-  } catch (error) {
-    logger.error(`Error deleting payslip from Spaces (${key}):`, error);
-    throw error;
-  }
+  await deleteObject(key);
 }

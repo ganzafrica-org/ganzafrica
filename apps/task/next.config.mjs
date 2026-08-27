@@ -1,10 +1,19 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Match portal behavior: mount the app at /task in production
-  basePath: process.env.NODE_ENV === "production" ? "/task" : "",
+  output: "standalone",
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   transpilePackages: ["@workspace/ui"],
   images: {
     remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.blob.core.windows.net",
+      },
       {
         protocol: "https",
         hostname: "**.digitaloceanspaces.com",

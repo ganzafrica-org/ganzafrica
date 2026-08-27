@@ -28,7 +28,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser(env.SESSION_SECRET)); // For parsing cookies
 
-// Note: Static files are served from Digital Ocean Spaces
+// Note: Static files are served from Azure Blob Storage
 
 app.use((req, res, next) => {
   res.setHeader(
@@ -92,7 +92,7 @@ app.use(notFoundHandler);
 // Global error handler
 app.use(errorHandler);
 
-// Files are now served from Digital Ocean Spaces
-logger.info("File uploads configured to use Digital Ocean Spaces");
+// Files are served from Azure Blob Storage
+logger.info("File uploads configured to use Azure Blob Storage");
 
 export default app;
