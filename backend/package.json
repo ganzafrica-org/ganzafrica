@@ -23,6 +23,7 @@
     "db:push": "tsx scripts/guard-push.ts",
     "db:seed:test-users": "tsx scripts/seed-test-users.ts",
     "db:wipe-employee": "tsx scripts/wipe-employee.ts",
+    "db:wipe-employees-except": "tsx scripts/wipe-employees-except.ts",
     "swagger:generate": "tsx src/swagger/generate.ts",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",

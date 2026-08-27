@@ -4,6 +4,8 @@
  */
 import { describe, it, expect, beforeEach } from "vitest";
 import { resetDb } from "../setup";
+import { db } from "../../src/db/client";
+import { hr_leaves } from "../../src/db/schema";
 import {
   listPolicies,
   upsertPolicy,
@@ -134,6 +136,23 @@ describe("MOD-06 holidays", () => {
       "Rwanda Independence Day",
     ]);
   });
+
+  it("no represented countries (no active employees) falls back to universal-only holidays", async () => {
+    await createHoliday({ date: "2026-01-01", name: "New Year" }); // universal
+    await createHoliday({ date: "2026-07-01", name: "Rwanda Independence Day", country: "Rwanda" });
+
+    const relevant = await listRelevantHolidays(2026);
+    expect(relevant.map((h) => h.name)).toEqual(["New Year"]);
+  });
+
+  it("omitting the year returns holidays across every year, not just one", async () => {
+    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
+    await createHoliday({ date: "2025-01-01", name: "New Year 2025" });
+    await createHoliday({ date: "2026-01-01", name: "New Year 2026" });
+
+    const relevant = await listRelevantHolidays();
+    expect(relevant.map((h) => h.name).sort()).toEqual(["New Year 2025", "New Year 2026"]);
+  });
 });
 
 describe("MOD-06 balance adjustment and self-service read", () => {
@@ -204,6 +223,36 @@ describe("MOD-06 cancellation rules", () => {
 
     await expect(cancelLeaveRequest(stranger.user.id, leave.id)).rejects.toMatchObject({
       statusCode: 403,
+    });
+  });
+
+  it("stops a non-HR employee filing a leave request on someone else's behalf", async () => {
+    const owner = await makeEmployeeUser({ employmentType: "staff" });
+    const stranger = await makeEmployeeUser({ employmentType: "staff" });
+
+    await expect(
+      requestLeave(stranger.user.id, owner.employee.id, {
+        type: "ANNUAL",
+        startDate: d("2026-03-02"),
+        endDate: d("2026-03-03"),
+      }),
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("rejects any action on a legacy row that predates the employees model (employee_id null)", async () => {
+    const [legacy] = await db
+      .insert(hr_leaves)
+      .values({
+        type: "ANNUAL",
+        start_date: d("2026-03-02"),
+        end_date: d("2026-03-03"),
+        reason: "pre-migration row",
+      })
+      .returning();
+
+    await expect(cancelLeaveRequest(1, legacy.id)).rejects.toMatchObject({
+      statusCode: 409,
+      code: "LEAVE_LEGACY_ROW",
     });
   });
 

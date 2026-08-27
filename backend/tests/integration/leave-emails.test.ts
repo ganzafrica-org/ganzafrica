@@ -19,6 +19,11 @@ vi.mock("../../src/services/email.service", () => ({
   sendEmail: (...args: unknown[]) => sendEmailMock(...args),
 }));
 
+const sendNotificationMock = vi.fn(async () => {});
+vi.mock("../../src/modules/hr/notifications/notification.service", () => ({
+  sendNotification: (...args: unknown[]) => sendNotificationMock(...args),
+}));
+
 const d = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
 
 async function seedOrg() {
@@ -43,6 +48,9 @@ describe("MOD-06 leave-flow emails", () => {
     await ensureRole("hr");
     await makeLeavePolicy({ employmentType: "staff", type: "ANNUAL", annualDays: 20 });
     sendEmailMock.mockClear();
+    sendEmailMock.mockResolvedValue({ id: "x" });
+    sendNotificationMock.mockClear();
+    sendNotificationMock.mockResolvedValue(undefined);
   });
 
   it("submitting sends exactly one email to the resolved manager", async () => {
@@ -151,5 +159,61 @@ describe("MOD-06 leave-flow emails", () => {
     expect(to).toBe(report.user.email);
     expect(subject).toMatch(/rejected/i);
     expect(html).toContain("Coverage gap that week");
+  });
+
+  it("a transport failure sending the email is swallowed — the leave action itself still succeeds", async () => {
+    const { report } = await seedOrg();
+    sendEmailMock.mockRejectedValueOnce(new Error("Resend is down"));
+
+    const leave = await requestLeave(report.user.id, report.employee.id, {
+      type: "ANNUAL",
+      startDate: d("2026-03-02"),
+      endDate: d("2026-03-04"),
+      reason: "Family trip",
+    });
+
+    expect(leave.id).toBeTruthy();
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("sendLeaveEmailOnce does not swallow a real insert failure, only a duplicate-send one", async () => {
+    const unknownLeaveId = "00000000-0000-0000-0000-000000000000";
+    const render = () => ({ subject: "s", html: "h", text: "t" });
+
+    await expect(sendLeaveEmailOnce(unknownLeaveId, "submitted", 1, render)).rejects.toBeTruthy();
+    expect(sendEmailMock).not.toHaveBeenCalled();
+  });
+
+  it("a notification failure on submit does not stop the approver email from sending", async () => {
+    const { manager, report } = await seedOrg();
+    sendNotificationMock.mockRejectedValueOnce(new Error("notification service down"));
+
+    const leave = await requestLeave(report.user.id, report.employee.id, {
+      type: "ANNUAL",
+      startDate: d("2026-03-02"),
+      endDate: d("2026-03-04"),
+      reason: "Family trip",
+    });
+
+    expect(leave.id).toBeTruthy();
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+    expect(sendEmailMock.mock.calls[0][0]).toBe(manager.user.email);
+  });
+
+  it("a notification failure on decision does not stop the decision email from sending", async () => {
+    const { manager, report } = await seedOrg();
+    const leave = await requestLeave(report.user.id, report.employee.id, {
+      type: "ANNUAL",
+      startDate: d("2026-03-02"),
+      endDate: d("2026-03-04"),
+      reason: "Family trip",
+    });
+    sendEmailMock.mockClear();
+    sendNotificationMock.mockRejectedValueOnce(new Error("notification service down"));
+
+    await decideLeave(manager.user.id, leave.id, "APPROVED");
+
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+    expect(sendEmailMock.mock.calls[0][0]).toBe(report.user.email);
   });
 });

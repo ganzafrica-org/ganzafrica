@@ -188,6 +188,27 @@ describe("leave attachments (optional)", () => {
     expect(viewDenied.status).toBe(403);
   });
 
+  it("an unrelated employee (not the requester, not HR) cannot upload an attachment to someone else's leave request — 403", async () => {
+    const manager = await loginAsEmployee("employee");
+    const report = await loginAsEmployee("employee", manager.employee.id);
+    const outsider = await loginAsEmployee("employee");
+
+    const leave = await requestLeave(report.user.id, report.employee.id, {
+      type: "ANNUAL",
+      startDate: d("2026-03-02"),
+      endDate: d("2026-03-04"),
+      reason: "Trip",
+    });
+
+    const upload = await outsider.agent
+      .post(`${API}/leave/${leave.id}/attachments`)
+      .attach("file", Buffer.from("%PDF-1.4 test"), {
+        filename: "note.pdf",
+        contentType: "application/pdf",
+      });
+    expect(upload.status).toBe(403);
+  });
+
   it("HR can always view a leave attachment regardless of the manager chain", async () => {
     const manager = await loginAsEmployee("employee");
     const report = await loginAsEmployee("employee", manager.employee.id);
