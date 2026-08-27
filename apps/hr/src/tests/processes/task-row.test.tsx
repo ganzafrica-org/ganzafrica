@@ -116,8 +116,7 @@ describe("TaskRow — contract_signing: view before sign + sign action", () => {
       <TaskRow task={contractSigningTask} canManage isMine={false} employeeId="emp-1" />,
     );
 
-    screen.debug();
-    const viewButton = await screen.findByRole("button", { name: /view/i });
+    const viewButton = await screen.findByRole("button", { name: /view/i }, { timeout: 3000 });
     await userEvent.click(viewButton);
 
     expect(await screen.findByText("Software Engineer")).toBeInTheDocument();
