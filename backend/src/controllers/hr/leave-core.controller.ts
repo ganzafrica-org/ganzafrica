@@ -99,6 +99,33 @@ export const cancelLeave = async (req: Request, res: Response) => {
   }
 };
 
+/** multer-s3 augments the uploaded file with `location`/`key` (not part of Express.Multer.File). */
+function uploadedFile(req: Request) {
+  const file = req.file as unknown as { key?: string; size?: number; originalname?: string };
+  if (!file?.key) return undefined;
+  return { key: file.key, size: file.size ?? 0, originalName: file.originalname ?? file.key };
+}
+
+export const addLeaveAttachment = async (req: Request, res: Response) => {
+  try {
+    const file = uploadedFile(req);
+    if (!file) throw new AppError("A file is required", 400);
+    const document = await leave.addLeaveAttachment(actorId(req), req.params.id, file);
+    return res.status(201).json({ document });
+  } catch (e) {
+    return handleError(res, e, "Add Leave Attachment Error");
+  }
+};
+
+export const listLeaveAttachments = async (req: Request, res: Response) => {
+  try {
+    const attachments = await leave.listLeaveAttachments(actorId(req), req.params.id);
+    return res.json({ attachments });
+  } catch (e) {
+    return handleError(res, e, "List Leave Attachments Error");
+  }
+};
+
 // --- Approvals ---
 
 export const pendingApprovals = async (req: Request, res: Response) => {
@@ -106,6 +133,18 @@ export const pendingApprovals = async (req: Request, res: Response) => {
     return res.json({ leaves: await leave.listPendingApprovals(actorId(req)) });
   } catch (e) {
     return handleError(res, e, "Pending Approvals Error");
+  }
+};
+
+/**
+ * Role-scoped leave request list (any status): the employee's own plus their reports' for a
+ * regular user, or every request in the org for HR/admin. Backs the "Leave Requests" table.
+ */
+export const visibleLeaves = async (req: Request, res: Response) => {
+  try {
+    return res.json({ leaves: await leave.listVisibleLeaves(actorId(req)) });
+  } catch (e) {
+    return handleError(res, e, "List Visible Leaves Error");
   }
 };
 
@@ -136,6 +175,15 @@ export const calendar = async (req: Request, res: Response) => {
     return res.json({ events });
   } catch (e) {
     return handleError(res, e, "Leave Calendar Error");
+  }
+};
+
+export const summary = async (req: Request, res: Response) => {
+  try {
+    const window = (req.query.window as "week" | "month" | "year" | undefined) ?? "month";
+    return res.json(await leave.getLeaveSummary(window));
+  } catch (e) {
+    return handleError(res, e, "Leave Summary Error");
   }
 };
 
@@ -173,10 +221,20 @@ export const deletePolicy = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Default: every configured holiday (Settings admin CRUD needs to see/manage all of them,
+ * including ones for countries the org has no employees in right now). ?scope=relevant (punch-list
+ * #7, the Leave Calendar's Public Holidays section) narrows to the union of universal holidays
+ * plus whichever countries are actually represented among active employees.
+ */
 export const listHolidays = async (req: Request, res: Response) => {
   try {
     const year = req.query.year ? Number(req.query.year) : undefined;
-    return res.json({ holidays: await leave.listHolidays(year) });
+    const holidays =
+      req.query.scope === "relevant"
+        ? await leave.listRelevantHolidays(year)
+        : await leave.listHolidays(year);
+    return res.json({ holidays });
   } catch (e) {
     return handleError(res, e, "List Holidays Error");
   }

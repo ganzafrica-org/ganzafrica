@@ -113,7 +113,9 @@ export const skipTask = async (req: Request, res: Response) => {
 
 export const patchTask = async (req: Request, res: Response) => {
   try {
-    return res.json({ task: await process.reassignTask(Number(req.params.id), req.body) });
+    return res.json({
+      task: await process.reassignTask(Number(req.params.id), req.body, actorId(req)),
+    });
   } catch (e) {
     return handleError(res, e, "Update Task Error");
   }

@@ -22,7 +22,7 @@ import type {
   UpdateMaintenanceRequest,
 } from "@/types/api";
 import { Loader2, Save } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 interface MaintenanceFormSheetProps {
   open: boolean;
@@ -91,7 +91,7 @@ export function MaintenanceFormSheet({
 
   const handleSubmit = async () => {
     if (!formData.assetId || !formData.title || !me?.id) {
-      toast.error("Please fill in all required fields");
+      toast.danger("Please fill in all required fields");
       return;
     }
 
@@ -122,9 +122,8 @@ export function MaintenanceFormSheet({
         toast.success("Maintenance scheduled successfully");
       }
       onOpenChange(false);
-    } catch (error: any) {
-      const message = error.response?.data?.message || "Something went wrong";
-      toast.error(message);
+    } catch {
+      // Global mutation error handler shows the toast.
     }
   };
 

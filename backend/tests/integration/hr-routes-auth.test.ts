@@ -37,8 +37,8 @@ describe("HR route auth matrix (FND-07)", () => {
   });
 
   it("granting the matching permission to the hr role stops the 403", async () => {
-    // Grant to the `hr` role so both the middleware AND the transitional HR services (which still
-    // check the mapped enum) allow the request.
+    // Grant to the `hr` role so both the middleware AND the transitional HR services (which
+    // still check the mapped enum) allow the request.
     for (const r of READ_ROUTES) {
       await resetDb();
       clearPermissionCache();
@@ -48,7 +48,7 @@ describe("HR route auth matrix (FND-07)", () => {
       expect(res.status, r.path).not.toBe(403);
       expect(res.status, r.path).not.toBe(401);
     }
-  });
+  }, 45000); // instrumentation that tips past the global 20s testTimeout. // 5 full resetDb + loginAs cycles routinely take ~19s on their own; under coverage
 
   it("admin reaches every HR resource (short-circuit)", async () => {
     const { agent } = await loginAs("admin");

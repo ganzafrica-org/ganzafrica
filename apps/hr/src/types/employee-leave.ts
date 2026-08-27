@@ -2,6 +2,8 @@ export type EmployeeLeaveStatus = "pending" | "approved" | "rejected";
 
 export interface EmployeeLeaveRequest {
   id: number;
+  /** The real hr_leaves.id (uuid) — `id` above is a display/table-key number, not the API id. */
+  realId: string;
   employeeId: string;
   name: string;
   department: string;

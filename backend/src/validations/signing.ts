@@ -39,8 +39,15 @@ export const createRequestSchema = z.object({
     signer_email: z.string().email().nullable().optional(),
     signer_name: z.string().nullable().optional(),
     ref_kind: z.string().nullable().optional(),
-    ref_id: z.number().int().nullable().optional(),
+    ref_id: z.string().nullable().optional(),
     expires_at: z.string().nullable().optional(),
+  }),
+});
+
+export const listByRefSchema = z.object({
+  query: z.object({
+    ref_kind: z.string().min(1),
+    ref_id: z.string().min(1),
   }),
 });
 

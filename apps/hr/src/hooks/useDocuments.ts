@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { documentsService } from "@/services/documents.service";
 import type { CreateDocumentRequest, UpdateDocumentRequest } from "@/types/api";
+import { toast } from "@/lib/toast";
 
 export function useDocuments(params?: {
   category?: string;
@@ -38,7 +39,10 @@ export function useCreateDocument() {
   return useMutation({
     mutationFn: ({ payload, file }: { payload: CreateDocumentRequest; file: File }) =>
       documentsService.createDocument(payload, file),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["documents"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("Document uploaded");
+    },
   });
 }
 
@@ -54,7 +58,10 @@ export function useUpdateDocument() {
       payload: UpdateDocumentRequest;
       file?: File | null;
     }) => documentsService.updateDocument(id, payload, file),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["documents"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("Document updated");
+    },
   });
 }
 
@@ -62,6 +69,9 @@ export function useArchiveDocument() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => documentsService.archiveDocument(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["documents"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("Document archived");
+    },
   });
 }

@@ -3,8 +3,15 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreHorizontal } from "lucide-react";
+import { useEmployeeStatusCounts } from "@/hooks/useEmployees";
 
+/** Same 3-bubble visual as before — only the labels/numbers changed, from real backend counts. */
 export function EmploymentStatusCard() {
+  const { data, isLoading } = useEmployeeStatusCounts();
+  const pending = data?.pending ?? 0;
+  const onboarding = data?.onboarding ?? 0;
+  const active = data?.active ?? 0;
+
   return (
     <Card className="border-0 shadow-sm rounded-lg">
       <CardHeader className="flex flex-row justify-between">
@@ -22,7 +29,7 @@ export function EmploymentStatusCard() {
             className="relative scale-75 sm:scale-100"
             style={{ width: "240px", height: "220px" }}
           >
-            {/* Happy – large blue bubble (left) */}
+            {/* Active – large bubble (left) */}
             <div
               className="absolute rounded-full flex items-center justify-center"
               style={{
@@ -33,10 +40,10 @@ export function EmploymentStatusCard() {
                 backgroundColor: "rgba(187, 247, 208, 0.75)",
               }}
             >
-              <span className="text-white font-bold text-3xl">12</span>
+              <span className="text-white font-bold text-3xl">{isLoading ? "—" : active}</span>
             </div>
 
-            {/* Neutral – medium blue bubble (right) */}
+            {/* Onboarding – medium bubble (right) */}
             <div
               className="absolute rounded-full flex items-center justify-center"
               style={{
@@ -47,10 +54,10 @@ export function EmploymentStatusCard() {
                 backgroundColor: "rgba(74, 222, 128, 0.75)",
               }}
             >
-              <span className="text-white font-bold text-xl">20</span>
+              <span className="text-white font-bold text-xl">{isLoading ? "—" : onboarding}</span>
             </div>
 
-            {/* Other – small purple bubble (bottom center) */}
+            {/* Pending – small bubble (bottom center) */}
             <div
               className="absolute rounded-full flex items-center justify-center"
               style={{
@@ -61,7 +68,7 @@ export function EmploymentStatusCard() {
                 backgroundColor: "rgba(21, 128, 61, 0.75)",
               }}
             >
-              <span className="text-white font-bold text-sm">2</span>
+              <span className="text-white font-bold text-sm">{isLoading ? "—" : pending}</span>
             </div>
           </div>
         </div>
@@ -73,21 +80,21 @@ export function EmploymentStatusCard() {
               className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: "rgba(187, 247, 208, 0.75)" }}
             />
-            <span className="text-xs text-slate-500">Permanent</span>
+            <span className="text-xs text-slate-500">Active</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div
               className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: "rgba(74, 222, 128, 0.75)" }}
             />
-            <span className="text-xs text-slate-500">contact</span>
+            <span className="text-xs text-slate-500">Onboarding</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div
               className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: "rgba(21, 128, 61, 0.75)" }}
             />
-            <span className="text-xs text-slate-500">Internship</span>
+            <span className="text-xs text-slate-500">Pending</span>
           </div>
         </div>
       </CardContent>

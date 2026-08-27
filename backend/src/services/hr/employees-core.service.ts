@@ -5,7 +5,7 @@
  * *disjoint* sets of columns, enforced server-side. An employee cannot promote themselves by
  * PATCHing `job_title`, and HR does not silently overwrite someone's personal phone number.
  */
-import { and, asc, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import { db, withDbTransaction } from "@/db/client";
 import {
   employees,
@@ -13,6 +13,7 @@ import {
   hr_contracts,
   hr_documents,
   hr_leaves,
+  password_reset_tokens,
   roles,
   user_roles,
   users,
@@ -20,6 +21,8 @@ import {
 import { AppError } from "@/middlewares";
 import { hashPassword } from "../auth.service";
 import { randomBytes } from "crypto";
+import { getEmployeeForUser } from "./employee-context";
+import { instantiateProcess } from "./process.service";
 import {
   HR_EDITABLE_FIELDS,
   HR_SETTABLE_STATUSES,
@@ -48,13 +51,18 @@ async function hasAnyRole(userId: number, names: string[]): Promise<boolean> {
 
 export const canManageEmployees = (userId: number) => hasAnyRole(userId, ["hr", "admin"]);
 
+/**
+ * Delegates to the shared `getEmployeeForUser` seam (employee-context.ts) rather than querying
+ * `employees` directly, so FND-07's swap to `getEmployeeForUser` touches only that one file.
+ * Nullable here (unlike the seam, which throws) because callers use this for an own-row check
+ * that must tolerate "no profile" rather than fail the whole request.
+ */
 async function employeeIdForUser(userId: number): Promise<string | null> {
-  const [row] = await db
-    .select({ id: employees.id })
-    .from(employees)
-    .where(eq(employees.user_id, userId))
-    .limit(1);
-  return row?.id ?? null;
+  try {
+    return (await getEmployeeForUser(userId)).employeeId;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -89,8 +97,13 @@ const DIRECTORY_COLUMNS = {
   employment_type: employees.employment_type,
   status: employees.status,
   picture: employees.picture,
+  phone: employees.phone,
+  citizenship: employees.citizenship,
+  home_country: employees.home_country,
+  home_city: employees.home_city,
   hired_at: employees.hired_at,
   manager_id: employees.manager_id,
+  is_active: employees.is_active,
   account_email: users.email,
   account_active: users.is_active,
 };
@@ -117,6 +130,24 @@ async function attachManagers(rows: DirectoryQueryRow[]): Promise<DirectoryRow[]
 
   const byId = new Map(managerRows.map((m) => [m.id, m]));
 
+  // Country-flag proxy for the directory (MOD-01 follow-up): the employee's ACTIVE contract's
+  // currency, batched to avoid an N+1 query. No real country column exists on hr_contracts.
+  const employeeIds = rows.map((r) => r.id as string);
+  const contractRows = employeeIds.length
+    ? await db
+        .select({ employee_ref_id: hr_contracts.employee_ref_id, currency: hr_contracts.currency })
+        .from(hr_contracts)
+        .where(
+          and(
+            inArray(hr_contracts.employee_ref_id, employeeIds),
+            eq(hr_contracts.status, "ACTIVE"),
+          ),
+        )
+    : [];
+  const currencyByEmployeeId = new Map(
+    contractRows.map((c) => [c.employee_ref_id, c.currency] as const),
+  );
+
   return rows.map((r) => ({
     id: r.id as string,
     user_id: r.user_id as number,
@@ -130,11 +161,17 @@ async function attachManagers(rows: DirectoryQueryRow[]): Promise<DirectoryRow[]
     employment_type: r.employment_type as string,
     status: r.status as string,
     picture: r.picture as string | null,
+    phone: r.phone as string | null,
+    citizenship: r.citizenship as string | null,
+    home_country: r.home_country as string | null,
+    home_city: r.home_city as string | null,
     hired_at: r.hired_at as string | null,
     manager: byId.get(r.manager_id as string) ?? null,
     account: r.account_email
       ? { email: r.account_email as string, is_active: r.account_active as boolean }
       : null,
+    contract_currency: currencyByEmployeeId.get(r.id as string) ?? null,
+    is_active: r.is_active as boolean,
   }));
 }
 
@@ -144,6 +181,12 @@ export async function listEmployees(query: ListEmployeesQuery = {}) {
   const limit = Math.min(200, Math.max(1, query.limit ?? 25));
 
   const conditions = [];
+  // Default to the active roster — deactivated employees (former "delete") are opt-in via
+  // ?active=inactive|all, never silently mixed into the default list.
+  const activeFilter = query.active ?? "active";
+  if (activeFilter !== "all") {
+    conditions.push(eq(employees.is_active, activeFilter === "active"));
+  }
   if (query.status) conditions.push(eq(employees.status, query.status));
   if (query.department) conditions.push(eq(employees.department, query.department));
   if (query.employment_type) conditions.push(eq(employees.employment_type, query.employment_type));
@@ -227,10 +270,25 @@ export async function getEmployeeDetail(
       .select({ n: sql<number>`count(*)::int` })
       .from(hr_leaves)
       .where(and(eq(hr_leaves.employee_id, employeeId), eq(hr_leaves.status, "PENDING"))),
+    // A document "belongs to" this employee if they uploaded it themselves, or if it's linked to
+    // one of their own contracts (e.g. HR uploading a signed contract PDF against the employee's
+    // record) — created_by_employee_id alone is just the uploader, almost always HR, not the
+    // employee the document is about.
     db
       .select({ n: sql<number>`count(*)::int` })
       .from(hr_documents)
-      .where(eq(hr_documents.created_by_employee_id, employeeId)),
+      .where(
+        or(
+          eq(hr_documents.created_by_employee_id, employeeId),
+          inArray(
+            hr_documents.contract_id,
+            db
+              .select({ id: hr_contracts.id })
+              .from(hr_contracts)
+              .where(eq(hr_contracts.employee_ref_id, employeeId)),
+          ),
+        ),
+      ),
     db
       .select({
         id: hr_contracts.id,
@@ -314,8 +372,21 @@ export async function linkOrCreateUserForEmployee(
   return { userId: created.id, created: true };
 }
 
-/** Manual create for staff who predate REC-05. Future hires arrive through the offer flow. */
-export async function createEmployee(input: CreateEmployeeInput) {
+/**
+ * Manual create for legacy staff / HR-entered hires. Instantiates the default onboarding process
+ * in the same transaction as REC-05's offer-accept path (offers.service.ts) does — a hire that
+ * can't get a checklist (no active template for the employment type) shouldn't silently create an
+ * employee with nothing to do, so a missing-template 422 rolls back the whole creation, same as
+ * REC-05's.
+ *
+ * Status starts at `pending`, not `onboarding` — the checklist exists immediately (so there's
+ * something to act on right away), but the employee doesn't count as actively onboarding until
+ * they've done something on it. process.service.ts's completeTask/skipTask flip pending→onboarding
+ * on that first action; maybeCompleteInstance flips onboarding→active when the checklist is done.
+ * (REC-05's offer-accept path still lands new hires straight in `onboarding` — left as-is here,
+ * out of this change's scope; flagging the inconsistency rather than silently touching that file.)
+ */
+export async function createEmployee(input: CreateEmployeeInput, actorUserId: number) {
   const email = input.personal_email.toLowerCase();
 
   const [dup] = await db
@@ -338,7 +409,7 @@ export async function createEmployee(input: CreateEmployeeInput) {
   }
 
   return withDbTransaction(async (tx) => {
-    const { userId } = await linkOrCreateUserForEmployee(tx, {
+    const { userId, created: invited } = await linkOrCreateUserForEmployee(tx, {
       email,
       first_name: input.first_name,
       last_name: input.last_name,
@@ -359,11 +430,22 @@ export async function createEmployee(input: CreateEmployeeInput) {
         manager_id: input.manager_id ?? null,
         hired_at: input.hired_at ?? null,
         phone: input.phone ?? null,
-        status: "active",
+        citizenship: input.citizenship ?? null,
+        home_country: input.home_country ?? null,
+        home_city: input.home_city ?? null,
+        status: "pending",
       })
       .returning();
 
-    return row;
+    await instantiateProcess("onboarding", row.id, {
+      actorUserId,
+      tx,
+      startedAt: input.hired_at ? new Date(input.hired_at) : undefined,
+    });
+
+    // `invited` (true only for a brand-new account, not one linked to an existing user) tells
+    // the controller whether to send the set-password invite email, post-commit.
+    return { ...row, invited };
   });
 }
 
@@ -427,6 +509,124 @@ export async function updateMyProfile(userId: number, patch: Record<string, unkn
   return row;
 }
 
+/**
+ * Deactivate (reversible — replaces the old hard-delete action). Never touches the row itself or
+ * any related data: contracts, documents, leave, assets, process history all stay intact. Sets
+ * `employees.is_active = false` (hides them from the default directory) and deactivates the
+ * linked `users` account (blocks login — `auth.ts::login` already 401s on `!user.is_active`).
+ * Deliberately independent of `status`, which the onboarding/offboarding process engine owns
+ * (`exited` is reserved for LCM-02, not yet built) — deactivation doesn't touch it.
+ */
+export async function deactivateEmployee(employeeId: string, actorUserId: number): Promise<void> {
+  const row = await requireEmployeeRow(employeeId);
+
+  const selfEmployeeId = await employeeIdForUser(actorUserId);
+  if (selfEmployeeId === employeeId) {
+    throw new AppError("You cannot deactivate your own employee record", 422, "SELF_DEACTIVATE");
+  }
+
+  await withDbTransaction(async (tx) => {
+    await tx
+      .update(employees)
+      .set({ is_active: false, updated_at: new Date() })
+      .where(eq(employees.id, employeeId));
+    if (row.user_id) {
+      await tx
+        .update(users)
+        .set({ is_active: false })
+        .where(eq(users.id, row.user_id as number));
+    }
+  });
+}
+
+/** Reverse of `deactivateEmployee` — restores directory visibility and login access. */
+export async function reactivateEmployee(employeeId: string): Promise<void> {
+  const row = await requireEmployeeRow(employeeId);
+
+  await withDbTransaction(async (tx) => {
+    await tx
+      .update(employees)
+      .set({ is_active: true, updated_at: new Date() })
+      .where(eq(employees.id, employeeId));
+    if (row.user_id) {
+      await tx
+        .update(users)
+        .set({ is_active: true })
+        .where(eq(users.id, row.user_id as number));
+    }
+  });
+}
+
+const RESEND_INVITE_COOLDOWN_MS = 2 * 60 * 1000;
+
+export interface ResendInviteInfo {
+  user_id: number;
+  first_name: string;
+  personal_email: string;
+  job_title: string | null;
+}
+
+/**
+ * Eligible only for a still-pending hire whose account was originally invited (has at least one
+ * `password_reset_tokens` row) — linking to an existing account at creation never mints one, so
+ * its absence means this employee already has real, working credentials and shouldn't get a
+ * set-password link. Cooldown reuses that same token history rather than a dedicated column.
+ */
+export async function requireResendInviteEligible(employeeId: string): Promise<ResendInviteInfo> {
+  const row = await requireEmployeeRow(employeeId);
+  if (!row.is_active) {
+    throw new AppError(
+      "Cannot resend an invite to a deactivated employee",
+      422,
+      "EMPLOYEE_INACTIVE",
+    );
+  }
+  if (row.status !== "pending") {
+    throw new AppError(
+      "This employee already has account access or has started onboarding",
+      422,
+      "NOT_PENDING",
+    );
+  }
+  if (!row.user_id) {
+    throw new AppError("Employee has no linked account", 422, "NO_ACCOUNT");
+  }
+  if (!row.personal_email) {
+    throw new AppError("Employee has no personal email on file", 422, "NO_PERSONAL_EMAIL");
+  }
+
+  const [lastToken] = await db
+    .select({ created_at: password_reset_tokens.created_at })
+    .from(password_reset_tokens)
+    .where(eq(password_reset_tokens.user_id, row.user_id as number))
+    .orderBy(desc(password_reset_tokens.created_at))
+    .limit(1);
+  if (!lastToken) {
+    throw new AppError(
+      "This employee's account was linked to an existing user, not invited — there is no invite to resend",
+      422,
+      "NOT_INVITED",
+    );
+  }
+
+  const elapsedMs = Date.now() - lastToken.created_at.getTime();
+  if (elapsedMs < RESEND_INVITE_COOLDOWN_MS) {
+    const retryInSec = Math.ceil((RESEND_INVITE_COOLDOWN_MS - elapsedMs) / 1000);
+    throw new AppError(
+      `An invite was already sent recently. Try again in ${retryInSec}s.`,
+      429,
+      "INVITE_COOLDOWN",
+    );
+  }
+
+  return {
+    user_id: row.user_id as number,
+    first_name: row.first_name as string,
+    personal_email: row.personal_email as string,
+    job_title: row.job_title as string | null,
+  };
+}
+
 /** Distinct departments — powers the directory filter without a separate table. */
 export async function listDepartments(): Promise<string[]> {
   const rows = await db
@@ -435,4 +635,91 @@ export async function listDepartments(): Promise<string[]> {
     .where(sql`${employees.department} is not null`)
     .orderBy(asc(employees.department));
   return rows.map((r) => r.department!).filter(Boolean);
+}
+
+export interface EmployeeStatusCounts {
+  pending: number;
+  onboarding: number;
+  active: number;
+  on_leave: number;
+  offboarding: number;
+  exited: number;
+  total: number;
+}
+
+/**
+ * Real counts by lifecycle status, for the HR landing page's headerStats and employee-status
+ * circles — one grouped query rather than the client fetching the whole directory (or one
+ * request per status) just to count. Scoped to the active roster (deactivated employees excluded,
+ * same default as the directory list) since a deactivated employee's stale status shouldn't
+ * inflate these numbers.
+ */
+export async function getEmployeeStatusCounts(): Promise<EmployeeStatusCounts> {
+  const rows = await db
+    .select({ status: employees.status, n: sql<number>`count(*)::int` })
+    .from(employees)
+    .where(eq(employees.is_active, true))
+    .groupBy(employees.status);
+
+  const counts: EmployeeStatusCounts = {
+    pending: 0,
+    onboarding: 0,
+    active: 0,
+    on_leave: 0,
+    offboarding: 0,
+    exited: 0,
+    total: 0,
+  };
+  for (const row of rows) {
+    if (row.status in counts)
+      counts[row.status as keyof Omit<EmployeeStatusCounts, "total">] = row.n;
+    counts.total += row.n;
+  }
+  return counts;
+}
+
+export interface DepartmentStat {
+  department: string;
+  total: number;
+  active: number;
+  on_leave: number;
+}
+
+export interface DepartmentStatsSummary {
+  total_departments: number;
+  total_employees: number;
+  departments: DepartmentStat[];
+}
+
+/**
+ * Per-department headcounts for employees/department's headerStats. `department` is a free-text
+ * column (no departments table — see listDepartments above), so this groups the same active
+ * roster by (department, status) in one query rather than one round trip per department. Scoped
+ * to is_active like getEmployeeStatusCounts, for the same reason.
+ */
+export async function getDepartmentStats(): Promise<DepartmentStatsSummary> {
+  const rows = await db
+    .select({
+      department: employees.department,
+      status: employees.status,
+      n: sql<number>`count(*)::int`,
+    })
+    .from(employees)
+    .where(and(eq(employees.is_active, true), sql`${employees.department} is not null`))
+    .groupBy(employees.department, employees.status);
+
+  const byDept = new Map<string, DepartmentStat>();
+  let total_employees = 0;
+  for (const row of rows) {
+    const dept = row.department as string;
+    const entry = byDept.get(dept) ?? { department: dept, total: 0, active: 0, on_leave: 0 };
+    entry.total += row.n;
+    if (row.status === "active") entry.active += row.n;
+    if (row.status === "on_leave") entry.on_leave += row.n;
+    byDept.set(dept, entry);
+    total_employees += row.n;
+  }
+
+  const departments = [...byDept.values()].sort((a, b) => a.department.localeCompare(b.department));
+  return { total_departments: departments.length, total_employees, departments };
 }

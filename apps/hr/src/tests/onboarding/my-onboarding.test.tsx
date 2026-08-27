@@ -7,7 +7,7 @@ import { screen, cleanup } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/mocks/server";
 import { renderWithClient } from "@/tests/recruitment/test-utils";
-import MyOnboardingPage from "@/app/onboarding/me/page";
+import MyOnboardingPage from "@/app/employees/onboarding/me/page";
 
 const API = "http://localhost:3002/api";
 

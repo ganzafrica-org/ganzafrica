@@ -72,8 +72,9 @@ Backend:
    where C is in A's subtree → 422 with path; legal reassignments pass; self → 422.
 2. CTE tree shape (fixture forest with 2 roots, 3 levels); exited employees excluded;
    orphaned subtree (manager exited → children float to root; decide+test: on offboarding
-   completion LCM-02 sets reports' manager_id = exiting employee's manager — add that line
-   to LCM-02 §4 hook: "re-parent direct reports").
+   completion LCM-02 sets reports' manager_id = exiting employee's manager — cross-ref added
+   as step 2 of LCM-02 §4's completion hook: "re-parent direct reports", ahead of the
+   status='exited' write so setManager's own "not an exited manager" guard doesn't reject it).
 3. `isManagerOf` transitive true/false cases.
 4. Backfill: fixtures with exact, case-variant, ambiguous ("John"), missing names → correct
    sets + unresolved rows; rerun idempotent.

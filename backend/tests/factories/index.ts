@@ -30,6 +30,7 @@ import {
   hr_assets,
   hr_asset_categories,
   hr_asset_assignments,
+  type EmployeeProfile,
 } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import * as authService from "../../src/services/auth.service";
@@ -167,6 +168,8 @@ export async function makeDocument(opts: MakeDocumentOptions) {
 export interface MakeContractOptions {
   employeeId: string; // employees.id (employee_ref_id FK)
   jobTitle?: string;
+  currency?: string;
+  status?: "ACTIVE" | "DRAFT" | "EXPIRED" | "TERMINATED";
 }
 
 /** Insert a minimal hr_contracts row (contract-owner ACL override tests). */
@@ -180,7 +183,8 @@ export async function makeContract(opts: MakeContractOptions) {
       employment_term: "indefinite",
       employment_type: "full-time",
       compensation_type: "salaried",
-      currency: "RWF",
+      currency: opts.currency ?? "RWF",
+      status: opts.status ?? "ACTIVE",
     })
     .returning();
   return row;
@@ -235,6 +239,8 @@ export interface MakeEmployeeOptions {
   firstName?: string;
   lastName?: string;
   department?: string | null;
+  homeCountry?: string | null;
+  picture?: string | null;
 }
 
 /** Insert an employees row (MOD-06 / LCM-01 tests). */
@@ -250,6 +256,8 @@ export async function makeEmployee(opts: MakeEmployeeOptions) {
       status: opts.status ?? "active",
       manager_id: opts.managerId ?? null,
       department: opts.department ?? "Programs",
+      home_country: opts.homeCountry ?? null,
+      picture: opts.picture ?? null,
     })
     .returning();
   return row;
@@ -262,6 +270,50 @@ export async function makeEmployeeUser(
   const user = await makeUser({ role: opts.role ?? "employee", ...opts });
   const employee = await makeEmployee({ ...opts, userId: user.id });
   return { user, employee };
+}
+
+export interface OrgNodeSpec {
+  /** Becomes `first_name` (unique per node) — the lookup key in the returned map. */
+  name: string;
+  status?: string;
+  employmentType?: string;
+  department?: string | null;
+  children?: OrgNodeSpec[];
+}
+
+/**
+ * Build a `manager_id`-linked tree of employee+user pairs from a nested spec, one call covering
+ * an entire fixture forest (MOD-02 §6 items 1-3 all build on this — cycle tests as a straight
+ * chain via single-child nesting, tree-shape tests as multiple roots with branching children).
+ * Returns a flat `{ [node.name]: { user, employee } }` map for easy lookup in assertions.
+ */
+export async function makeOrgForest(
+  specs: OrgNodeSpec[],
+): Promise<Record<string, { user: MadeUser; employee: EmployeeProfile }>> {
+  const byName: Record<string, { user: MadeUser; employee: EmployeeProfile }> = {};
+
+  async function build(spec: OrgNodeSpec, managerId: string | null) {
+    const user = await makeUser({ role: "employee" });
+    const employee = await makeEmployee({
+      userId: user.id,
+      firstName: spec.name,
+      lastName: "Test",
+      status: spec.status,
+      employmentType: spec.employmentType,
+      department: spec.department,
+      managerId,
+    });
+    byName[spec.name] = { user, employee };
+    for (const child of spec.children ?? []) {
+      await build(child, employee.id);
+    }
+  }
+
+  for (const root of specs) {
+    await build(root, null);
+  }
+
+  return byName;
 }
 
 export async function makeLeavePolicy(opts: {

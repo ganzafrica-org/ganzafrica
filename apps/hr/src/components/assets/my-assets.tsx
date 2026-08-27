@@ -16,17 +16,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useMyAssets, useReportAssetIssue } from "@/hooks/useAssets";
 import { helpdeskService } from "@/services/helpdesk.service";
-import { getCategoryIcon } from "@/lib/helpers/assets-util";
+import { ASSET_STATUS_BADGE_STYLES, getCategoryIcon } from "@/lib/helpers/assets-util";
 import type { Asset } from "@/types/api";
 import { AlertTriangle, Loader2, Package } from "lucide-react";
-import { toast } from "sonner";
-
-const statusStyles: Record<string, string> = {
-  AVAILABLE: "bg-green-100 text-green-800 border-green-200",
-  ASSIGNED: "bg-blue-100 text-blue-800 border-blue-200",
-  UNDER_MAINTENANCE: "bg-amber-100 text-amber-800 border-amber-200",
-  DISPOSED: "bg-gray-100 text-gray-800 border-gray-200",
-};
+import { toast } from "@/lib/toast";
 
 export function MyAssets() {
   const { data: assets, isLoading, isError, refetch } = useMyAssets();
@@ -38,7 +31,7 @@ export function MyAssets() {
 
   const handleReportIssue = async () => {
     if (!reportTarget || !description.trim()) {
-      toast.error("Describe the issue before submitting");
+      toast.danger("Describe the issue before submitting");
       return;
     }
     setSubmitting(true);
@@ -54,7 +47,9 @@ export function MyAssets() {
       setReportTarget(null);
       setDescription("");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? "Failed to report issue");
+      // helpdeskService.createTicket() is a raw call, not a tracked mutation, so the
+      // global mutation error handler won't see failures that originate from it.
+      toast.danger(error?.response?.data?.message ?? "Failed to report issue");
     } finally {
       setSubmitting(false);
     }
@@ -84,11 +79,6 @@ export function MyAssets() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">My Assets</h1>
-        <p className="text-sm text-muted-foreground">Assets currently assigned to you.</p>
-      </div>
-
       {myAssets.length === 0 ? (
         <Card className="rounded-lg">
           <CardContent className="p-12 text-center">
@@ -117,7 +107,10 @@ export function MyAssets() {
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <Badge variant="outline" className={statusStyles[asset.status] ?? ""}>
+                  <Badge
+                    variant="outline"
+                    className={ASSET_STATUS_BADGE_STYLES[asset.status] ?? ""}
+                  >
                     {asset.status.replace("_", " ")}
                   </Badge>
                   {asset.hasIssue === "YES" && <Badge variant="destructive">Has Issue</Badge>}

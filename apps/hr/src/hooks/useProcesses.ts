@@ -7,6 +7,7 @@ import {
   type ProcessType,
   type TaskKind,
 } from "@/services/processes.service";
+import { toast } from "@/lib/toast";
 
 const LIST = "processes";
 const ONE = "process";
@@ -22,10 +23,14 @@ function invalidateProcessViews(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: [MY_TASKS] });
 }
 
-export function useProcesses(params: { type?: ProcessType; status?: string } = {}) {
+export function useProcesses(
+  params: { type?: ProcessType; status?: string; employee_id?: string } = {},
+  enabled = true,
+) {
   return useQuery({
     queryKey: [LIST, params],
     queryFn: () => processesService.list(params),
+    enabled,
   });
 }
 
@@ -37,10 +42,12 @@ export function useProcess(id: number | null) {
   });
 }
 
-export function useMyProcess(type: ProcessType = "onboarding") {
+/** enabled defaults to true for the self-service dashboard; the employee sheet passes isSelf so the HR-gated useProcesses() above runs instead when viewing someone else. */
+export function useMyProcess(type: ProcessType = "onboarding", enabled = true) {
   return useQuery({
     queryKey: [MINE, type],
     queryFn: () => processesService.getMine(type),
+    enabled,
   });
 }
 
@@ -59,7 +66,10 @@ export function useStartProcess() {
       type: ProcessType;
       template_id?: number;
     }) => processesService.start(employeeId, payload),
-    onSuccess: () => invalidateProcessViews(qc),
+    onSuccess: () => {
+      invalidateProcessViews(qc);
+      toast.success("Process started");
+    },
   });
 }
 
@@ -67,7 +77,10 @@ export function useCancelProcess() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => processesService.cancel(id),
-    onSuccess: () => invalidateProcessViews(qc),
+    onSuccess: () => {
+      invalidateProcessViews(qc);
+      toast.success("Process cancelled");
+    },
   });
 }
 
@@ -76,7 +89,10 @@ export function useCompleteTask() {
   return useMutation({
     mutationFn: ({ taskId, notes }: { taskId: number; notes?: string }) =>
       processesService.completeTask(taskId, notes),
-    onSuccess: () => invalidateProcessViews(qc),
+    onSuccess: () => {
+      invalidateProcessViews(qc);
+      toast.success("Task completed");
+    },
   });
 }
 
@@ -85,7 +101,10 @@ export function useSkipTask() {
   return useMutation({
     mutationFn: ({ taskId, notes }: { taskId: number; notes: string }) =>
       processesService.skipTask(taskId, notes),
-    onSuccess: () => invalidateProcessViews(qc),
+    onSuccess: () => {
+      invalidateProcessViews(qc);
+      toast.success("Task skipped");
+    },
   });
 }
 
@@ -128,7 +147,10 @@ export function useCreateTemplate() {
       name: string;
       employment_types?: string[] | null;
     }) => processesService.createTemplate(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [TEMPLATES] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [TEMPLATES] });
+      toast.success("Template created");
+    },
   });
 }
 
@@ -136,7 +158,10 @@ export function useDeactivateTemplate() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => processesService.deactivateTemplate(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [TEMPLATES] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [TEMPLATES] });
+      toast.success("Template deactivated");
+    },
   });
 }
 

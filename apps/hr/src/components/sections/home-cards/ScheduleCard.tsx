@@ -1,46 +1,73 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronLeft, ChevronRight, MoreHorizontal, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { useLeaves } from "@/hooks/useLeaves";
+import { getInitialsFromName } from "@/lib/helpers/employee-util";
+import type { Leave } from "@/types/api";
 
-const meetings = [
-  {
-    id: "m1",
-    title: "Meeting with Clients",
-    time: "8:30 - 10:30 AM",
-    location: "345 Silva, CA",
-    people: [
-      "https://i.pravatar.cc/80?img=26",
-      "https://i.pravatar.cc/80?img=38",
-      "https://i.pravatar.cc/80?img=44",
-    ],
-  },
-  {
-    id: "m2",
-    title: "Book Discussion",
-    time: "2:30 - 3:30 PM",
-    location: "Los Angeles, CA",
-    people: ["https://i.pravatar.cc/80?img=58", "https://i.pravatar.cc/80?img=12"],
-  },
-  {
-    id: "m3",
-    title: "Brief for reference, color, style",
-    time: "2:00 - 3:45 PM",
-    location: "San Diego, CA",
-    people: ["https://i.pravatar.cc/80?img=5"],
-  },
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
+function overlapsDay(leave: Leave, day: Date): boolean {
+  const start = new Date(leave.startDate);
+  const end = new Date(leave.endDate);
+  const d = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+  return (
+    d >= new Date(start.getFullYear(), start.getMonth(), start.getDate()) &&
+    d <= new Date(end.getFullYear(), end.getMonth(), end.getDate())
+  );
+}
+
+/**
+ * "Schedule" — was a mock Meetings/Events/Holiday list; replaced with a real calendar showing
+ * which employees are away, sourced from the same org-wide leave data (1B) as LeaveSummaryCard.
+ * No new data source, per the source doc's instruction.
+ */
 export function ScheduleCard() {
-  const [tab, setTab] = useState<"meetings" | "events" | "holiday">("meetings");
-  const filtered = useMemo(() => {
-    if (tab !== "meetings") return [];
-    return meetings;
-  }, [tab]);
+  const today = useMemo(() => new Date(), []);
+  const [viewDate, setViewDate] = React.useState(
+    () => new Date(today.getFullYear(), today.getMonth(), 1),
+  );
+  const { data: leaves, isLoading } = useLeaves();
+
+  const approvedLeaves = useMemo(
+    () => (leaves ?? []).filter((l) => l.status === "Approved"),
+    [leaves],
+  );
+
+  const awayToday = useMemo(
+    () => approvedLeaves.filter((l) => overlapsDay(l, today)),
+    [approvedLeaves, today],
+  );
+
+  const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
+  // Monday-first blank lead-in, matching the header row below.
+  const firstWeekday = (new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay() + 6) % 7;
+
+  const awayByDay = useMemo(() => {
+    const map = new Map<number, Leave[]>();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+      const away = approvedLeaves.filter((l) => overlapsDay(l, d));
+      if (away.length) map.set(day, away);
+    }
+    return map;
+  }, [approvedLeaves, viewDate, daysInMonth]);
 
   return (
     <Card className="border-0 shadow-sm rounded-lg">
@@ -57,12 +84,22 @@ export function ScheduleCard() {
       </CardHeader>
       <CardContent className="pt-0 space-y-4">
         <div className="flex items-center justify-between text-sm">
-          <div className="font-semibold text-slate-900">July 2026</div>
+          <div className="font-semibold text-slate-900">
+            {MONTH_NAMES[viewDate.getMonth()]} {viewDate.getFullYear()}
+          </div>
           <div className="flex items-center gap-1">
-            <button type="button" className="p-1 rounded hover:bg-slate-100">
+            <button
+              type="button"
+              className="p-1 rounded hover:bg-slate-100"
+              onClick={() => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
+            >
               <ChevronLeft className="h-4 w-4 text-slate-500" />
             </button>
-            <button type="button" className="p-1 rounded hover:bg-slate-100">
+            <button
+              type="button"
+              className="p-1 rounded hover:bg-slate-100"
+              onClick={() => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
+            >
               <ChevronRight className="h-4 w-4 text-slate-500" />
             </button>
           </div>
@@ -74,99 +111,66 @@ export function ScheduleCard() {
               {d}
             </div>
           ))}
-          {Array.from({ length: 7 }).map((_, i) => (
-            <div key={`blank-${i}`} className="h-8" />
+          {Array.from({ length: firstWeekday }).map((_, i) => (
+            <div key={`blank-${i}`} className="h-9" />
           ))}
-          {Array.from({ length: 12 }).map((_, i) => {
+          {Array.from({ length: daysInMonth }).map((_, i) => {
             const day = i + 1;
-            const isSelected = day === 4;
+            const isToday =
+              day === today.getDate() &&
+              viewDate.getMonth() === today.getMonth() &&
+              viewDate.getFullYear() === today.getFullYear();
+            const away = awayByDay.get(day) ?? [];
             return (
-              <div
-                key={day}
-                className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs ${
-                  isSelected
-                    ? "bg-emerald-100 text-emerald-800 font-semibold"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                {day}
+              <div key={day} className="flex flex-col items-center gap-0.5">
+                <div
+                  className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs ${
+                    isToday
+                      ? "bg-emerald-100 text-emerald-800 font-semibold"
+                      : "text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  {day}
+                </div>
+                {away.length > 0 && (
+                  <div className="flex -space-x-1" title={`${away.length} away`}>
+                    {away.slice(0, 3).map((l) => (
+                      <div
+                        key={l.id}
+                        className="h-1.5 w-1.5 rounded-full bg-amber-400 border border-white"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            className="h-10 pl-9 rounded-full bg-slate-50 border-slate-200 dark:border-none"
-            placeholder="Search"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setTab("meetings")}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              tab === "meetings"
-                ? "bg-emerald-600 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            Meetings
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("events")}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              tab === "events"
-                ? "bg-emerald-600 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            Events
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("holiday")}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              tab === "holiday"
-                ? "bg-emerald-600 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            Holiday
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          {filtered.map((m) => (
-            <div
-              key={m.id}
-              className="rounded-lg bg-gradient-to-r from-emerald-50 to-purple-50 dark:bg-white/10 p-4"
-            >
-              <div className="flex items-start justify-between gap-3 dark:bg-white/10">
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">{m.title}</div>
-                  <div className="mt-1 text-xs text-slate-500">{m.time}</div>
-                </div>
-                <Badge variant="secondary" className="bg-brand-accent text-slate-700 rounded-lg">
-                  {m.location}
-                </Badge>
-              </div>
-              <div className="mt-3 flex -space-x-2">
-                {m.people.map((src, idx) => (
-                  <Avatar key={idx} className="h-7 w-7 border-2 border-white">
-                    <AvatarImage src={src} />
-                    <AvatarFallback>U</AvatarFallback>
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Away today
+          </h3>
+          {isLoading && <p className="text-sm text-slate-400">Loading…</p>}
+          {!isLoading && awayToday.length === 0 && (
+            <p className="text-sm text-slate-400">Everyone&apos;s in today.</p>
+          )}
+          {awayToday.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {awayToday.map((l) => (
+                <div
+                  key={l.id}
+                  className="flex items-center gap-1.5 rounded-full bg-slate-50 pl-1 pr-3 py-1"
+                  title={`${l.employeeName} — ${l.type.toLowerCase()} leave`}
+                >
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="bg-brand-accent/10 text-brand-accent text-[10px]">
+                      {getInitialsFromName(l.employeeName)}
+                    </AvatarFallback>
                   </Avatar>
-                ))}
-              </div>
-            </div>
-          ))}
-          {tab !== "meetings" && (
-            <div className="rounded-lg border bg-slate-50 p-4 text-sm text-slate-500 dark:bg-white/10">
-              No items in this tab yet.
+                  <span className="text-xs font-medium text-slate-700">{l.employeeName}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>

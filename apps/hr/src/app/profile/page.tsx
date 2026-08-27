@@ -1,28 +1,11 @@
-// ✅ Data integrated — uses useMe() / useEmployeeLeaves()
-// Fake data removed: profileData from @/data/employee-data
-// Fields not in API response: title (mapped from position), hireDate (mapped from joinDate), workPhone/workEmail (mapped from phone/email), officeLocation (mapped from location), avatar (mapped from avatarUrl), leave card fields (available, pending, estimated, unit — fallback "—")
-
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import ProfileTab from "@/components/sections/user-profile//profile-tab";
-import LeaveTab from "@/components/sections/user-profile//leave-tab";
+import { useMemo, useState } from "react";
+import ProfileTab from "@/components/sections/user-profile/profile-tab";
+import LeaveTab from "@/components/sections/user-profile/leave-tab";
 import EditProfileModal from "@/components/sections/user-profile/edit-profile-modal";
 import { useMe, useEmployeeLeaves } from "@/hooks/useEmployees";
-import type { Employee, Leave } from "@/types/api";
-
-const mapEmployeeToProfile = (emp: Employee) => ({
-  id: emp.employeeId ?? emp.id ?? "—",
-  name: emp.name || `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim() || "—",
-  title: emp.position ?? "—",
-  department: emp.department ?? "—",
-  status: emp.status ?? "—",
-  hireDate: emp.joinDate ?? "—",
-  workPhone: emp.phone ?? "—",
-  workEmail: emp.email ?? "—",
-  officeLocation: emp.location ?? "—",
-  avatar: emp.avatarUrl ?? "",
-});
+import type { Leave } from "@/types/api";
 
 const mapLeaveToCard = (leave: Leave) => ({
   id: leave.id,
@@ -40,7 +23,6 @@ const mapLeaveToCard = (leave: Leave) => ({
 export default function ProfileDashboard() {
   const [activeTab, setActiveTab] = useState<"profile" | "leave">("profile");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [employee, setEmployee] = useState<any>(null);
 
   const { data: meData, isLoading: isLoadingProfile, isError: isErrorProfile } = useMe();
   const employeeId = meData?.id ?? "";
@@ -50,29 +32,21 @@ export default function ProfileDashboard() {
     isError: isErrorLeaves,
   } = useEmployeeLeaves(employeeId);
 
-  const leaveList = Array.isArray(leavesResponse) ? leavesResponse : [];
-  const leaves = useMemo(() => leaveList.map(mapLeaveToCard), [leaveList]);
-
-  useEffect(() => {
-    if (meData) {
-      setEmployee(mapEmployeeToProfile(meData));
-    }
-  }, [meData]);
-
-  const handleSaveProfile = (updatedEmployee: any) => {
-    setEmployee(updatedEmployee);
-  };
+  const leaves = useMemo(() => {
+    const leaveList = Array.isArray(leavesResponse) ? leavesResponse : [];
+    return leaveList.map(mapLeaveToCard);
+  }, [leavesResponse]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="py-8">
-        <div className="flex gap-8 border-b border-gray-200 mb-8">
+        <div className="flex gap-8 border-b border-border mb-8">
           <button
             onClick={() => setActiveTab("profile")}
             className={`pb-4 px-1 font-medium text-sm border-b-2 transition-colors ${
               activeTab === "profile"
                 ? "text-brand-accent border-brand-accent"
-                : "text-gray-600 border-transparent hover:text-gray-900"
+                : "text-muted-foreground border-transparent hover:text-foreground"
             }`}
           >
             Job Profile
@@ -82,7 +56,7 @@ export default function ProfileDashboard() {
             className={`pb-4 px-1 font-medium text-sm border-b-2 transition-colors ${
               activeTab === "leave"
                 ? "text-brand-accent border-brand-accent"
-                : "text-gray-600 border-transparent hover:text-gray-900"
+                : "text-muted-foreground border-transparent hover:text-foreground"
             }`}
           >
             Leave
@@ -103,8 +77,8 @@ export default function ProfileDashboard() {
               </div>
             )}
 
-            {!isLoadingProfile && !isErrorProfile && employee && (
-              <ProfileTab employee={employee} onEditClick={() => setIsEditModalOpen(true)} />
+            {!isLoadingProfile && !isErrorProfile && meData && (
+              <ProfileTab employee={meData} onEditClick={() => setIsEditModalOpen(true)} />
             )}
           </>
         )}
@@ -128,12 +102,13 @@ export default function ProfileDashboard() {
         )}
       </div>
 
-      <EditProfileModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        employee={employee}
-        onSave={handleSaveProfile}
-      />
+      {meData && (
+        <EditProfileModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          employee={meData}
+        />
+      )}
     </div>
   );
 }

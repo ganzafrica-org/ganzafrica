@@ -15,7 +15,12 @@ import {
 } from "@/components/ui/select";
 import { AccessBuilder } from "@/components/sections/documents/access-builder";
 import { useCreateDocument, useUpdateDocument } from "@/hooks/useDocuments";
-import { DOCUMENT_CATEGORIES, type DocumentACL, type HrDocument } from "@/types/api";
+import {
+  DOCUMENT_CATEGORIES,
+  type DocumentACL,
+  type DocumentCategory,
+  type HrDocument,
+} from "@/types/api";
 
 interface DocumentFormSheetProps {
   document: HrDocument | null;
@@ -31,7 +36,12 @@ export function DocumentFormSheet({ document, onDone }: DocumentFormSheetProps) 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState(document?.document_name ?? "");
-  const [category, setCategory] = useState<HrDocument["category"] | "">(document?.category ?? "");
+  // "Leave Attachment" documents (punch-list #5) aren't created/edited through this generic
+  // form — they don't appear in the lists this sheet opens from — so an editable category here is
+  // always one of DOCUMENT_CATEGORIES, never that value.
+  const [category, setCategory] = useState<DocumentCategory | "">(
+    document?.category && document.category !== "Leave Attachment" ? document.category : "",
+  );
   const [description, setDescription] = useState(document?.description ?? "");
   const [department, setDepartment] = useState(document?.department ?? "");
   const [status, setStatus] = useState<"PUBLISHED" | "DRAFT">(
@@ -44,7 +54,9 @@ export function DocumentFormSheet({ document, onDone }: DocumentFormSheetProps) 
 
   useEffect(() => {
     setName(document?.document_name ?? "");
-    setCategory(document?.category ?? "");
+    setCategory(
+      document?.category && document.category !== "Leave Attachment" ? document.category : "",
+    );
     setDescription(document?.description ?? "");
     setDepartment(document?.department ?? "");
     setStatus((document?.status as "PUBLISHED" | "DRAFT") ?? "PUBLISHED");
@@ -76,7 +88,7 @@ export function DocumentFormSheet({ document, onDone }: DocumentFormSheetProps) 
           id: document.id,
           payload: {
             document_name: name,
-            category: category as HrDocument["category"],
+            category: category as DocumentCategory,
             description,
             department,
             status,
@@ -89,7 +101,7 @@ export function DocumentFormSheet({ document, onDone }: DocumentFormSheetProps) 
         await createDocument.mutateAsync({
           payload: {
             document_name: name,
-            category: category as HrDocument["category"],
+            category: category as DocumentCategory,
             description,
             department,
             status,
@@ -158,10 +170,7 @@ export function DocumentFormSheet({ document, onDone }: DocumentFormSheetProps) 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label className="text-sm font-medium">Category *</Label>
-            <Select
-              value={category}
-              onValueChange={(v) => setCategory(v as HrDocument["category"])}
-            >
+            <Select value={category} onValueChange={(v) => setCategory(v as DocumentCategory)}>
               <SelectTrigger className="border-slate-200">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>

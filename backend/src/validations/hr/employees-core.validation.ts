@@ -12,6 +12,7 @@ export const listEmployeesSchema = z.object({
     limit: z.coerce.number().int().min(1).max(200).optional(),
     sortBy: z.enum(["name", "department", "hired_at"]).optional(),
     sortOrder: z.enum(["asc", "desc"]).optional(),
+    active: z.enum(["active", "inactive", "all"]).optional(),
   }),
 });
 
@@ -34,6 +35,9 @@ export const createEmployeeSchema = z.object({
       .nullable()
       .optional(),
     phone: z.string().max(50).nullable().optional(),
+    citizenship: z.string().max(100).nullable().optional(),
+    home_country: z.string().max(100).nullable().optional(),
+    home_city: z.string().max(100).nullable().optional(),
   }),
 });
 

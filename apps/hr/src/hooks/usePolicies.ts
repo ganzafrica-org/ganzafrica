@@ -6,6 +6,7 @@ import {
   type CreatePolicyPayload,
   type UpdatePolicyPayload,
 } from "@/services/policies.service";
+import { toast } from "@/lib/toast";
 
 export function usePolicies(params?: {
   search?: string;
@@ -34,7 +35,10 @@ export function useCreatePolicy() {
   return useMutation({
     mutationFn: ({ payload, file }: { payload: CreatePolicyPayload; file: File }) =>
       policiesService.createPolicy(payload, file),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["policies"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["policies"] });
+      toast.success("Policy created");
+    },
   });
 }
 
@@ -50,7 +54,10 @@ export function useUpdatePolicy() {
       payload: UpdatePolicyPayload;
       file?: File | null;
     }) => policiesService.updatePolicy(id, payload, file),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["policies"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["policies"] });
+      toast.success("Policy updated");
+    },
   });
 }
 
@@ -58,7 +65,10 @@ export function useDeletePolicy() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => policiesService.deletePolicy(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["policies"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["policies"] });
+      toast.success("Policy deleted");
+    },
   });
 }
 
@@ -66,7 +76,10 @@ export function usePublishPolicy() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => policiesService.publishPolicy(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["policies"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["policies"] });
+      toast.success("Policy published");
+    },
   });
 }
 
@@ -77,6 +90,7 @@ export function useAcknowledgePolicy() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["policies"] });
       queryClient.invalidateQueries({ queryKey: ["policies", "acknowledgements"] });
+      toast.success("Policy acknowledged");
     },
   });
 }

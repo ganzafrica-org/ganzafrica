@@ -12,7 +12,14 @@ export const hr_contracts = pgTable("hr_contracts", {
   job_title: text("job_title").notNull(),
   department: text("department"),
   work_location: text("work_location"),
+  /**
+   * @deprecated MOD-02: superseded by `employees.manager_id`, the single source of truth for
+   * reporting lines. Kept only as the backfill source (`backend/scripts/backfill-managers.ts`)
+   * and for historical contracts pre-dating the org hierarchy; do not read this for new code.
+   * Dropping these two columns is a separate migration owned by Track A once backfill is accepted.
+   */
   manager: text("manager"),
+  /** @deprecated MOD-02: see `manager` above — same backfill-only status. */
   report_to: text("report_to"),
 
   // ── Contract Details (Step 3) ──────────────

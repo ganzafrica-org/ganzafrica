@@ -2,16 +2,26 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { employeesService } from "@/services/employees.service";
-import type { CreateEmployeeRequest, UpdateEmployeeRequest } from "@/types/api";
+import type {
+  CreateEmployeeRequest,
+  UpdateEmployeeRequest,
+  UpdateMyProfileRequest,
+} from "@/types/api";
+import { toast } from "@/lib/toast";
 
-export function useEmployees(params?: {
+export interface EmployeesQueryParams {
   search?: string;
-  status?: string;
   department?: string;
-  country?: string;
+  status?: string;
+  employment_type?: string;
   page?: number;
   limit?: number;
-}) {
+  sortBy?: "name" | "department" | "hired_at";
+  sortOrder?: "asc" | "desc";
+  active?: "active" | "inactive" | "all";
+}
+
+export function useEmployees(params?: EmployeesQueryParams) {
   return useQuery({
     queryKey: ["employees", params],
     queryFn: () => employeesService.getEmployees(params),
@@ -26,17 +36,33 @@ export function useEmployee(id: string) {
   });
 }
 
-export function useEmployeeStats() {
-  return useQuery({
-    queryKey: ["employeeStats"],
-    queryFn: () => employeesService.getEmployeeStats(),
-  });
-}
-
 export function useMe() {
   return useQuery({
     queryKey: ["employees", "me"],
     queryFn: () => employeesService.getMe(),
+  });
+}
+
+export function useDepartments() {
+  return useQuery({
+    queryKey: ["employees", "departments"],
+    queryFn: () => employeesService.listDepartments(),
+  });
+}
+
+export function useEmployeeStatusCounts(enabled = true) {
+  return useQuery({
+    queryKey: ["employees", "stats"],
+    queryFn: () => employeesService.getStatusCounts(),
+    enabled,
+  });
+}
+
+/** employees/department's headerStats — real per-department counts. */
+export function useDepartmentStats() {
+  return useQuery({
+    queryKey: ["employees", "departments", "stats"],
+    queryFn: () => employeesService.getDepartmentStats(),
   });
 }
 
@@ -54,7 +80,7 @@ export function useCreateEmployee() {
     mutationFn: (payload: CreateEmployeeRequest) => employeesService.createEmployee(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      queryClient.invalidateQueries({ queryKey: ["employeeStats"] });
+      toast.success("Employee created");
     },
   });
 }
@@ -67,18 +93,54 @@ export function useUpdateEmployee() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       queryClient.invalidateQueries({ queryKey: ["employee", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["employeeStats"] });
     },
   });
 }
 
-export function useDeleteEmployee() {
+export function useDeactivateEmployee() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => employeesService.deleteEmployee(id),
+    mutationFn: (id: string) => employeesService.deactivateEmployee(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      queryClient.invalidateQueries({ queryKey: ["employeeStats"] });
+      toast.success("Employee deactivated");
+    },
+  });
+}
+
+export function useReactivateEmployee() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => employeesService.reactivateEmployee(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      toast.success("Employee reactivated");
+    },
+  });
+}
+
+export function useResendInvite() {
+  return useMutation({
+    mutationFn: (id: string) => employeesService.resendInvite(id),
+    onSuccess: () => {
+      toast.success("Invite email resent");
+    },
+  });
+}
+
+export function useUpdateMyProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      payload,
+      pictureFile,
+    }: {
+      payload: UpdateMyProfileRequest;
+      pictureFile?: File;
+    }) => employeesService.updateMyProfile(payload, pictureFile),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees", "me"] });
+      toast.success("Profile updated");
     },
   });
 }

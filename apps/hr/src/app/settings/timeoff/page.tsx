@@ -68,7 +68,7 @@ export default function TimeOffPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <select
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+            className="px-4 py-2 border border-border rounded-lg text-sm bg-background text-foreground"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
           >
@@ -80,7 +80,7 @@ export default function TimeOffPage() {
             ))}
           </select>
           <select
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+            className="px-4 py-2 border border-border rounded-lg text-sm bg-background text-foreground"
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
           >
@@ -110,22 +110,26 @@ export default function TimeOffPage() {
       )}
 
       {!isLoading && !isError && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-card rounded-lg border border-border overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-muted-foreground">
                   Policy name
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Type</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-muted-foreground">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-muted-foreground">
                   Workers assigned
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Country</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-muted-foreground">
+                  Country
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-muted-foreground">
                   Allowance
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                <th className="px-6 py-3 text-left text-sm font-semibold text-muted-foreground">
                   Carryover
                 </th>
               </tr>
@@ -134,23 +138,31 @@ export default function TimeOffPage() {
               {filteredPolicies.map((policy, index) => (
                 <tr
                   key={policy.id ?? index}
-                  className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                  className="border-b border-border hover:bg-muted/50 cursor-pointer"
                 >
                   <td className="px-6 py-4 font-medium text-blue-600">{getPolicyName(policy)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{policy.type ?? "—"}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 text-sm text-muted-foreground">{policy.type ?? "—"}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-foreground">
                     {policy.workers_assigned ?? policy.assigned ?? "—"}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{policy.country ?? "—"}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{policy.allowance ?? "—"}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{policy.carryover ?? "—"}</td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                    {policy.country ?? "—"}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                    {policy.allowance ?? "—"}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                    {policy.carryover ?? "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
-      <div className="mt-4 text-sm text-gray-600">Total {filteredPolicies.length} items</div>
+      <div className="mt-4 text-sm text-muted-foreground">
+        Total {filteredPolicies.length} items
+      </div>
     </div>
   );
 
@@ -159,8 +171,8 @@ export default function TimeOffPage() {
       <div className="w-[80%]">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Time off</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-3xl font-bold text-foreground">Time off</h1>
+            <p className="text-muted-foreground mt-1">
               Manage your organization&apos;s policies for holidays, illness and other time off
             </p>
           </div>

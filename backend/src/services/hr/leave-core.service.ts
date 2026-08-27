@@ -14,13 +14,20 @@ import {
   hr_leave_policies,
   hr_leaves,
   hr_org_holidays,
+  hr_documents,
+  leave_emails,
   user_roles,
   roles,
+  users,
+  type Leave,
 } from "@/db/schema";
 import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
-import { countWorkingDays, toIsoDate } from "./leave-days";
+import { sendEmail } from "../email.service";
+import { leaveSubmittedEmail, leaveDecidedEmail } from "./leave-emails";
+import { countWorkingDays, toIsoDate, windowBounds, type SummaryWindow } from "./leave-days";
 import { getManagerUserId, isManagerOf } from "./employee-context";
+import { createDocument } from "./document.service";
 
 /** Types whose usage draws down a balance. UNPAID/OTHER are tracked but never blocked. */
 const BALANCE_TRACKED = new Set(["ANNUAL", "SICK", "MATERNITY", "PATERNITY"]);
@@ -209,7 +216,7 @@ export async function requestLeave(
     })
     .returning();
 
-  await notifyApprover(created.id, employeeId, input.type, days);
+  await notifyApprover(created, input.type, days);
   return created;
 }
 
@@ -222,13 +229,61 @@ async function hrUserIds(): Promise<number[]> {
   return rows.map((r) => r.userId);
 }
 
-/** Notify the manager, or the HR queue when the requester sits at the top of the tree. */
-async function notifyApprover(
+function isUniqueViolation(err: unknown): boolean {
+  return typeof err === "object" && err !== null && (err as { code?: string }).code === "23505";
+}
+
+/** userId -> {email, firstName}, firstName null when the account has no employees row (HR/admin). */
+async function userMailInfo(
+  userIds: number[],
+): Promise<Map<number, { email: string; firstName: string | null }>> {
+  if (!userIds.length) return new Map();
+  const rows = await db
+    .select({ id: users.id, email: users.email, firstName: employees.first_name })
+    .from(users)
+    .leftJoin(employees, eq(employees.user_id, users.id))
+    .where(inArray(users.id, userIds));
+  return new Map(rows.map((r) => [r.id, { email: r.email, firstName: r.firstName ?? null }]));
+}
+
+/**
+ * Sends `render()`'s email to `recipientUserId` exactly once per (leave, type, recipient).
+ * Insert-first, unique-violation => already sent, skip — mirrors recruitment_emails
+ * (recruitment/pipeline.ts sendApplicantEmail). A send failure must never fail the leave action
+ * itself, same as the in-app notification it accompanies.
+ */
+/** Exported for direct idempotency testing — production callers are notifyApprover/decideLeave. */
+export async function sendLeaveEmailOnce(
   leaveId: string,
-  employeeId: string,
-  type: LeaveTypeName,
-  days: number,
+  emailType: "submitted" | "decided",
+  recipientUserId: number,
+  render: () => { subject: string; html: string; text: string },
 ) {
+  try {
+    await db
+      .insert(leave_emails)
+      .values({ leave_id: leaveId, email_type: emailType, recipient_user_id: recipientUserId });
+  } catch (err) {
+    if (isUniqueViolation(err)) return;
+    throw err;
+  }
+
+  const [info] = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.id, recipientUserId));
+  if (!info) return;
+  const { subject, html, text } = render();
+  try {
+    await sendEmail(info.email, subject, html, text);
+  } catch {
+    // A send failure must not fail the leave action that triggered it.
+  }
+}
+
+/** Notify the manager, or the HR queue when the requester sits at the top of the tree. */
+async function notifyApprover(leave: Leave, type: LeaveTypeName, days: number) {
+  const employeeId = leave.employee_id!;
   const managerUserId = await getManagerUserId(employeeId);
   const recipients = managerUserId != null ? [managerUserId] : await hrUserIds();
   if (!recipients.length) return;
@@ -237,7 +292,7 @@ async function notifyApprover(
     await sendNotification({
       type: "LEAVE_PENDING_APPROVAL",
       triggeredBy: 0,
-      relatedEntity: { leaveId, employeeId },
+      relatedEntity: { leaveId: leave.id, employeeId },
       recipientUserIds: recipients,
       title: "Leave request awaiting your approval",
       message: `A ${type} request for ${days} working day(s) needs a decision.`,
@@ -245,6 +300,22 @@ async function notifyApprover(
     });
   } catch {
     // A notification failure must never fail the request itself.
+  }
+
+  const requester = await requireEmployee(employeeId);
+  const requesterName = `${requester.first_name} ${requester.last_name}`.trim();
+  const mailInfo = await userMailInfo(recipients);
+  for (const recipientUserId of recipients) {
+    await sendLeaveEmailOnce(leave.id, "submitted", recipientUserId, () =>
+      leaveSubmittedEmail({
+        approverFirstName: mailInfo.get(recipientUserId)?.firstName ?? null,
+        requesterName,
+        type,
+        days,
+        startDate: toIsoDate(leave.start_date),
+        endDate: toIsoDate(leave.end_date),
+      }),
+    );
   }
 }
 
@@ -338,12 +409,14 @@ export async function decideLeave(
     return row;
   });
 
+  const requester = await requireEmployee(leave.employee_id!);
+
   try {
     await sendNotification({
       type: decision === "APPROVED" ? "LEAVE_APPROVED" : "LEAVE_REJECTED",
       triggeredBy: actorUserId,
       relatedEntity: { leaveId, employeeId: leave.employee_id! },
-      recipientUserIds: [(await requireEmployee(leave.employee_id!)).user_id],
+      recipientUserIds: [requester.user_id],
       title: decision === "APPROVED" ? "Leave approved" : "Leave rejected",
       message:
         decision === "APPROVED"
@@ -354,6 +427,18 @@ export async function decideLeave(
   } catch {
     // Notification failures must not fail the decision.
   }
+
+  await sendLeaveEmailOnce(leaveId, "decided", requester.user_id, () =>
+    leaveDecidedEmail({
+      firstName: requester.first_name,
+      decision,
+      type: leave.type as LeaveTypeName,
+      days: Number(leave.days ?? 0),
+      startDate: toIsoDate(leave.start_date),
+      endDate: toIsoDate(leave.end_date),
+      approverNote: updated?.approver_note ?? note?.trim() ?? null,
+    }),
+  );
 
   return updated;
 }
@@ -391,6 +476,66 @@ export async function cancelLeaveRequest(actorUserId: number, leaveId: string) {
     }
     return row;
   });
+}
+
+/**
+ * Punch-list #5 — optional leave-request attachments. Stored as ordinary hr_documents rows
+ * (category "Leave Attachment", leave_id set) so upload/storage/versioning/ACL and the shared
+ * document viewer are all reused as-is rather than building parallel plumbing. Access is enforced
+ * here (relationship check), not at the route: the requester, HR/admin, and the leave's resolved
+ * approver (manager chain) may add/list attachments; nobody else.
+ */
+export async function addLeaveAttachment(
+  actorUserId: number,
+  leaveId: string,
+  file: { key: string; size: number; originalName: string },
+) {
+  const leave = await requireLeave(leaveId);
+  const actor = await employeeForUser(actorUserId);
+  const isOwner = actor?.id === leave.employee_id;
+  const privileged = await isHrOrAdmin(actorUserId);
+
+  if (!isOwner && !privileged) {
+    throw new AppError(
+      "Cannot add an attachment to another employee's leave request",
+      403,
+      "FORBIDDEN",
+    );
+  }
+
+  const owner = await requireEmployee(leave.employee_id!);
+  return createDocument({
+    document_name: file.originalName,
+    category: "Leave Attachment",
+    description: `Attachment for ${owner.first_name} ${owner.last_name}'s ${leave.type.toLowerCase()} leave request`,
+    department: owner.department ?? "",
+    createdById: actor?.id ?? owner.id,
+    file,
+    leaveId,
+  });
+}
+
+export async function listLeaveAttachments(actorUserId: number, leaveId: string) {
+  const leave = await requireLeave(leaveId);
+  const actor = await employeeForUser(actorUserId);
+  const isOwner = actor?.id === leave.employee_id;
+  const privileged = await isHrOrAdmin(actorUserId);
+  const isApprover = actor && !isOwner ? await isManagerOf(actor.id, leave.employee_id!) : false;
+
+  if (!isOwner && !privileged && !isApprover) {
+    throw new AppError("You cannot view this leave's attachments", 403, "FORBIDDEN");
+  }
+
+  return db
+    .select({
+      id: hr_documents.id,
+      document_name: hr_documents.document_name,
+      file_size: hr_documents.file_size,
+      created_at: hr_documents.created_at,
+    })
+    .from(hr_documents)
+    .where(eq(hr_documents.leave_id, leaveId))
+    .orderBy(hr_documents.created_at);
 }
 
 /** Everyone at or below `employeeId` in the org tree (bounded breadth-first walk). */
@@ -435,43 +580,178 @@ export async function listPendingApprovals(actorUserId: number) {
     .orderBy(asc(hr_leaves.start_date));
 }
 
+const employeeFullName = sql<string>`${employees.first_name} || ' ' || ${employees.last_name}`;
+
+/** DB stores "PENDING"/"APPROVED"/etc; the frontend `Leave` type wants "Pending"/"Approved". */
+function titleCaseStatus(status: string): string {
+  return status.charAt(0) + status.slice(1).toLowerCase();
+}
+
+export interface VisibleLeave {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  type: LeaveTypeName;
+  startDate: Date;
+  endDate: Date;
+  status: string;
+  reason: string;
+}
+
+/**
+ * Leave requests (any status) this user may see: their own plus their reports' — the same
+ * manager-chain scope as `listPendingApprovals`, just not filtered to PENDING — or every request
+ * in the org for HR/admin. Backs the "Leave Requests" table; distinct from `getLeaveCalendar`,
+ * which is approved-only and feeds the calendar widget.
+ */
+export async function listVisibleLeaves(actorUserId: number): Promise<VisibleLeave[]> {
+  const select = () =>
+    db
+      .select({ leave: hr_leaves, employeeName: employeeFullName })
+      .from(hr_leaves)
+      .leftJoin(employees, eq(employees.id, hr_leaves.employee_id));
+
+  const rows = await (async () => {
+    if (await isHrOrAdmin(actorUserId)) {
+      return select().orderBy(desc(hr_leaves.start_date));
+    }
+
+    const actor = await employeeForUser(actorUserId);
+    if (!actor) return [];
+
+    const visible = [actor.id, ...(await reportIdsUnder(actor.id))];
+    return select()
+      .where(inArray(hr_leaves.employee_id, visible))
+      .orderBy(desc(hr_leaves.start_date));
+  })();
+
+  return rows.map((r) => ({
+    id: r.leave.id,
+    employeeId: r.leave.employee_id ?? "",
+    employeeName: r.employeeName ?? "—",
+    type: r.leave.type as LeaveTypeName,
+    startDate: r.leave.start_date,
+    endDate: r.leave.end_date,
+    status: titleCaseStatus(r.leave.status),
+    reason: r.leave.reason,
+  }));
+}
+
 export interface CalendarRange {
   from: Date;
   to: Date;
 }
 
+export interface CalendarLeave {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  employeePicture: string | null;
+  type: LeaveTypeName;
+  startDate: Date;
+  endDate: Date;
+  status: string;
+  reason: string;
+}
+
 /**
- * Approved leave in range: org-wide for HR/admin, otherwise the viewer's own team — their
+ * Leave in range, any status: org-wide for HR/admin, otherwise the viewer's own team — their
  * manager's reports plus anyone beneath them — so people see coverage without seeing the org.
+ * All statuses are included (punch-list #6 — the calendar shows pending/rejected too, only the
+ * background color is approved-specific, decided by the caller); includes the employee's picture
+ * so the calendar can render an avatar without a second round trip.
  */
-export async function getLeaveCalendar(actorUserId: number, range: CalendarRange) {
-  const overlapping = and(
-    lte(hr_leaves.start_date, range.to),
-    gte(hr_leaves.end_date, range.from),
-    eq(hr_leaves.status, "APPROVED"),
-  );
+export async function getLeaveCalendar(
+  actorUserId: number,
+  range: CalendarRange,
+): Promise<CalendarLeave[]> {
+  const overlapping = and(lte(hr_leaves.start_date, range.to), gte(hr_leaves.end_date, range.from));
 
-  if (await isHrOrAdmin(actorUserId)) {
-    return db.select().from(hr_leaves).where(overlapping).orderBy(asc(hr_leaves.start_date));
-  }
+  const select = () =>
+    db
+      .select({
+        leave: hr_leaves,
+        employeeName: employeeFullName,
+        employeePicture: employees.picture,
+      })
+      .from(hr_leaves)
+      .leftJoin(employees, eq(employees.id, hr_leaves.employee_id));
 
-  const actor = await employeeForUser(actorUserId);
-  if (!actor) return [];
+  const rows = await (async () => {
+    if (await isHrOrAdmin(actorUserId)) {
+      return select().where(overlapping).orderBy(asc(hr_leaves.start_date));
+    }
 
-  const visible = new Set<string>([actor.id, ...(await reportIdsUnder(actor.id))]);
-  if (actor.manager_id) {
-    const peers = await db
-      .select({ id: employees.id })
-      .from(employees)
-      .where(eq(employees.manager_id, actor.manager_id));
-    peers.forEach((p) => visible.add(p.id));
-  }
+    const actor = await employeeForUser(actorUserId);
+    if (!actor) return [];
 
-  return db
-    .select()
+    const visible = new Set<string>([actor.id, ...(await reportIdsUnder(actor.id))]);
+    if (actor.manager_id) {
+      const peers = await db
+        .select({ id: employees.id })
+        .from(employees)
+        .where(eq(employees.manager_id, actor.manager_id));
+      peers.forEach((p) => visible.add(p.id));
+    }
+
+    return select()
+      .where(and(overlapping, inArray(hr_leaves.employee_id, [...visible])))
+      .orderBy(asc(hr_leaves.start_date));
+  })();
+
+  return rows.map((r) => ({
+    id: r.leave.id,
+    employeeId: r.leave.employee_id ?? "",
+    employeeName: r.employeeName ?? "—",
+    employeePicture: r.employeePicture,
+    type: r.leave.type as LeaveTypeName,
+    startDate: r.leave.start_date,
+    endDate: r.leave.end_date,
+    status: titleCaseStatus(r.leave.status),
+    reason: r.leave.reason,
+  }));
+}
+
+export interface LeaveSummary {
+  window: SummaryWindow;
+  from: string;
+  to: string;
+  requestCount: number;
+  totalDays: number;
+}
+
+/**
+ * Punch-list #8 — historical leave totals for the HR home page's summary card. APPROVED only:
+ * "total leave taken" should reflect leave that actually happened, not requests still pending or
+ * ones that were rejected. A leave is counted in the window if its range overlaps it at all
+ * (boundary case: a leave spanning the edge of the window is counted with its FULL days total,
+ * not prorated to the overlapping portion — hr_leaves.days is a single precomputed total for the
+ * whole request, not a per-day breakdown, so splitting it at a window edge isn't available data).
+ */
+export async function getLeaveSummary(window: SummaryWindow, now?: Date): Promise<LeaveSummary> {
+  const { from, to } = windowBounds(window, now);
+
+  const [row] = await db
+    .select({
+      requestCount: sql<number>`count(*)::int`,
+      totalDays: sql<string>`coalesce(sum(${hr_leaves.days}), 0)`,
+    })
     .from(hr_leaves)
-    .where(and(overlapping, inArray(hr_leaves.employee_id, [...visible])))
-    .orderBy(asc(hr_leaves.start_date));
+    .where(
+      and(
+        eq(hr_leaves.status, "APPROVED"),
+        lte(hr_leaves.start_date, to),
+        gte(hr_leaves.end_date, from),
+      ),
+    );
+
+  return {
+    window,
+    from: toIsoDate(from),
+    to: toIsoDate(to),
+    requestCount: row?.requestCount ?? 0,
+    totalDays: Number(row?.totalDays ?? 0),
+  };
 }
 
 /** An employee's balances plus their request history — the self-service view. */
@@ -553,6 +833,7 @@ export async function deletePolicy(id: number) {
   return row;
 }
 
+/** Every configured holiday, any country — the Settings admin CRUD view. */
 export function listHolidays(year?: number) {
   const query = db.select().from(hr_org_holidays);
   if (year == null) return query.orderBy(asc(hr_org_holidays.date));
@@ -563,12 +844,45 @@ export function listHolidays(year?: number) {
     .orderBy(asc(hr_org_holidays.date));
 }
 
-export async function createHoliday(input: { date: string; name: string }) {
+/**
+ * Punch-list #7 — the union of holidays relevant to the org: every universal (country = "")
+ * holiday, plus every country-scoped one whose country matches an active employee's
+ * home_country. A single-country org (or one that has never tagged a holiday with a country)
+ * sees every holiday, identical to today's behavior, since untagged holidays default to "".
+ */
+export async function listRelevantHolidays(year?: number) {
+  const countries = await db
+    .selectDistinct({ country: employees.home_country })
+    .from(employees)
+    .where(eq(employees.is_active, true));
+  const represented = countries.map((c) => c.country).filter((c): c is string => !!c);
+
+  const scopeMatch = represented.length
+    ? or(eq(hr_org_holidays.country, ""), inArray(hr_org_holidays.country, represented))
+    : eq(hr_org_holidays.country, "");
+
+  const conditions =
+    year == null
+      ? [scopeMatch]
+      : [
+          scopeMatch,
+          gte(hr_org_holidays.date, `${year}-01-01`),
+          lte(hr_org_holidays.date, `${year}-12-31`),
+        ];
+
+  return db
+    .select()
+    .from(hr_org_holidays)
+    .where(and(...conditions))
+    .orderBy(asc(hr_org_holidays.date));
+}
+
+export async function createHoliday(input: { date: string; name: string; country?: string }) {
   const [row] = await db
     .insert(hr_org_holidays)
-    .values(input)
+    .values({ date: input.date, name: input.name, country: input.country ?? "" })
     .onConflictDoUpdate({
-      target: hr_org_holidays.date,
+      target: [hr_org_holidays.date, hr_org_holidays.country],
       set: { name: input.name, updated_at: new Date() },
     })
     .returning();

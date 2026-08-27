@@ -12,9 +12,14 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-// Sonner renders toasts into a portal; assert via the mocked toast fn instead.
-const toastMock = vi.fn();
-vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: toastMock }) }));
+// HeroUI renders toasts into a portal; assert via the mocked toast fns instead.
+const toastMock = vi.hoisted(() => ({
+  success: vi.fn(),
+  danger: vi.fn(),
+  warning: vi.fn(),
+  info: vi.fn(),
+}));
+vi.mock("@/lib/toast", () => ({ toast: toastMock }));
 
 import PipelineBoardPage from "@/app/recruitment/[id]/page";
 
@@ -43,7 +48,10 @@ const APPLICATIONS = [
 
 afterEach(() => {
   cleanup();
-  toastMock.mockClear();
+  toastMock.success.mockClear();
+  toastMock.danger.mockClear();
+  toastMock.warning.mockClear();
+  toastMock.info.mockClear();
 });
 
 function stubList() {
@@ -82,9 +90,9 @@ describe("PipelineBoard", () => {
     await userEvent.click(screen.getByLabelText("Move Ada"));
     await userEvent.click(await screen.findByText("Move to screening"));
 
-    await waitFor(() => expect(toastMock).toHaveBeenCalled());
-    const arg = toastMock.mock.calls.at(-1)![0];
-    expect(arg.variant).toBe("destructive");
-    expect(String(arg.description)).toContain("screening");
+    await waitFor(() => expect(toastMock.danger).toHaveBeenCalled());
+    const [title, description] = toastMock.danger.mock.calls.at(-1)!;
+    expect(title).toBe("Move not allowed");
+    expect(String(description)).toContain("screening");
   });
 });

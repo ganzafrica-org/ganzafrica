@@ -4,12 +4,15 @@
  */
 import { describe, it, expect, beforeEach } from "vitest";
 import { resetDb } from "../setup";
+import { db } from "../../src/db/client";
+import { hr_leaves } from "../../src/db/schema";
 import {
   listPolicies,
   upsertPolicy,
   updatePolicy,
   deletePolicy,
   listHolidays,
+  listRelevantHolidays,
   createHoliday,
   deleteHoliday,
   adjustBalance,
@@ -19,6 +22,7 @@ import {
   cancelLeaveRequest,
   requestLeave,
   decideLeave,
+  getLeaveSummary,
 } from "../../src/services/hr/leave-core.service";
 import { makeEmployeeUser, makeLeavePolicy, ensureRole } from "../factories";
 
@@ -107,6 +111,48 @@ describe("MOD-06 holidays", () => {
     expect(renamed.name).toBe("Liberation Day (obs.)");
     expect(await listHolidays(2026)).toHaveLength(1);
   });
+
+  it("a single-country org (no holiday ever tagged) sees every holiday — identical to today's behavior (regression)", async () => {
+    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
+    await createHoliday({ date: "2026-01-01", name: "New Year" });
+    await createHoliday({ date: "2026-07-01", name: "Independence Day" });
+
+    const relevant = await listRelevantHolidays(2026);
+    expect(relevant.map((h) => h.name).sort()).toEqual(["Independence Day", "New Year"]);
+  });
+
+  it("a two-country org sees the union: universal holidays plus each represented country's own", async () => {
+    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
+    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Kenya" });
+    await createHoliday({ date: "2026-01-01", name: "New Year" }); // universal
+    await createHoliday({ date: "2026-07-01", name: "Rwanda Independence Day", country: "Rwanda" });
+    await createHoliday({ date: "2026-12-12", name: "Kenya Jamhuri Day", country: "Kenya" });
+    await createHoliday({ date: "2026-05-25", name: "Ghana Republic Day", country: "Ghana" }); // no employee there
+
+    const relevant = await listRelevantHolidays(2026);
+    expect(relevant.map((h) => h.name).sort()).toEqual([
+      "Kenya Jamhuri Day",
+      "New Year",
+      "Rwanda Independence Day",
+    ]);
+  });
+
+  it("no represented countries (no active employees) falls back to universal-only holidays", async () => {
+    await createHoliday({ date: "2026-01-01", name: "New Year" }); // universal
+    await createHoliday({ date: "2026-07-01", name: "Rwanda Independence Day", country: "Rwanda" });
+
+    const relevant = await listRelevantHolidays(2026);
+    expect(relevant.map((h) => h.name)).toEqual(["New Year"]);
+  });
+
+  it("omitting the year returns holidays across every year, not just one", async () => {
+    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
+    await createHoliday({ date: "2025-01-01", name: "New Year 2025" });
+    await createHoliday({ date: "2026-01-01", name: "New Year 2026" });
+
+    const relevant = await listRelevantHolidays();
+    expect(relevant.map((h) => h.name).sort()).toEqual(["New Year 2025", "New Year 2026"]);
+  });
 });
 
 describe("MOD-06 balance adjustment and self-service read", () => {
@@ -177,6 +223,36 @@ describe("MOD-06 cancellation rules", () => {
 
     await expect(cancelLeaveRequest(stranger.user.id, leave.id)).rejects.toMatchObject({
       statusCode: 403,
+    });
+  });
+
+  it("stops a non-HR employee filing a leave request on someone else's behalf", async () => {
+    const owner = await makeEmployeeUser({ employmentType: "staff" });
+    const stranger = await makeEmployeeUser({ employmentType: "staff" });
+
+    await expect(
+      requestLeave(stranger.user.id, owner.employee.id, {
+        type: "ANNUAL",
+        startDate: d("2026-03-02"),
+        endDate: d("2026-03-03"),
+      }),
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("rejects any action on a legacy row that predates the employees model (employee_id null)", async () => {
+    const [legacy] = await db
+      .insert(hr_leaves)
+      .values({
+        type: "ANNUAL",
+        start_date: d("2026-03-02"),
+        end_date: d("2026-03-03"),
+        reason: "pre-migration row",
+      })
+      .returning();
+
+    await expect(cancelLeaveRequest(1, legacy.id)).rejects.toMatchObject({
+      statusCode: 409,
+      code: "LEAVE_LEGACY_ROW",
     });
   });
 
@@ -254,5 +330,85 @@ describe("MOD-06 cancellation rules", () => {
 
     expect(leave.status).toBe("PENDING");
     expect(leave.employee_id).toBe(employee.employee.id);
+  });
+});
+
+describe("MOD-06 leave summary (punch-list #8)", () => {
+  const NOW = d("2026-03-18"); // Wednesday — week window is Mon 2026-03-16..Sun 2026-03-22
+
+  beforeEach(async () => {
+    await resetDb();
+    await ensureRole("employee");
+    await ensureRole("hr");
+    await makeLeavePolicy({ employmentType: "staff", type: "ANNUAL", annualDays: 20 });
+  });
+
+  async function approvedLeave(startIso: string, endIso: string) {
+    const employee = await makeEmployeeUser({ employmentType: "staff" });
+    const hr = await makeEmployeeUser({ role: "hr", employmentType: "staff" });
+    const leave = await requestLeave(hr.user.id, employee.employee.id, {
+      type: "ANNUAL",
+      startDate: d(startIso),
+      endDate: d(endIso),
+      reason: "summary coverage",
+    });
+    return decideLeave(hr.user.id, leave.id, "APPROVED");
+  }
+
+  it("counts an approved leave inside the current week/month/year window", async () => {
+    await approvedLeave("2026-03-16", "2026-03-17"); // Mon-Tue, 2 working days
+
+    const week = await getLeaveSummary("week", NOW);
+    expect(week.requestCount).toBe(1);
+    expect(week.totalDays).toBe(2);
+    expect(week.from).toBe("2026-03-16");
+    expect(week.to).toBe("2026-03-22");
+
+    const month = await getLeaveSummary("month", NOW);
+    expect(month.requestCount).toBe(1);
+    expect(month.totalDays).toBe(2);
+
+    const year = await getLeaveSummary("year", NOW);
+    expect(year.requestCount).toBe(1);
+    expect(year.totalDays).toBe(2);
+  });
+
+  it("boundary: a leave spanning a window edge is counted in the window its range overlaps, with its full days total", async () => {
+    // Fri Feb 27 -> Mon Mar 2: crosses the Feb/Mar boundary. Working days: Feb 27, Mar 2 (weekend
+    // between excluded) = 2 total, attributed to March in full since the leave overlaps it.
+    await approvedLeave("2026-02-27", "2026-03-02");
+
+    const march = await getLeaveSummary("month", NOW);
+    expect(march.requestCount).toBe(1);
+    expect(march.totalDays).toBe(2);
+
+    // A window that shares no days with the leave at all sees nothing.
+    const nextYear = await getLeaveSummary("year", d("2025-06-15"));
+    expect(nextYear.requestCount).toBe(0);
+    expect(nextYear.totalDays).toBe(0);
+  });
+
+  it("only counts APPROVED leave — pending and rejected are excluded", async () => {
+    const employee = await makeEmployeeUser({ employmentType: "staff" });
+    const hr = await makeEmployeeUser({ role: "hr", employmentType: "staff" });
+
+    await requestLeave(hr.user.id, employee.employee.id, {
+      type: "ANNUAL",
+      startDate: d("2026-03-16"),
+      endDate: d("2026-03-16"),
+      reason: "left pending",
+    });
+
+    const rejected = await requestLeave(hr.user.id, employee.employee.id, {
+      type: "ANNUAL",
+      startDate: d("2026-03-17"),
+      endDate: d("2026-03-17"),
+      reason: "will be rejected",
+    });
+    await decideLeave(hr.user.id, rejected.id, "REJECTED", "no coverage");
+
+    const week = await getLeaveSummary("week", NOW);
+    expect(week.requestCount).toBe(0);
+    expect(week.totalDays).toBe(0);
   });
 });

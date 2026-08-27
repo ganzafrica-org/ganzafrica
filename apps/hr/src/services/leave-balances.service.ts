@@ -40,6 +40,40 @@ export interface OrgHoliday {
   id: number;
   date: string;
   name: string;
+  /** "" = universal (applies regardless of country); otherwise matches employees.home_country. */
+  country: string;
+}
+
+/** Lightweight attachment metadata — open it via documentsService.getDocument(id) + DocumentViewer. */
+export interface LeaveAttachment {
+  id: string;
+  document_name: string;
+  file_size: string;
+  created_at: string;
+}
+
+export type SummaryWindow = "week" | "month" | "year";
+
+/** GET /hr/leave/summary — historical (APPROVED-only) totals for a window (HR home page card). */
+export interface LeaveSummaryTotals {
+  window: SummaryWindow;
+  from: string;
+  to: string;
+  requestCount: number;
+  totalDays: number;
+}
+
+/** GET /hr/leave/calendar row — any status, in range, scoped to the viewer's team (or org for HR). */
+export interface CalendarLeaveEvent {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  employeePicture: string | null;
+  type: LeaveTypeName;
+  startDate: string;
+  endDate: string;
+  status: "Pending" | "Approved" | "Rejected" | "Cancelled";
+  reason: string;
 }
 
 export interface LeaveDraft {
@@ -108,8 +142,33 @@ export const leaveBalancesService = {
     return data.leave;
   },
 
+  async listAttachments(leaveId: string) {
+    const { data } = await httpClient.get<{ attachments: LeaveAttachment[] }>(
+      `/hr/leave/${leaveId}/attachments`,
+    );
+    return data.attachments;
+  },
+
+  /** Optional — a leave request is fully submittable with none of these. */
+  async uploadAttachment(leaveId: string, file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    const { data } = await httpClient.post<{ document: { id: string } }>(
+      `/hr/leave/${leaveId}/attachments`,
+      form,
+    );
+    return data.document;
+  },
+
+  async getSummary(window: SummaryWindow) {
+    const { data } = await httpClient.get<LeaveSummaryTotals>("/hr/leave/summary", {
+      params: { window },
+    });
+    return data;
+  },
+
   async calendar(from: string, to: string) {
-    const { data } = await httpClient.get<{ events: LeaveRequest[] }>("/hr/leave/calendar", {
+    const { data } = await httpClient.get<{ events: CalendarLeaveEvent[] }>("/hr/leave/calendar", {
       params: { from, to },
     });
     return data.events;
@@ -141,7 +200,15 @@ export const leaveBalancesService = {
     return data.holidays;
   },
 
-  async createHoliday(payload: { date: string; name: string }) {
+  /** Union of universal + every represented country's holidays — the Leave Calendar's display. */
+  async listRelevantHolidays(year?: number) {
+    const { data } = await httpClient.get<{ holidays: OrgHoliday[] }>("/hr/holidays", {
+      params: { scope: "relevant", ...(year ? { year } : undefined) },
+    });
+    return data.holidays;
+  },
+
+  async createHoliday(payload: { date: string; name: string; country?: string }) {
     const { data } = await httpClient.post<{ holiday: OrgHoliday }>("/hr/holidays", payload);
     return data.holiday;
   },

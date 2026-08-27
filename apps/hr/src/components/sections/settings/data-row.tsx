@@ -6,15 +6,15 @@ interface DataRowProps {
 
 export function DataRow({ label, value, variant = "default" }: DataRowProps) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
       <span
-        className={`text-sm font-medium ${variant === "muted" ? "text-gray-600" : "text-gray-700"}`}
+        className={`text-sm font-medium ${variant === "muted" ? "text-muted-foreground" : "text-foreground/80"}`}
       >
         {label}
       </span>
       <span
         className={`text-sm ${
-          variant === "muted" ? "text-gray-500" : "text-gray-900 font-semibold"
+          variant === "muted" ? "text-muted-foreground" : "text-foreground font-semibold"
         }`}
       >
         {value}

@@ -26,6 +26,11 @@ apiClient.interceptors.request.use((config) => {
 
 let refreshPromise: Promise<boolean> | null = null;
 
+// Pages a signed-out visitor legitimately lands on (an invite/reset link, the login page itself,
+// etc.) — a 401 here (e.g. AuthProvider's own /auth/me probe) is expected, not a reason to bounce
+// them to /login and blow away whatever they're doing on the page (like a reset-password form).
+const PUBLIC_AUTH_PATHS = ["/login", "/reset-password", "/forgot-password", "/verify", "/signup"];
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -44,7 +49,10 @@ apiClient.interceptors.response.use(
           });
       }
       if (await refreshPromise) return apiClient(originalRequest);
-      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+      const onPublicAuthPath =
+        typeof window !== "undefined" &&
+        PUBLIC_AUTH_PATHS.some((p) => window.location.pathname.startsWith(p));
+      if (typeof window !== "undefined" && !onPublicAuthPath) {
         window.location.href = "/login";
       }
     }

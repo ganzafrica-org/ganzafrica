@@ -72,8 +72,13 @@ export const signature_requests = pgTable(
     signer_email: text("signer_email"), // external (and used for internal notifications)
     signer_name: text("signer_name"),
     // Optional link back to what this signs (a contract, a document, an onboarding task).
+    // text, not integer/uuid: ref_kind is polymorphic and hr_contracts' PK is a uuid.
     ref_kind: text("ref_kind"), // 'contract' | 'document' | ...
-    ref_id: integer("ref_id"),
+    ref_id: text("ref_id"),
+    // Position in a multi-signer sequence sharing the same (ref_kind, ref_id, template_id) — e.g.
+    // an employment contract's HR signer (1) then employee signer (2). Single-signer requests are
+    // just sequence_no=1 with no siblings. See completeSequenceStep in signing.service.ts.
+    sequence_no: integer("sequence_no").notNull().default(1),
     status: text("status").notNull().default("draft"), // draft|sent|signed|declined|voided|expired
     signed_file_key: text("signed_file_key"), // the completed/signed copy (private)
     expires_at: timestamp("expires_at", { withTimezone: true }),

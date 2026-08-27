@@ -22,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast";
 import { recruitmentService } from "@/services/recruitment.service";
 import { FormBuilder } from "@/components/recruitment/form-builder";
 import type { FormDefinition } from "@/lib/recruitment/form-types";
@@ -59,7 +59,6 @@ type Step = 1 | 2 | 3;
 
 export default function NewPostingPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [step, setStep] = useState<Step>(1);
   const [saving, setSaving] = useState(false);
   const [oppId, setOppId] = useState<number | null>(null);
@@ -85,7 +84,7 @@ export default function NewPostingPage() {
       !details.description ||
       !details.application_deadline
     ) {
-      toast({ title: "Fill in title, description and deadline", variant: "destructive" });
+      toast.danger("Fill in title, description and deadline");
       return;
     }
     setSaving(true);
@@ -103,7 +102,7 @@ export default function NewPostingPage() {
       setOppId(res.opportunity.id);
       setStep(2);
     } catch {
-      toast({ title: "Couldn't create the posting", variant: "destructive" });
+      toast.danger("Couldn't create the posting");
     } finally {
       setSaving(false);
     }
@@ -116,10 +115,10 @@ export default function NewPostingPage() {
       await recruitmentService.saveForm(oppId, definition);
       await recruitmentService.publishForm(oppId);
       await recruitmentService.publishOpportunity(oppId);
-      toast({ title: "Posting published" });
+      toast.success("Posting published");
       router.push(`/recruitment/${oppId}`);
     } catch {
-      toast({ title: "Publish failed", variant: "destructive" });
+      toast.danger("Publish failed");
     } finally {
       setSaving(false);
       setPublishOpen(false);

@@ -3,6 +3,7 @@ import { timestampFields } from "../common";
 import { documentCategoryEnum, documentStatusEnum } from "./hr.enums";
 import { employees } from "./employees";
 import { hr_contracts } from "@/db/schema/hr/contract";
+import { hr_leaves } from "./leave";
 
 export const hr_documents = pgTable(
   "hr_documents",
@@ -22,6 +23,10 @@ export const hr_documents = pgTable(
     // (oldest first). Current file stays in file_path/version; this is prior versions only.
     versions: jsonb("versions").default([]).notNull(),
     contract_id: uuid("contract_id").references(() => hr_contracts.id), // The dynamic Foreign Key link requested
+    // Punch-list #5: an optional leave-request attachment is just an hr_documents row with this
+    // set (and contract_id null) — reuses the same upload/ACL/viewer plumbing as every other
+    // document rather than a parallel attachment system.
+    leave_id: uuid("leave_id").references(() => hr_leaves.id, { onDelete: "cascade" }),
     // DOC-plus: search-in-file — extracted (normalized) text + when it was indexed. Populated
     // out-of-band after upload via the shared text-extraction service (OCR seam for scans).
     extracted_text: text("extracted_text"),

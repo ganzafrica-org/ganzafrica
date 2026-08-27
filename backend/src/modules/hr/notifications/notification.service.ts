@@ -49,6 +49,9 @@ const NOTIFICATION_ROUTING: Record<NotificationType, RoutingTarget> = {
   PROCESS_TASK_ASSIGNED: { it: false, hr: false, employee: false },
   PROCESS_TASK_OVERDUE: { it: false, hr: false, employee: false },
   PROCESS_COMPLETED: { it: false, hr: false, employee: false },
+  // MOD-02: setManager addresses the affected employee + the new manager directly via
+  // recipientUserIds — no role fan-out.
+  MANAGER_CHANGED: { it: false, hr: false, employee: false },
 };
 
 const LEAVE_TYPES: NotificationType[] = [

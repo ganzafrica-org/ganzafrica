@@ -5,6 +5,7 @@
 
 export type EmploymentType = "fellow" | "analyst" | "staff" | "contractor" | "intern";
 export type EmployeeLifecycleStatus =
+  | "pending"
   | "onboarding"
   | "active"
   | "on_leave"
@@ -39,8 +40,9 @@ export type HrEditableField = (typeof HR_EDITABLE_FIELDS)[number];
 export type SelfEditableField = (typeof SELF_EDITABLE_FIELDS)[number];
 
 /**
- * Statuses HR may set directly. `onboarding` is set by the hire flow and cleared by LCM-01;
- * `offboarding`/`exited` belong to LCM-02, so HR cannot jump an employee straight to exited.
+ * Statuses HR may set directly. `pending`/`onboarding` are set by the hire flow and advanced by
+ * LCM-01 as the employee acts on their checklist; `offboarding`/`exited` belong to LCM-02. HR
+ * cannot jump an employee straight to any of those — all four are system-owned.
  */
 export const HR_SETTABLE_STATUSES: EmployeeLifecycleStatus[] = ["active", "on_leave"];
 
@@ -57,10 +59,18 @@ export interface DirectoryRow {
   employment_type: string;
   status: string;
   picture: string | null;
+  phone: string | null;
+  citizenship: string | null;
+  home_country: string | null;
+  home_city: string | null;
   hired_at: string | null;
   manager: { id: string; first_name: string; last_name: string } | null;
   /** Null when the employees row has no linked users account (a data gap HR can repair). */
   account: { email: string; is_active: boolean } | null;
+  /** Currency of the employee's ACTIVE contract, if any — the directory's country-flag proxy. */
+  contract_currency: string | null;
+  /** Reversible deactivation (replaces the old hard-delete action) — independent of `status`. */
+  is_active: boolean;
 }
 
 export interface ListEmployeesQuery {
@@ -72,6 +82,8 @@ export interface ListEmployeesQuery {
   limit?: number;
   sortBy?: "name" | "department" | "hired_at";
   sortOrder?: "asc" | "desc";
+  /** Directory scope by activation state — default "active" (deactivated employees hidden). */
+  active?: "active" | "inactive" | "all";
 }
 
 export interface EmployeeDetail extends DirectoryRow {
@@ -97,4 +109,7 @@ export interface CreateEmployeeInput {
   manager_id?: string | null;
   hired_at?: string | null;
   phone?: string | null;
+  citizenship?: string | null;
+  home_country?: string | null;
+  home_city?: string | null;
 }

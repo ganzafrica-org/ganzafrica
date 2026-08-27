@@ -16,7 +16,7 @@ import {
 import { useAssetCategories, useCreateAsset } from "@/hooks/useAssets";
 import type { CreateAssetRequest } from "@/types/api";
 import { Loader2, Upload, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 interface CreateAssetSheetProps {
   open: boolean;
@@ -78,7 +78,7 @@ export function CreateAssetSheet({ open, onOpenChange }: CreateAssetSheetProps) 
 
   const handleSubmit = async () => {
     if (!form.deviceName.trim() || !form.serialNumber.trim() || !form.categoryId) {
-      toast.error("Device name, serial number, and category are required");
+      toast.danger("Device name, serial number, and category are required");
       return;
     }
 
@@ -86,7 +86,7 @@ export function CreateAssetSheet({ open, onOpenChange }: CreateAssetSheetProps) 
       (field) => field.required && !specValues[field.key]?.trim(),
     );
     if (missingRequired) {
-      toast.error(`"${missingRequired.label}" is required`);
+      toast.danger(`"${missingRequired.label}" is required`);
       return;
     }
 
@@ -107,8 +107,8 @@ export function CreateAssetSheet({ open, onOpenChange }: CreateAssetSheetProps) 
       await createAsset.mutateAsync({ payload, images: images.length > 0 ? images : undefined });
       toast.success("Asset created");
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? "Failed to create asset");
+    } catch {
+      // Global mutation error handler shows the toast.
     }
   };
 

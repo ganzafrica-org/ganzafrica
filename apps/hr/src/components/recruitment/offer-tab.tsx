@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast";
 import { useApplicationOffer, useOfferMutations } from "@/hooks/useRecruitment";
 import type { CreateOfferPayload } from "@/services/recruitment.service";
 
@@ -21,7 +21,6 @@ const EMPLOYMENT_TYPES = ["fellow", "analyst", "staff", "contractor", "intern"] 
 export function OfferTab({ applicationId }: { applicationId: number }) {
   const { data: offer, isLoading } = useApplicationOffer(applicationId);
   const m = useOfferMutations(applicationId);
-  const { toast } = useToast();
 
   const [draft, setDraft] = useState<CreateOfferPayload>({
     position_title: "",
@@ -78,7 +77,7 @@ export function OfferTab({ applicationId }: { applicationId: number }) {
           disabled={m.create.isPending || !draft.position_title}
           onClick={() =>
             m.create.mutate(draft, {
-              onError: () => toast({ title: "Couldn't create offer", variant: "destructive" }),
+              onError: () => toast.danger("Couldn't create offer"),
             })
           }
         >
@@ -136,12 +135,8 @@ export function OfferTab({ applicationId }: { applicationId: number }) {
               disabled={m.send.isPending || !offer.letter_file_key || !offer.start_date}
               onClick={() =>
                 m.send.mutate(offer.id, {
-                  onSuccess: () => toast({ title: "Offer sent to the candidate" }),
-                  onError: () =>
-                    toast({
-                      title: "Attach a letter and start date first",
-                      variant: "destructive",
-                    }),
+                  onSuccess: () => toast.success("Offer sent to the candidate"),
+                  onError: () => toast.danger("Attach a letter and start date first"),
                 })
               }
             >

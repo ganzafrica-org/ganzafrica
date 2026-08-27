@@ -9,8 +9,10 @@ export default function OrganizationPage() {
     <div className="flex flex-col justify-center items-center w-full">
       <div className="w-[80%]">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Organization settings</h1>
-          <p className="text-gray-600 mt-1">Manage your organization information and preferences</p>
+          <h1 className="text-3xl font-bold text-foreground">Organization settings</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your organization information and preferences
+          </p>
         </div>
 
         <SettingsSection title="Organization information" onEdit={() => alert("Edit clicked")}>

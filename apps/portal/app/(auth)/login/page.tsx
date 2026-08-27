@@ -7,10 +7,11 @@ import { Suspense } from "react";
 function LoginPageContent() {
   const searchParams = useSearchParams();
   const userType = searchParams.get("user"); // 'alumni' or null
+  const next = searchParams.get("next");
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <LoginForm userType={userType} />
+      <LoginForm userType={userType} next={next} />
     </div>
   );
 }

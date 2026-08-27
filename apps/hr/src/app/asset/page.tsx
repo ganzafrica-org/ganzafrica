@@ -93,7 +93,7 @@ import {
 } from "@/hooks/useAssets";
 import { useEmployees } from "@/hooks/useEmployees";
 import type { Asset, AssetStats, AssetMaintenance } from "@/types/api";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 const chartConfig = {
   count: {
@@ -164,13 +164,7 @@ export default function AssetsPage() {
   };
 
   const handleReportIssue = (asset: Asset) => {
-    flagAsset.mutate(
-      { id: asset.id },
-      {
-        onSuccess: () => toast.success("Asset flagged"),
-        onError: () => toast.error("Failed to flag asset"),
-      },
-    );
+    flagAsset.mutate({ id: asset.id }, { onSuccess: () => toast.success("Asset flagged") });
   };
 
   useEffect(() => {
@@ -223,8 +217,8 @@ export default function AssetsPage() {
       await deleteAsset.mutateAsync(deleteAssetTarget.id);
       toast.success("Asset deleted");
       setDeleteAssetTarget(null);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to delete asset");
+    } catch {
+      // Global mutation error handler shows the toast.
     }
   };
 
@@ -234,8 +228,8 @@ export default function AssetsPage() {
       await deleteMaintenance.mutateAsync(deleteMaintenanceTarget.id);
       toast.success("Maintenance record deleted");
       setDeleteMaintenanceTarget(null);
-    } catch (error) {
-      toast.error("Failed to delete record");
+    } catch {
+      // Global mutation error handler shows the toast.
     }
   };
 
@@ -247,8 +241,8 @@ export default function AssetsPage() {
     try {
       await updateMaintenanceStatus.mutateAsync({ id, payload: { status, rejectionReason } });
       toast.success(`Maintenance ${status.toLowerCase()} successfully`);
-    } catch (error) {
-      toast.error(`Failed to ${status.toLowerCase()} maintenance`);
+    } catch {
+      // Global mutation error handler shows the toast.
     }
   };
 
@@ -306,7 +300,7 @@ export default function AssetsPage() {
             </Avatar>
             <div>
               <div className="text-sm font-medium truncate max-w-[120px]">
-                {emp ? `${emp.firstName} ${emp.lastName}` : (assignedToId as string)}
+                {emp ? `${emp.first_name} ${emp.last_name}` : (assignedToId as string)}
               </div>
             </div>
           </div>

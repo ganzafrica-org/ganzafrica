@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Eye, AlertCircle, CheckCircle } from "lucide-react";
+import { Eye, AlertCircle, CheckCircle, Building2, Users, UserCheck } from "lucide-react";
 import { DepartmentSheet } from "@/components/sections/sheets/department-sheet";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
+import { StatsHeader } from "@/components/sections/header";
+import { useDepartmentStats } from "@/hooks/useEmployees";
 
 type Department = {
   name: string;
@@ -47,6 +49,22 @@ const getDeptInitials = (name: string) =>
 
 const Page = () => {
   const [departmentStats, setDepartmentStats] = useState<Department[]>(initialDepartmentStats);
+  const { data: realStats, isLoading: statsLoading } = useDepartmentStats();
+
+  const headerStats = useMemo(() => {
+    const active = realStats?.departments.reduce((sum, d) => sum + d.active, 0) ?? 0;
+    const onLeave = realStats?.departments.reduce((sum, d) => sum + d.on_leave, 0) ?? 0;
+    return [
+      {
+        icon: Building2,
+        label: "Total Departments",
+        value: String(realStats?.total_departments ?? 0),
+      },
+      { icon: Users, label: "Total Employees", value: String(realStats?.total_employees ?? 0) },
+      { icon: UserCheck, label: "Active", value: String(active) },
+      { icon: AlertCircle, label: "On Leave", value: String(onLeave) },
+    ];
+  }, [realStats]);
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
@@ -77,8 +95,16 @@ const Page = () => {
   };
 
   return (
-    <div className="min-h-screen py-6 bg-transparent">
-      <div className="max-w-full flex flex-col gap-4">
+    <div className="min-h-screen flex flex-col w-full bg-[#f6f8fb] dark:bg-slate-950 text-slate-900 dark:text-white">
+      <div className="space-y-6">
+        <StatsHeader
+          title="Departments"
+          subtitle="Headcount by department"
+          stats={headerStats}
+          isLoading={statsLoading}
+        />
+      </div>
+      <div className="flex flex-col mt-6 gap-4">
         {departmentStats.map((dept) => (
           <div
             key={dept.name}

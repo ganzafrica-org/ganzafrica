@@ -59,12 +59,14 @@ export default function PoliciesPage() {
   );
 
   return (
-    <div className="flex flex-col justify-center items-center w-full bg-gray-50 min-h-screen">
+    <div className="flex flex-col justify-center items-center w-full bg-background min-h-screen">
       <div className="px-6 py-6 flex flex-col w-full max-w-5xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Policies</h1>
-            <p className="text-sm text-gray-600">Publish policies and track acknowledgements.</p>
+            <h1 className="text-2xl font-bold text-foreground">Policies</h1>
+            <p className="text-sm text-muted-foreground">
+              Publish policies and track acknowledgements.
+            </p>
           </div>
           <Button
             onClick={() => {
@@ -79,16 +81,18 @@ export default function PoliciesPage() {
         </div>
 
         <div className="mb-4 relative max-w-xs">
-          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search policies"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-white border-gray-300"
+            className="pl-10 bg-background border-border"
           />
         </div>
 
-        <div className="mb-4 text-sm text-gray-600">Total {filteredPolicies.length} items</div>
+        <div className="mb-4 text-sm text-muted-foreground">
+          Total {filteredPolicies.length} items
+        </div>
 
         {isLoading && (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
@@ -102,21 +106,23 @@ export default function PoliciesPage() {
         )}
 
         {!isLoading && !isError && (
-          <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-lg border border-border bg-card">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Title</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
+                    Title
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
                     Category
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
                     Version
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-muted-foreground">
                     Downloads
                   </th>
                   <th className="px-4 py-3 w-12"></th>
@@ -126,7 +132,7 @@ export default function PoliciesPage() {
                 {filteredPolicies.map((policy) => (
                   <tr
                     key={policy.id}
-                    className="border-b border-gray-200 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
                     onClick={() => setAckReportPolicy(policy)}
                   >
                     <td className="px-4 py-4">
@@ -134,19 +140,23 @@ export default function PoliciesPage() {
                         {policy.title ?? policy.name}
                       </p>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-700">
+                    <td className="px-4 py-4 text-sm text-muted-foreground">
                       {policy.policyCategory ?? policy.category ?? "—"}
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-700">v{policy.version ?? "—"}</td>
+                    <td className="px-4 py-4 text-sm text-muted-foreground">
+                      v{policy.version ?? "—"}
+                    </td>
                     <td className="px-4 py-4">{getStatusBadge(policy)}</td>
-                    <td className="px-4 py-4 text-sm text-gray-700">{policy.downloads ?? 0}</td>
+                    <td className="px-4 py-4 text-sm text-muted-foreground">
+                      {policy.downloads ?? 0}
+                    </td>
                     <td className="px-4 py-4">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-gray-400 hover:text-gray-600"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreVertical className="h-4 w-4" />
@@ -190,7 +200,7 @@ export default function PoliciesPage() {
                 ))}
                 {filteredPolicies.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">
+                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
                       No policies yet.
                     </td>
                   </tr>

@@ -17,7 +17,7 @@ across the org. Continuous feedback (praise/suggestion) can be given any time â€
 ## 2. Context & current state
 
 - NOTHING exists in the backend â€” schema is net-new.
-- Mock UI to replace: `apps/hr/src/app/performance/page.tsx` +
+- Mock UI to replace: `../../../apps/hr/src/app/employees/performance/page.tsx` +
   `app/employees/performance/`; archived reference `apps/_archived/main/hr/performance/`
   (harvest layout: cycle cards, review forms, ratings display).
 - Manager checks: `isManagerOf` (MOD-02). Notifications module for nudges.

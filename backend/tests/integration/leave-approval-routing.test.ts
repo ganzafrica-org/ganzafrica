@@ -3,7 +3,10 @@
  * with HR as override and as the fallback queue for people with no manager.
  */
 import { describe, it, expect, beforeEach } from "vitest";
+import { eq } from "drizzle-orm";
 import { resetDb } from "../setup";
+import { db } from "../../src/db/client";
+import { employees } from "../../src/db/schema";
 import { isManagerOf, getManagerUserId } from "../../src/services/hr/employee-context";
 import {
   requestLeave,
@@ -189,5 +192,30 @@ describe("MOD-06 calendar scoping", () => {
     expect(hrView.map((e) => e.id)).toEqual(
       expect.arrayContaining([peerLeave.id, outsiderLeave.id]),
     );
+  });
+
+  it("includes every status, not just approved, and carries the employee's name and picture (punch-list #6)", async () => {
+    const { manager, report } = await seedOrg();
+    await db
+      .update(employees)
+      .set({ picture: "https://cdn.example.com/report.jpg" })
+      .where(eq(employees.id, report.employee.id));
+
+    const pending = await requestLeave(report.user.id, report.employee.id, {
+      type: "ANNUAL",
+      startDate: d("2026-03-02"),
+      endDate: d("2026-03-03"),
+      reason: "Trip",
+    });
+
+    const events = await getLeaveCalendar(manager.user.id, {
+      from: d("2026-03-01"),
+      to: d("2026-03-31"),
+    });
+    const event = events.find((e) => e.id === pending.id);
+    expect(event).toBeTruthy();
+    expect(event!.status).toBe("Pending");
+    expect(event!.employeeName).toBe(`${report.employee.first_name} ${report.employee.last_name}`);
+    expect(event!.employeePicture).toBe("https://cdn.example.com/report.jpg");
   });
 });

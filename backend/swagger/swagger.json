@@ -34,14 +34,7 @@
     "schemas": {
       "User": {
         "type": "object",
-        "required": [
-          "id",
-          "email",
-          "name",
-          "base_role",
-          "created_at",
-          "updated_at"
-        ],
+        "required": ["id", "email", "name", "base_role", "created_at", "updated_at"],
         "properties": {
           "id": {
             "type": "string",
@@ -58,13 +51,7 @@
           },
           "base_role": {
             "type": "string",
-            "enum": [
-              "public",
-              "applicant",
-              "fellow",
-              "employee",
-              "alumni"
-            ],
+            "enum": ["public", "applicant", "fellow", "employee", "alumni"],
             "description": "User base role"
           },
           "avatar_url": {
@@ -118,11 +105,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "planned",
-              "active",
-              "completed"
-            ],
+            "enum": ["planned", "active", "completed"],
             "description": "Project status"
           },
           "start_date": {
@@ -153,10 +136,7 @@
       },
       "Error": {
         "type": "object",
-        "required": [
-          "error",
-          "message"
-        ],
+        "required": ["error", "message"],
         "properties": {
           "error": {
             "type": "string",
@@ -224,11 +204,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "inactive",
-              "archived"
-            ]
+            "enum": ["active", "inactive", "archived"]
           },
           "created_by": {
             "type": "integer"
@@ -272,13 +248,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "planning",
-              "active",
-              "on_hold",
-              "completed",
-              "cancelled"
-            ]
+            "enum": ["planning", "active", "on_hold", "completed", "cancelled"]
           },
           "start_date": {
             "type": "string",
@@ -333,21 +303,11 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "backlog",
-              "todo",
-              "inprogress",
-              "review",
-              "done"
-            ]
+            "enum": ["backlog", "todo", "inprogress", "review", "done"]
           },
           "priority": {
             "type": "string",
-            "enum": [
-              "low",
-              "medium",
-              "high"
-            ]
+            "enum": ["low", "medium", "high"]
           },
           "due_date": {
             "type": "string",
@@ -375,10 +335,7 @@
       },
       "HrLoginRequest": {
         "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
+        "required": ["email", "password"],
         "properties": {
           "email": {
             "type": "string",
@@ -433,19 +390,11 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "EMPLOYEE",
-              "IT",
-              "HR"
-            ]
+            "enum": ["EMPLOYEE", "IT", "HR"]
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "ON_LEAVE",
-              "INACTIVE"
-            ]
+            "enum": ["ACTIVE", "ON_LEAVE", "INACTIVE"]
           },
           "department": {
             "type": "string"
@@ -475,12 +424,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "FULL_TIME",
-              "PART_TIME",
-              "CONTRACT",
-              "INTERN"
-            ]
+            "enum": ["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"]
           },
           "startDate": {
             "type": "string",
@@ -499,11 +443,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "EXPIRED",
-              "TERMINATED"
-            ]
+            "enum": ["ACTIVE", "EXPIRED", "TERMINATED"]
           },
           "notes": {
             "type": "string",
@@ -524,14 +464,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "SICK",
-              "ANNUAL",
-              "MATERNITY",
-              "PATERNITY",
-              "UNPAID",
-              "OTHER"
-            ]
+            "enum": ["SICK", "ANNUAL", "MATERNITY", "PATERNITY", "UNPAID", "OTHER"]
           },
           "startDate": {
             "type": "string",
@@ -543,12 +476,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PENDING",
-              "APPROVED",
-              "REJECTED",
-              "CANCELLED"
-            ]
+            "enum": ["PENDING", "APPROVED", "REJECTED", "CANCELLED"]
           },
           "reason": {
             "type": "string",
@@ -592,11 +520,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "DRAFT",
-              "PAID",
-              "CANCELLED"
-            ]
+            "enum": ["DRAFT", "PAID", "CANCELLED"]
           },
           "paymentDate": {
             "type": "string",
@@ -653,12 +577,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "AVAILABLE",
-              "ASSIGNED",
-              "UNDER_REPAIR",
-              "RETIRED"
-            ]
+            "enum": ["AVAILABLE", "ASSIGNED", "UNDER_REPAIR", "RETIRED"]
           },
           "assignedTo": {
             "type": "string",
@@ -682,21 +601,11 @@
           },
           "priority": {
             "type": "string",
-            "enum": [
-              "LOW",
-              "MEDIUM",
-              "HIGH",
-              "URGENT"
-            ]
+            "enum": ["LOW", "MEDIUM", "HIGH", "URGENT"]
           },
           "status": {
             "type": "string",
-            "enum": [
-              "OPEN",
-              "IN_PROGRESS",
-              "RESOLVED",
-              "CLOSED"
-            ]
+            "enum": ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]
           },
           "category": {
             "type": "string"
@@ -768,9 +677,7 @@
     "/achievements/stats": {
       "get": {
         "summary": "Get achievements statistics",
-        "tags": [
-          "Achievements"
-        ],
+        "tags": ["Achievements"],
         "security": [
           {
             "bearerAuth": []
@@ -812,9 +719,7 @@
     "/achievements": {
       "get": {
         "summary": "Get all achievements with pagination and filters",
-        "tags": [
-          "Achievements"
-        ],
+        "tags": ["Achievements"],
         "security": [
           {
             "bearerAuth": []
@@ -884,12 +789,7 @@
             "name": "sort",
             "schema": {
               "type": "string",
-              "enum": [
-                "newest",
-                "oldest",
-                "most-liked",
-                "most-viewed"
-              ]
+              "enum": ["newest", "oldest", "most-liked", "most-viewed"]
             },
             "description": "Sort order"
           }
@@ -1018,9 +918,7 @@
       },
       "post": {
         "summary": "Share a new achievement",
-        "tags": [
-          "Achievements"
-        ],
+        "tags": ["Achievements"],
         "security": [
           {
             "bearerAuth": []
@@ -1032,10 +930,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "title",
-                  "category"
-                ],
+                "required": ["title", "category"],
                 "properties": {
                   "title": {
                     "type": "string"
@@ -1100,9 +995,7 @@
     "/achievements/{id}": {
       "get": {
         "summary": "Get single achievement with comments",
-        "tags": [
-          "Achievements"
-        ],
+        "tags": ["Achievements"],
         "security": [
           {
             "bearerAuth": []
@@ -1133,9 +1026,7 @@
       },
       "put": {
         "summary": "Update an achievement (owner only)",
-        "tags": [
-          "Achievements"
-        ],
+        "tags": ["Achievements"],
         "security": [
           {
             "bearerAuth": []
@@ -1209,9 +1100,7 @@
       },
       "delete": {
         "summary": "Delete an achievement (owner only)",
-        "tags": [
-          "Achievements"
-        ],
+        "tags": ["Achievements"],
         "security": [
           {
             "bearerAuth": []
@@ -1244,9 +1133,7 @@
     "/achievements/{id}/like": {
       "post": {
         "summary": "Like or unlike an achievement",
-        "tags": [
-          "Achievements"
-        ],
+        "tags": ["Achievements"],
         "security": [
           {
             "bearerAuth": []
@@ -1294,9 +1181,7 @@
     "/achievements/{id}/comments": {
       "post": {
         "summary": "Add a comment to an achievement",
-        "tags": [
-          "Achievements"
-        ],
+        "tags": ["Achievements"],
         "security": [
           {
             "bearerAuth": []
@@ -1319,9 +1204,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "content"
-                ],
+                "required": ["content"],
                 "properties": {
                   "content": {
                     "type": "string"
@@ -1350,9 +1233,7 @@
     "/achievements/{id}/comments/{commentId}": {
       "delete": {
         "summary": "Delete a comment (owner only)",
-        "tags": [
-          "Achievements"
-        ],
+        "tags": ["Achievements"],
         "security": [
           {
             "bearerAuth": []
@@ -1394,9 +1275,7 @@
     "/alumni/stats": {
       "get": {
         "summary": "Get alumni directory statistics",
-        "tags": [
-          "Alumni"
-        ],
+        "tags": ["Alumni"],
         "security": [
           {
             "bearerAuth": []
@@ -1441,9 +1320,7 @@
     "/alumni/dashboard/stats": {
       "get": {
         "summary": "Get dashboard statistics",
-        "tags": [
-          "Alumni"
-        ],
+        "tags": ["Alumni"],
         "security": [
           {
             "bearerAuth": []
@@ -1488,9 +1365,7 @@
     "/alumni/profile": {
       "get": {
         "summary": "Get current user's alumni profile",
-        "tags": [
-          "Alumni"
-        ],
+        "tags": ["Alumni"],
         "security": [
           {
             "bearerAuth": []
@@ -1572,9 +1447,7 @@
       },
       "put": {
         "summary": "Update current user's alumni profile",
-        "tags": [
-          "Alumni"
-        ],
+        "tags": ["Alumni"],
         "security": [
           {
             "bearerAuth": []
@@ -1662,9 +1535,7 @@
     "/alumni": {
       "get": {
         "summary": "Get all alumni with pagination and filters",
-        "tags": [
-          "Alumni"
-        ],
+        "tags": ["Alumni"],
         "security": [
           {
             "bearerAuth": []
@@ -1828,9 +1699,7 @@
     "/events/stats": {
       "get": {
         "summary": "Get events statistics",
-        "tags": [
-          "Events"
-        ],
+        "tags": ["Events"],
         "security": [
           {
             "bearerAuth": []
@@ -1849,9 +1718,7 @@
     "/events": {
       "get": {
         "summary": "Get all events with pagination and filters",
-        "tags": [
-          "Events"
-        ],
+        "tags": ["Events"],
         "security": [
           {
             "bearerAuth": []
@@ -1923,9 +1790,7 @@
     "/events/{id}": {
       "get": {
         "summary": "Get a single event",
-        "tags": [
-          "Events"
-        ],
+        "tags": ["Events"],
         "security": [
           {
             "bearerAuth": []
@@ -1957,9 +1822,7 @@
     "/events/{id}/register": {
       "post": {
         "summary": "Register or unregister for an event",
-        "tags": [
-          "Events"
-        ],
+        "tags": ["Events"],
         "security": [
           {
             "bearerAuth": []
@@ -1994,9 +1857,7 @@
     "/jobs/stats": {
       "get": {
         "summary": "Get job opportunities statistics",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "security": [
           {
             "bearerAuth": []
@@ -2035,9 +1896,7 @@
     "/jobs/trending-skills": {
       "get": {
         "summary": "Get trending skills across all jobs",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "security": [
           {
             "bearerAuth": []
@@ -2080,9 +1939,7 @@
       "post": {
         "summary": "Manually trigger job scraping",
         "description": "Triggers the job scraping process that fetches jobs from ReliefWeb, Devex, and BrighterMonday. Also cleans up expired jobs. Use this endpoint for testing the scraper.",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "security": [
           {
             "bearerAuth": []
@@ -2135,9 +1992,7 @@
     "/jobs": {
       "get": {
         "summary": "Get all job opportunities with pagination and filters",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "security": [
           {
             "bearerAuth": []
@@ -2207,10 +2062,7 @@
             "name": "source",
             "schema": {
               "type": "string",
-              "enum": [
-                "internal",
-                "scraped"
-              ]
+              "enum": ["internal", "scraped"]
             },
             "description": "Filter by source"
           },
@@ -2227,14 +2079,7 @@
             "name": "sort",
             "schema": {
               "type": "string",
-              "enum": [
-                "newest",
-                "oldest",
-                "salary-high",
-                "salary-low",
-                "company",
-                "views"
-              ]
+              "enum": ["newest", "oldest", "salary-high", "salary-low", "company", "views"]
             },
             "description": "Sort order"
           }
@@ -2250,9 +2095,7 @@
       },
       "post": {
         "summary": "Create a job opportunity",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "security": [
           {
             "bearerAuth": []
@@ -2264,11 +2107,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "title",
-                  "company",
-                  "sector"
-                ],
+                "required": ["title", "company", "sector"],
                 "properties": {
                   "title": {
                     "type": "string"
@@ -2339,9 +2178,7 @@
     "/jobs/{id}": {
       "get": {
         "summary": "Get single job opportunity",
-        "tags": [
-          "Jobs"
-        ],
+        "tags": ["Jobs"],
         "security": [
           {
             "bearerAuth": []
@@ -2374,9 +2211,7 @@
     "/mentorship/stats": {
       "get": {
         "summary": "Get mentorship statistics",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -2418,9 +2253,7 @@
     "/mentorship/fellows": {
       "get": {
         "summary": "Get all fellows (potential mentees) with pagination",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -2533,9 +2366,7 @@
     "/mentorship/add-mentee": {
       "post": {
         "summary": "Add a fellow as mentee",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -2547,9 +2378,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "fellowId"
-                ],
+                "required": ["fellowId"],
                 "properties": {
                   "fellowId": {
                     "type": "integer",
@@ -2597,9 +2426,7 @@
     "/mentorship/connections": {
       "get": {
         "summary": "Get current user's mentorship connections",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -2629,11 +2456,7 @@
                           },
                           "status": {
                             "type": "string",
-                            "enum": [
-                              "active",
-                              "completed",
-                              "paused"
-                            ]
+                            "enum": ["active", "completed", "paused"]
                           },
                           "totalSessions": {
                             "type": "integer"
@@ -2665,9 +2488,7 @@
     "/mentorship/connections/{id}": {
       "get": {
         "summary": "Get single mentorship connection details",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -2736,9 +2557,7 @@
       },
       "put": {
         "summary": "Update mentorship settings",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -2768,11 +2587,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "active",
-                      "completed",
-                      "paused"
-                    ],
+                    "enum": ["active", "completed", "paused"],
                     "description": "Mentorship status"
                   }
                 }
@@ -2799,9 +2614,7 @@
     "/mentorship/connections/{id}/goals": {
       "post": {
         "summary": "Add a goal to a mentorship",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -2824,9 +2637,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "title"
-                ],
+                "required": ["title"],
                 "properties": {
                   "title": {
                     "type": "string",
@@ -2860,9 +2671,7 @@
     "/mentorship/connections/{id}/goals/{goalId}": {
       "put": {
         "summary": "Update a goal",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -2926,9 +2735,7 @@
       },
       "delete": {
         "summary": "Delete a goal",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -2973,9 +2780,7 @@
     "/mentorship/connections/{id}/sessions": {
       "post": {
         "summary": "Schedule a session",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -2998,9 +2803,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "scheduledAt"
-                ],
+                "required": ["scheduledAt"],
                 "properties": {
                   "title": {
                     "type": "string",
@@ -3044,9 +2847,7 @@
     "/mentorship/connections/{id}/sessions/{sessionId}": {
       "put": {
         "summary": "Update a session",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -3091,11 +2892,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "scheduled",
-                      "completed",
-                      "cancelled"
-                    ]
+                    "enum": ["scheduled", "completed", "cancelled"]
                   },
                   "notes": {
                     "type": "string"
@@ -3132,9 +2929,7 @@
       },
       "delete": {
         "summary": "Delete a session",
-        "tags": [
-          "Mentorship"
-        ],
+        "tags": ["Mentorship"],
         "security": [
           {
             "bearerAuth": []
@@ -3179,9 +2974,7 @@
     "/payroll/upload-csv": {
       "post": {
         "summary": "Upload and parse payroll CSV file",
-        "tags": [
-          "Payroll"
-        ],
+        "tags": ["Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -3216,9 +3009,7 @@
     "/payroll": {
       "post": {
         "summary": "Create payroll records (single or bulk)",
-        "tags": [
-          "Payroll"
-        ],
+        "tags": ["Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -3250,9 +3041,7 @@
       },
       "get": {
         "summary": "Get all payrolls with filters and pagination",
-        "tags": [
-          "Payroll"
-        ],
+        "tags": ["Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -3305,9 +3094,7 @@
     "/payroll/{id}": {
       "get": {
         "summary": "Get single payroll by ID",
-        "tags": [
-          "Payroll"
-        ],
+        "tags": ["Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -3334,9 +3121,7 @@
       },
       "put": {
         "summary": "Update payroll",
-        "tags": [
-          "Payroll"
-        ],
+        "tags": ["Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -3370,9 +3155,7 @@
       },
       "delete": {
         "summary": "Delete payroll",
-        "tags": [
-          "Payroll"
-        ],
+        "tags": ["Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -3398,9 +3181,7 @@
     "/payroll/{id}/signed-url": {
       "get": {
         "summary": "Get signed URL for viewing payslip",
-        "tags": [
-          "Payroll"
-        ],
+        "tags": ["Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -3444,9 +3225,7 @@
     "/payroll/send-emails": {
       "post": {
         "summary": "Send payslip emails (batch)",
-        "tags": [
-          "Payroll"
-        ],
+        "tags": ["Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -3480,9 +3259,7 @@
     "/resources/stats": {
       "get": {
         "summary": "Get resources statistics",
-        "tags": [
-          "Resources"
-        ],
+        "tags": ["Resources"],
         "security": [
           {
             "bearerAuth": []
@@ -3527,9 +3304,7 @@
     "/resources": {
       "get": {
         "summary": "Get all resources with pagination and filters",
-        "tags": [
-          "Resources"
-        ],
+        "tags": ["Resources"],
         "security": [
           {
             "bearerAuth": []
@@ -3578,13 +3353,7 @@
             "name": "sort",
             "schema": {
               "type": "string",
-              "enum": [
-                "newest",
-                "oldest",
-                "downloads",
-                "rating",
-                "views"
-              ]
+              "enum": ["newest", "oldest", "downloads", "rating", "views"]
             }
           }
         ],
@@ -3599,9 +3368,7 @@
       },
       "post": {
         "summary": "Create/contribute a new resource",
-        "tags": [
-          "Resources"
-        ],
+        "tags": ["Resources"],
         "security": [
           {
             "bearerAuth": []
@@ -3613,13 +3380,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "title",
-                  "description",
-                  "type",
-                  "category",
-                  "fileUrl"
-                ],
+                "required": ["title", "description", "type", "category", "fileUrl"],
                 "properties": {
                   "title": {
                     "type": "string"
@@ -3687,9 +3448,7 @@
     "/resources/{id}": {
       "get": {
         "summary": "Get a single resource",
-        "tags": [
-          "Resources"
-        ],
+        "tags": ["Resources"],
         "security": [
           {
             "bearerAuth": []
@@ -3719,9 +3478,7 @@
       },
       "put": {
         "summary": "Update a resource (owner only)",
-        "tags": [
-          "Resources"
-        ],
+        "tags": ["Resources"],
         "security": [
           {
             "bearerAuth": []
@@ -3761,9 +3518,7 @@
       },
       "delete": {
         "summary": "Delete a resource (owner only)",
-        "tags": [
-          "Resources"
-        ],
+        "tags": ["Resources"],
         "security": [
           {
             "bearerAuth": []
@@ -3795,9 +3550,7 @@
     "/resources/{id}/like": {
       "post": {
         "summary": "Like or unlike a resource",
-        "tags": [
-          "Resources"
-        ],
+        "tags": ["Resources"],
         "security": [
           {
             "bearerAuth": []
@@ -3829,9 +3582,7 @@
     "/resources/{id}/download": {
       "post": {
         "summary": "Track a resource download",
-        "tags": [
-          "Resources"
-        ],
+        "tags": ["Resources"],
         "security": [
           {
             "bearerAuth": []
@@ -3863,9 +3614,7 @@
     "/resources/{id}/rate": {
       "post": {
         "summary": "Rate a resource (1-5 stars)",
-        "tags": [
-          "Resources"
-        ],
+        "tags": ["Resources"],
         "security": [
           {
             "bearerAuth": []
@@ -3887,9 +3636,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "rating"
-                ],
+                "required": ["rating"],
                 "properties": {
                   "rating": {
                     "type": "integer",
@@ -3923,9 +3670,7 @@
     "/resources/{id}/feature": {
       "put": {
         "summary": "Feature or unfeature a resource (admin only)",
-        "tags": [
-          "Resources"
-        ],
+        "tags": ["Resources"],
         "security": [
           {
             "bearerAuth": []
@@ -3957,17 +3702,13 @@
     "/uploads/file": {
       "post": {
         "summary": "Upload a single file",
-        "tags": [
-          "Uploads"
-        ],
+        "tags": ["Uploads"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "file"
-                ],
+                "required": ["file"],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -3994,17 +3735,13 @@
     "/uploads/files": {
       "post": {
         "summary": "Upload multiple files",
-        "tags": [
-          "Uploads"
-        ],
+        "tags": ["Uploads"],
         "requestBody": {
           "content": {
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "files"
-                ],
+                "required": ["files"],
                 "properties": {
                   "files": {
                     "type": "array",
@@ -4034,21 +3771,14 @@
     "/auth/register": {
       "post": {
         "summary": "Register a new user",
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "email",
-                  "password",
-                  "confirm_password",
-                  "name"
-                ],
+                "required": ["email", "password", "confirm_password", "name"],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -4098,19 +3828,14 @@
     "/auth/login": {
       "post": {
         "summary": "Log in a user",
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "email",
-                  "password"
-                ],
+                "required": ["email", "password"],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -4152,9 +3877,7 @@
     "/auth/refresh-token": {
       "post": {
         "summary": "Refresh access token using refresh token",
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "requestBody": {
           "required": true,
           "content": {
@@ -4195,18 +3918,14 @@
     "/auth/forgot-password": {
       "post": {
         "summary": "Request password reset",
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "email"
-                ],
+                "required": ["email"],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -4233,20 +3952,14 @@
     "/auth/reset-password": {
       "post": {
         "summary": "Reset password with token",
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "token",
-                  "password",
-                  "confirm_password"
-                ],
+                "required": ["token", "password", "confirm_password"],
                 "properties": {
                   "token": {
                     "type": "string"
@@ -4282,9 +3995,7 @@
     "/auth/logout": {
       "post": {
         "summary": "Log out a user",
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "security": [
           {
             "bearerAuth": []
@@ -4309,18 +4020,14 @@
     "/auth/verify-email": {
       "post": {
         "summary": "Verify user email with token",
-        "tags": [
-          "Authentication"
-        ],
+        "tags": ["Authentication"],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "token"
-                ],
+                "required": ["token"],
                 "properties": {
                   "token": {
                     "type": "string"
@@ -4346,9 +4053,7 @@
     "/categories": {
       "post": {
         "summary": "Create a new project category",
-        "tags": [
-          "Categories"
-        ],
+        "tags": ["Categories"],
         "security": [
           {
             "bearerAuth": []
@@ -4363,9 +4068,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name"
-                ],
+                "required": ["name"],
                 "properties": {
                   "name": {
                     "type": "string"
@@ -4395,9 +4098,7 @@
       },
       "get": {
         "summary": "List all categories",
-        "tags": [
-          "Categories"
-        ],
+        "tags": ["Categories"],
         "security": [
           {
             "bearerAuth": []
@@ -4422,9 +4123,7 @@
     "/categories/{id}": {
       "get": {
         "summary": "Get category by ID",
-        "tags": [
-          "Categories"
-        ],
+        "tags": ["Categories"],
         "security": [
           {
             "bearerAuth": []
@@ -4460,9 +4159,7 @@
       },
       "put": {
         "summary": "Update a category",
-        "tags": [
-          "Categories"
-        ],
+        "tags": ["Categories"],
         "security": [
           {
             "bearerAuth": []
@@ -4522,9 +4219,7 @@
       },
       "delete": {
         "summary": "Delete a category",
-        "tags": [
-          "Categories"
-        ],
+        "tags": ["Categories"],
         "security": [
           {
             "bearerAuth": []
@@ -4562,20 +4257,14 @@
     "/contacts": {
       "post": {
         "summary": "Submit a new contact form message",
-        "tags": [
-          "Contacts"
-        ],
+        "tags": ["Contacts"],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name",
-                  "email",
-                  "message"
-                ],
+                "required": ["name", "email", "message"],
                 "properties": {
                   "name": {
                     "type": "string"
@@ -4611,9 +4300,7 @@
       },
       "get": {
         "summary": "List all contact form submissions",
-        "tags": [
-          "Contacts"
-        ],
+        "tags": ["Contacts"],
         "security": [
           {
             "bearerAuth": []
@@ -4660,10 +4347,7 @@
             "name": "sort_order",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             },
             "description": "Sort order (asc or desc, defaults to desc)"
           }
@@ -4684,9 +4368,7 @@
     "/contacts/{id}": {
       "get": {
         "summary": "Get contact form submission by ID",
-        "tags": [
-          "Contacts"
-        ],
+        "tags": ["Contacts"],
         "security": [
           {
             "bearerAuth": []
@@ -4722,9 +4404,7 @@
       },
       "put": {
         "summary": "Update a contact form submission",
-        "tags": [
-          "Contacts"
-        ],
+        "tags": ["Contacts"],
         "security": [
           {
             "bearerAuth": []
@@ -4785,9 +4465,7 @@
       },
       "delete": {
         "summary": "Delete a contact form submission",
-        "tags": [
-          "Contacts"
-        ],
+        "tags": ["Contacts"],
         "security": [
           {
             "bearerAuth": []
@@ -4825,18 +4503,14 @@
     "/newsletter/subscribe": {
       "post": {
         "summary": "Subscribe to newsletter",
-        "tags": [
-          "Newsletter"
-        ],
+        "tags": ["Newsletter"],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "email"
-                ],
+                "required": ["email"],
                 "properties": {
                   "email": {
                     "type": "string"
@@ -4862,9 +4536,7 @@
     "/newsletter/unsubscribe/{id}": {
       "post": {
         "summary": "Unsubscribe from newsletter",
-        "tags": [
-          "Newsletter"
-        ],
+        "tags": ["Newsletter"],
         "parameters": [
           {
             "in": "path",
@@ -4891,9 +4563,7 @@
     "/newsletter/subscribers": {
       "get": {
         "summary": "List all newsletter subscribers",
-        "tags": [
-          "Newsletter"
-        ],
+        "tags": ["Newsletter"],
         "security": [
           {
             "bearerAuth": []
@@ -4924,10 +4594,7 @@
             "name": "sort_order",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             },
             "description": "Sort order (asc or desc, defaults to desc)"
           }
@@ -4948,9 +4615,7 @@
     "/newsletter/subscribers/{id}": {
       "delete": {
         "summary": "Delete a newsletter subscriber",
-        "tags": [
-          "Newsletter"
-        ],
+        "tags": ["Newsletter"],
         "parameters": [
           {
             "in": "path",
@@ -4977,9 +4642,7 @@
     "/faqs": {
       "post": {
         "summary": "Create a new FAQ",
-        "tags": [
-          "FAQs"
-        ],
+        "tags": ["FAQs"],
         "security": [
           {
             "bearerAuth": []
@@ -4994,10 +4657,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "question",
-                  "answer"
-                ],
+                "required": ["question", "answer"],
                 "properties": {
                   "question": {
                     "type": "string"
@@ -5030,9 +4690,7 @@
       },
       "get": {
         "summary": "List all FAQs",
-        "tags": [
-          "FAQs"
-        ],
+        "tags": ["FAQs"],
         "security": [
           {
             "bearerAuth": []
@@ -5067,9 +4725,7 @@
     "/faqs/{id}": {
       "get": {
         "summary": "Get FAQ by ID",
-        "tags": [
-          "FAQs"
-        ],
+        "tags": ["FAQs"],
         "security": [
           {
             "bearerAuth": []
@@ -5105,9 +4761,7 @@
       },
       "put": {
         "summary": "Update a FAQ",
-        "tags": [
-          "FAQs"
-        ],
+        "tags": ["FAQs"],
         "security": [
           {
             "bearerAuth": []
@@ -5170,9 +4824,7 @@
       },
       "delete": {
         "summary": "Delete a FAQ",
-        "tags": [
-          "FAQs"
-        ],
+        "tags": ["FAQs"],
         "security": [
           {
             "bearerAuth": []
@@ -5210,9 +4862,7 @@
     "/google-calendar/auth-url": {
       "get": {
         "summary": "Get Google Calendar OAuth URL",
-        "tags": [
-          "Google Calendar"
-        ],
+        "tags": ["Google Calendar"],
         "security": [
           {
             "bearerAuth": []
@@ -5234,9 +4884,7 @@
     "/google-calendar/callback": {
       "get": {
         "summary": "Handle Google Calendar OAuth callback",
-        "tags": [
-          "Google Calendar"
-        ],
+        "tags": ["Google Calendar"],
         "security": [
           {
             "bearerAuth": []
@@ -5279,9 +4927,7 @@
     "/google-calendar/status": {
       "get": {
         "summary": "Check Google Calendar connection status",
-        "tags": [
-          "Google Calendar"
-        ],
+        "tags": ["Google Calendar"],
         "security": [
           {
             "bearerAuth": []
@@ -5303,9 +4949,7 @@
     "/google-calendar/events": {
       "get": {
         "summary": "Get Google Calendar events for a date range",
-        "tags": [
-          "Google Calendar"
-        ],
+        "tags": ["Google Calendar"],
         "security": [
           {
             "bearerAuth": []
@@ -5347,9 +4991,7 @@
     "/google-calendar/disconnect": {
       "post": {
         "summary": "Disconnect Google Calendar",
-        "tags": [
-          "Google Calendar"
-        ],
+        "tags": ["Google Calendar"],
         "security": [
           {
             "bearerAuth": []
@@ -5371,9 +5013,7 @@
     "/news": {
       "post": {
         "summary": "Create a new news item",
-        "tags": [
-          "News"
-        ],
+        "tags": ["News"],
         "security": [
           {
             "bearerAuth": []
@@ -5388,11 +5028,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "title",
-                  "content",
-                  "category"
-                ],
+                "required": ["title", "content", "category"],
                 "properties": {
                   "title": {
                     "type": "string"
@@ -5402,10 +5038,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "published",
-                      "not_published"
-                    ]
+                    "enum": ["published", "not_published"]
                   },
                   "publish_date": {
                     "type": "string",
@@ -5413,13 +5046,7 @@
                   },
                   "category": {
                     "type": "string",
-                    "enum": [
-                      "all",
-                      "news",
-                      "blogs",
-                      "reports",
-                      "publications"
-                    ]
+                    "enum": ["all", "news", "blogs", "reports", "publications"]
                   },
                   "key_lessons": {
                     "type": "string"
@@ -5455,9 +5082,7 @@
       },
       "get": {
         "summary": "List news items with filtering",
-        "tags": [
-          "News"
-        ],
+        "tags": ["News"],
         "security": [
           {
             "bearerAuth": []
@@ -5528,10 +5153,7 @@
             "name": "sortDir",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             },
             "description": "Sort direction"
           }
@@ -5552,9 +5174,7 @@
     "/news/{id}": {
       "get": {
         "summary": "Get news item by ID",
-        "tags": [
-          "News"
-        ],
+        "tags": ["News"],
         "security": [
           {
             "bearerAuth": []
@@ -5590,9 +5210,7 @@
       },
       "put": {
         "summary": "Update a news item",
-        "tags": [
-          "News"
-        ],
+        "tags": ["News"],
         "security": [
           {
             "bearerAuth": []
@@ -5626,10 +5244,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "published",
-                      "not_published"
-                    ]
+                    "enum": ["published", "not_published"]
                   },
                   "publish_date": {
                     "type": "string",
@@ -5637,13 +5252,7 @@
                   },
                   "category": {
                     "type": "string",
-                    "enum": [
-                      "all",
-                      "news",
-                      "blogs",
-                      "reports",
-                      "publications"
-                    ]
+                    "enum": ["all", "news", "blogs", "reports", "publications"]
                   },
                   "key_lessons": {
                     "type": "string"
@@ -5682,9 +5291,7 @@
       },
       "delete": {
         "summary": "Delete a news item",
-        "tags": [
-          "News"
-        ],
+        "tags": ["News"],
         "security": [
           {
             "bearerAuth": []
@@ -5722,9 +5329,7 @@
     "/news/tags": {
       "get": {
         "summary": "List all news tags",
-        "tags": [
-          "News"
-        ],
+        "tags": ["News"],
         "security": [
           {
             "bearerAuth": []
@@ -5747,9 +5352,7 @@
       },
       "post": {
         "summary": "Create a new tag",
-        "tags": [
-          "News"
-        ],
+        "tags": ["News"],
         "security": [
           {
             "bearerAuth": []
@@ -5764,9 +5367,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name"
-                ],
+                "required": ["name"],
                 "properties": {
                   "name": {
                     "type": "string"
@@ -5795,9 +5396,7 @@
     "/news/tags/{id}": {
       "delete": {
         "summary": "Delete a tag",
-        "tags": [
-          "News"
-        ],
+        "tags": ["News"],
         "security": [
           {
             "bearerAuth": []
@@ -5835,9 +5434,7 @@
     "/opportunities": {
       "post": {
         "summary": "Create a new opportunity (fellowship or employment)",
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "requestBody": {
           "required": true,
           "content": {
@@ -5869,19 +5466,14 @@
       },
       "get": {
         "summary": "List all opportunities",
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "parameters": [
           {
             "in": "query",
             "name": "type",
             "schema": {
               "type": "string",
-              "enum": [
-                "fellowship",
-                "employment"
-              ]
+              "enum": ["fellowship", "employment"]
             },
             "description": "Filter by opportunity type"
           },
@@ -5890,12 +5482,7 @@
             "name": "status",
             "schema": {
               "type": "string",
-              "enum": [
-                "draft",
-                "published",
-                "closed",
-                "cancelled"
-              ]
+              "enum": ["draft", "published", "closed", "cancelled"]
             },
             "description": "Filter by opportunity status"
           },
@@ -5921,9 +5508,7 @@
     "/opportunities/{id}": {
       "get": {
         "summary": "Get opportunity by ID",
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "parameters": [
           {
             "in": "path",
@@ -5948,9 +5533,7 @@
       },
       "put": {
         "summary": "Update an opportunity",
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "parameters": [
           {
             "in": "path",
@@ -5995,9 +5578,7 @@
       },
       "delete": {
         "summary": "Delete an opportunity",
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "parameters": [
           {
             "in": "path",
@@ -6024,9 +5605,7 @@
     "/opportunities/{id}/publish": {
       "post": {
         "summary": "Publish an opportunity",
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "parameters": [
           {
             "in": "path",
@@ -6053,9 +5632,7 @@
     "/opportunities/{id}/close": {
       "post": {
         "summary": "Close an opportunity",
-        "tags": [
-          "Opportunities"
-        ],
+        "tags": ["Opportunities"],
         "parameters": [
           {
             "in": "path",
@@ -6082,9 +5659,7 @@
     "/applications": {
       "post": {
         "summary": "Submit a general GanzAfrica application",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "requestBody": {
           "required": true,
           "content": {
@@ -6109,9 +5684,7 @@
       },
       "get": {
         "summary": "List all applications across all opportunities",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "parameters": [
           {
             "in": "query",
@@ -6151,9 +5724,7 @@
     "/opportunities/{id}/apply": {
       "post": {
         "summary": "Submit an application for a specific opportunity",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "parameters": [
           {
             "in": "path",
@@ -6193,9 +5764,7 @@
     "/opportunities/{id}/applications": {
       "get": {
         "summary": "List applications for an opportunity",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "parameters": [
           {
             "in": "path",
@@ -6230,9 +5799,7 @@
     "/applications/{id}": {
       "get": {
         "summary": "Get application by ID",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "parameters": [
           {
             "in": "path",
@@ -6257,9 +5824,7 @@
       },
       "delete": {
         "summary": "Delete an application",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "parameters": [
           {
             "in": "path",
@@ -6286,9 +5851,7 @@
     "/applications/{id}/status": {
       "put": {
         "summary": "Update application status",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "parameters": [
           {
             "in": "path",
@@ -6325,9 +5888,7 @@
     "/applications/{id}/review": {
       "post": {
         "summary": "Submit a review for an application",
-        "tags": [
-          "Applications"
-        ],
+        "tags": ["Applications"],
         "parameters": [
           {
             "in": "path",
@@ -6364,9 +5925,7 @@
     "/partners": {
       "post": {
         "summary": "Create a new partner",
-        "tags": [
-          "Partners"
-        ],
+        "tags": ["Partners"],
         "security": [
           {
             "bearerAuth": []
@@ -6381,9 +5940,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name"
-                ],
+                "required": ["name"],
                 "properties": {
                   "name": {
                     "type": "string"
@@ -6419,9 +5976,7 @@
       },
       "get": {
         "summary": "List all partners",
-        "tags": [
-          "Partners"
-        ],
+        "tags": ["Partners"],
         "security": [
           {
             "bearerAuth": []
@@ -6446,9 +6001,7 @@
     "/partners/{id}": {
       "get": {
         "summary": "Get partner by ID",
-        "tags": [
-          "Partners"
-        ],
+        "tags": ["Partners"],
         "security": [
           {
             "bearerAuth": []
@@ -6484,9 +6037,7 @@
       },
       "put": {
         "summary": "Update a partner",
-        "tags": [
-          "Partners"
-        ],
+        "tags": ["Partners"],
         "security": [
           {
             "bearerAuth": []
@@ -6552,9 +6103,7 @@
       },
       "delete": {
         "summary": "Delete a partner",
-        "tags": [
-          "Partners"
-        ],
+        "tags": ["Partners"],
         "security": [
           {
             "bearerAuth": []
@@ -6592,9 +6141,7 @@
     "/portal-data/teams": {
       "get": {
         "summary": "Get teams by team type for task management",
-        "tags": [
-          "Portal Data"
-        ],
+        "tags": ["Portal Data"],
         "security": [
           {
             "bearerAuth": []
@@ -6629,9 +6176,7 @@
     "/portal-data/projects": {
       "get": {
         "summary": "Get all projects for task management",
-        "tags": [
-          "Portal Data"
-        ],
+        "tags": ["Portal Data"],
         "security": [
           {
             "bearerAuth": []
@@ -6679,9 +6224,7 @@
     "/projects": {
       "post": {
         "summary": "Create a new project",
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -6696,12 +6239,7 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name",
-                  "status",
-                  "start_date",
-                  "category_id"
-                ],
+                "required": ["name", "status", "start_date", "category_id"],
                 "properties": {
                   "name": {
                     "type": "string"
@@ -6711,13 +6249,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "planned",
-                      "active",
-                      "completed",
-                      "cancelled",
-                      "on_hold"
-                    ]
+                    "enum": ["planned", "active", "completed", "cancelled", "on_hold"]
                   },
                   "start_date": {
                     "type": "string",
@@ -6805,10 +6337,7 @@
                             },
                             "type": {
                               "type": "string",
-                              "enum": [
-                                "image",
-                                "video"
-                              ]
+                              "enum": ["image", "video"]
                             },
                             "url": {
                               "type": "string"
@@ -6818,11 +6347,7 @@
                             },
                             "tag": {
                               "type": "string",
-                              "enum": [
-                                "feature",
-                                "description",
-                                "others"
-                              ]
+                              "enum": ["feature", "description", "others"]
                             },
                             "title": {
                               "type": "string"
@@ -6854,23 +6379,14 @@
                     "type": "array",
                     "items": {
                       "type": "object",
-                      "required": [
-                        "team_id",
-                        "role",
-                        "start_date"
-                      ],
+                      "required": ["team_id", "role", "start_date"],
                       "properties": {
                         "team_id": {
                           "type": "string"
                         },
                         "role": {
                           "type": "string",
-                          "enum": [
-                            "lead",
-                            "member",
-                            "supervisor",
-                            "contributor"
-                          ]
+                          "enum": ["lead", "member", "supervisor", "contributor"]
                         },
                         "start_date": {
                           "type": "string",
@@ -6887,9 +6403,7 @@
                     "type": "array",
                     "items": {
                       "type": "object",
-                      "required": [
-                        "partner_id"
-                      ],
+                      "required": ["partner_id"],
                       "properties": {
                         "partner_id": {
                           "type": "integer"
@@ -6927,9 +6441,7 @@
       },
       "get": {
         "summary": "List projects with pagination and filtering",
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -6967,12 +6479,7 @@
             "name": "sort_by",
             "schema": {
               "type": "string",
-              "enum": [
-                "name",
-                "status",
-                "start_date",
-                "created_at"
-              ],
+              "enum": ["name", "status", "start_date", "created_at"],
               "default": "created_at"
             }
           },
@@ -6981,10 +6488,7 @@
             "name": "sort_order",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "desc"
             }
           },
@@ -6993,13 +6497,7 @@
             "name": "status",
             "schema": {
               "type": "string",
-              "enum": [
-                "planned",
-                "active",
-                "completed",
-                "cancelled",
-                "on_hold"
-              ]
+              "enum": ["planned", "active", "completed", "cancelled", "on_hold"]
             }
           },
           {
@@ -7040,9 +6538,7 @@
     "/projects/{id}": {
       "get": {
         "summary": "Get project by ID",
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -7078,9 +6574,7 @@
       },
       "put": {
         "summary": "Update project",
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -7114,13 +6608,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "planned",
-                      "active",
-                      "completed",
-                      "cancelled",
-                      "on_hold"
-                    ]
+                    "enum": ["planned", "active", "completed", "cancelled", "on_hold"]
                   },
                   "start_date": {
                     "type": "string",
@@ -7184,9 +6672,7 @@
       },
       "delete": {
         "summary": "Delete project and all related data",
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -7224,9 +6710,7 @@
     "/projects/{id}/publish": {
       "post": {
         "summary": "Publish a project",
-        "tags": [
-          "Projects"
-        ],
+        "tags": ["Projects"],
         "parameters": [
           {
             "in": "path",
@@ -7253,9 +6737,7 @@
     "/roles": {
       "post": {
         "summary": "Create a new role",
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "security": [
           {
             "bearerAuth": []
@@ -7270,9 +6752,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name"
-                ],
+                "required": ["name"],
                 "properties": {
                   "name": {
                     "type": "string"
@@ -7302,9 +6782,7 @@
       },
       "get": {
         "summary": "List all roles",
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "security": [
           {
             "bearerAuth": []
@@ -7329,9 +6807,7 @@
     "/roles/{id}": {
       "get": {
         "summary": "Get role by ID",
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "security": [
           {
             "bearerAuth": []
@@ -7367,9 +6843,7 @@
       },
       "put": {
         "summary": "Update a role",
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "security": [
           {
             "bearerAuth": []
@@ -7429,9 +6903,7 @@
       },
       "delete": {
         "summary": "Delete a role",
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "security": [
           {
             "bearerAuth": []
@@ -7472,9 +6944,7 @@
     "/roles/users/{userId}": {
       "get": {
         "summary": "Get all roles for a user",
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "security": [
           {
             "bearerAuth": []
@@ -7512,9 +6982,7 @@
     "/roles/users/{userId}/assign/{roleId}": {
       "post": {
         "summary": "Assign a role to a user",
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "security": [
           {
             "bearerAuth": []
@@ -7563,9 +7031,7 @@
     "/roles/users/{userId}/replace/{roleId}": {
       "post": {
         "summary": "Replace all user roles with a single role",
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "security": [
           {
             "bearerAuth": []
@@ -7611,9 +7077,7 @@
     "/roles/users/{userId}/remove/{roleId}": {
       "delete": {
         "summary": "Remove a role from a user",
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "security": [
           {
             "bearerAuth": []
@@ -7659,9 +7123,7 @@
     "/task-teams": {
       "post": {
         "summary": "Create a new task team with members and projects",
-        "tags": [
-          "Task Teams"
-        ],
+        "tags": ["Task Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -7676,10 +7138,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name",
-                  "created_by"
-                ],
+                "required": ["name", "created_by"],
                 "properties": {
                   "name": {
                     "type": "string"
@@ -7695,11 +7154,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "active",
-                      "inactive",
-                      "archived"
-                    ]
+                    "enum": ["active", "inactive", "archived"]
                   },
                   "created_by": {
                     "type": "integer"
@@ -7742,13 +7197,7 @@
                         },
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "planning",
-                            "active",
-                            "on_hold",
-                            "completed",
-                            "cancelled"
-                          ]
+                          "enum": ["planning", "active", "on_hold", "completed", "cancelled"]
                         },
                         "start_date": {
                           "type": "string",
@@ -7786,9 +7235,7 @@
       },
       "get": {
         "summary": "List all task teams",
-        "tags": [
-          "Task Teams"
-        ],
+        "tags": ["Task Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -7803,11 +7250,7 @@
             "name": "status",
             "schema": {
               "type": "string",
-              "enum": [
-                "active",
-                "inactive",
-                "archived"
-              ]
+              "enum": ["active", "inactive", "archived"]
             }
           },
           {
@@ -7863,9 +7306,7 @@
     "/task-teams/{id}": {
       "get": {
         "summary": "Get task team by ID",
-        "tags": [
-          "Task Teams"
-        ],
+        "tags": ["Task Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -7901,9 +7342,7 @@
       },
       "put": {
         "summary": "Update task team",
-        "tags": [
-          "Task Teams"
-        ],
+        "tags": ["Task Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -7943,11 +7382,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "active",
-                      "inactive",
-                      "archived"
-                    ]
+                    "enum": ["active", "inactive", "archived"]
                   },
                   "settings": {
                     "type": "object"
@@ -7974,9 +7409,7 @@
       },
       "delete": {
         "summary": "Delete task team",
-        "tags": [
-          "Task Teams"
-        ],
+        "tags": ["Task Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -8014,9 +7447,7 @@
     "/task-teams/{id}/members": {
       "post": {
         "summary": "Add member to task team",
-        "tags": [
-          "Task Teams"
-        ],
+        "tags": ["Task Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -8041,21 +7472,14 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "user_id"
-                ],
+                "required": ["user_id"],
                 "properties": {
                   "user_id": {
                     "type": "integer"
                   },
                   "role": {
                     "type": "string",
-                    "enum": [
-                      "owner",
-                      "admin",
-                      "member",
-                      "viewer"
-                    ]
+                    "enum": ["owner", "admin", "member", "viewer"]
                   }
                 }
               }
@@ -8084,9 +7508,7 @@
     "/task-teams/{id}/members/{userId}": {
       "delete": {
         "summary": "Remove member from task team",
-        "tags": [
-          "Task Teams"
-        ],
+        "tags": ["Task Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -8132,9 +7554,7 @@
     "/task-teams/{id}/members/{userId}/role": {
       "patch": {
         "summary": "Update team member role",
-        "tags": [
-          "Task Teams"
-        ],
+        "tags": ["Task Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -8167,18 +7587,11 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "role"
-                ],
+                "required": ["role"],
                 "properties": {
                   "role": {
                     "type": "string",
-                    "enum": [
-                      "owner",
-                      "admin",
-                      "member",
-                      "viewer"
-                    ]
+                    "enum": ["owner", "admin", "member", "viewer"]
                   }
                 }
               }
@@ -8204,9 +7617,7 @@
     "/task-teams/{id}/projects": {
       "post": {
         "summary": "Create a project for a task team",
-        "tags": [
-          "Task Projects"
-        ],
+        "tags": ["Task Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -8231,10 +7642,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name",
-                  "created_by"
-                ],
+                "required": ["name", "created_by"],
                 "properties": {
                   "name": {
                     "type": "string"
@@ -8244,13 +7652,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "planning",
-                      "active",
-                      "on_hold",
-                      "completed",
-                      "cancelled"
-                    ]
+                    "enum": ["planning", "active", "on_hold", "completed", "cancelled"]
                   },
                   "start_date": {
                     "type": "string",
@@ -8291,9 +7693,7 @@
       },
       "get": {
         "summary": "List projects for a task team",
-        "tags": [
-          "Task Projects"
-        ],
+        "tags": ["Task Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -8316,13 +7716,7 @@
             "name": "status",
             "schema": {
               "type": "string",
-              "enum": [
-                "planning",
-                "active",
-                "on_hold",
-                "completed",
-                "cancelled"
-              ]
+              "enum": ["planning", "active", "on_hold", "completed", "cancelled"]
             }
           },
           {
@@ -8349,9 +7743,7 @@
     "/task-teams/{id}/projects/{projectId}": {
       "post": {
         "summary": "Add existing project to task team",
-        "tags": [
-          "Task Teams"
-        ],
+        "tags": ["Task Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -8400,9 +7792,7 @@
       },
       "delete": {
         "summary": "Remove project from task team",
-        "tags": [
-          "Task Teams"
-        ],
+        "tags": ["Task Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -8450,9 +7840,7 @@
     "/task-teams/projects/{id}": {
       "get": {
         "summary": "Get task project by ID",
-        "tags": [
-          "Task Projects"
-        ],
+        "tags": ["Task Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -8488,9 +7876,7 @@
       },
       "put": {
         "summary": "Update task project",
-        "tags": [
-          "Task Projects"
-        ],
+        "tags": ["Task Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -8524,13 +7910,7 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "planning",
-                      "active",
-                      "on_hold",
-                      "completed",
-                      "cancelled"
-                    ]
+                    "enum": ["planning", "active", "on_hold", "completed", "cancelled"]
                   },
                   "start_date": {
                     "type": "string",
@@ -8568,9 +7948,7 @@
       },
       "delete": {
         "summary": "Delete task project",
-        "tags": [
-          "Task Projects"
-        ],
+        "tags": ["Task Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -8608,9 +7986,7 @@
     "/task-teams/projects/{id}/members": {
       "post": {
         "summary": "Add member to task project",
-        "tags": [
-          "Task Projects"
-        ],
+        "tags": ["Task Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -8635,21 +8011,14 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "user_id"
-                ],
+                "required": ["user_id"],
                 "properties": {
                   "user_id": {
                     "type": "integer"
                   },
                   "role": {
                     "type": "string",
-                    "enum": [
-                      "owner",
-                      "admin",
-                      "member",
-                      "viewer"
-                    ]
+                    "enum": ["owner", "admin", "member", "viewer"]
                   }
                 }
               }
@@ -8678,9 +8047,7 @@
     "/task-teams/projects/{id}/members/{userId}": {
       "delete": {
         "summary": "Remove member from task project",
-        "tags": [
-          "Task Projects"
-        ],
+        "tags": ["Task Projects"],
         "security": [
           {
             "bearerAuth": []
@@ -8726,9 +8093,7 @@
     "/task-teams/projects/all": {
       "get": {
         "summary": "List all projects across all teams",
-        "tags": [
-          "Task Teams"
-        ],
+        "tags": ["Task Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -8743,13 +8108,7 @@
             "name": "status",
             "schema": {
               "type": "string",
-              "enum": [
-                "planning",
-                "active",
-                "on_hold",
-                "completed",
-                "cancelled"
-              ]
+              "enum": ["planning", "active", "on_hold", "completed", "cancelled"]
             },
             "description": "Filter by project status"
           },
@@ -8849,9 +8208,7 @@
     "/tasks": {
       "post": {
         "summary": "Create a new task",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -8866,10 +8223,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "title",
-                  "created_by"
-                ],
+                "required": ["title", "created_by"],
                 "properties": {
                   "project_id": {
                     "type": "integer",
@@ -8886,21 +8240,11 @@
                   },
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "backlog",
-                      "todo",
-                      "inprogress",
-                      "review",
-                      "done"
-                    ]
+                    "enum": ["backlog", "todo", "inprogress", "review", "done"]
                   },
                   "priority": {
                     "type": "string",
-                    "enum": [
-                      "low",
-                      "medium",
-                      "high"
-                    ]
+                    "enum": ["low", "medium", "high"]
                   },
                   "due_date": {
                     "type": "string",
@@ -8942,9 +8286,7 @@
     "/tasks/unrestricted": {
       "post": {
         "summary": "Create a new task without permission checks (for board view)",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -8973,9 +8315,7 @@
     "/tasks/{id}": {
       "get": {
         "summary": "Get task by ID",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9011,9 +8351,7 @@
       },
       "put": {
         "summary": "Update task",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9088,9 +8426,7 @@
       },
       "delete": {
         "summary": "Delete task",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9128,9 +8464,7 @@
     "/tasks/{id}/unrestricted": {
       "get": {
         "summary": "Get task by ID without permission checks (for board view)",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9160,9 +8494,7 @@
       },
       "put": {
         "summary": "Update task without permission checks (for board view)",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9231,9 +8563,7 @@
       },
       "delete": {
         "summary": "Delete task without permission checks (for board view)",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9265,9 +8595,7 @@
     "/tasks/project/{projectId}": {
       "get": {
         "summary": "List tasks for a project",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9302,9 +8630,7 @@
     "/tasks/user/assigned": {
       "get": {
         "summary": "Get all tasks assigned to the current user",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9326,9 +8652,7 @@
     "/tasks/projects": {
       "get": {
         "summary": "Get all task team projects (for task creation)",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9347,9 +8671,7 @@
     "/tasks/{id}/comments": {
       "post": {
         "summary": "Add comment to task",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9374,9 +8696,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "content"
-                ],
+                "required": ["content"],
                 "properties": {
                   "content": {
                     "type": "string"
@@ -9405,9 +8725,7 @@
     "/tasks/{id}/upload": {
       "post": {
         "summary": "Upload attachments to task",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9464,9 +8782,7 @@
     "/tasks/project/{projectId}/files": {
       "get": {
         "summary": "Get all files from tasks in a project with role-based filtering",
-        "tags": [
-          "Tasks"
-        ],
+        "tags": ["Tasks"],
         "security": [
           {
             "bearerAuth": []
@@ -9501,9 +8817,7 @@
     "/teams": {
       "post": {
         "summary": "Create a new team member",
-        "tags": [
-          "Teams"
-        ],
+        "tags": ["Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -9518,10 +8832,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name",
-                  "team_type_id"
-                ],
+                "required": ["name", "team_type_id"],
                 "properties": {
                   "name": {
                     "type": "string"
@@ -9572,9 +8883,7 @@
       },
       "get": {
         "summary": "List all team members",
-        "tags": [
-          "Teams"
-        ],
+        "tags": ["Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -9605,10 +8914,7 @@
             "name": "sort_order",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             },
             "description": "Sort order (asc or desc, defaults to desc)"
           }
@@ -9629,9 +8935,7 @@
     "/teams/{id}": {
       "get": {
         "summary": "Get team member by ID",
-        "tags": [
-          "Teams"
-        ],
+        "tags": ["Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -9667,9 +8971,7 @@
       },
       "put": {
         "summary": "Update a team member",
-        "tags": [
-          "Teams"
-        ],
+        "tags": ["Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -9747,9 +9049,7 @@
       },
       "delete": {
         "summary": "Delete a team member",
-        "tags": [
-          "Teams"
-        ],
+        "tags": ["Teams"],
         "security": [
           {
             "bearerAuth": []
@@ -9787,9 +9087,7 @@
     "/team-types": {
       "post": {
         "summary": "Create a new team type",
-        "tags": [
-          "TeamTypes"
-        ],
+        "tags": ["TeamTypes"],
         "security": [
           {
             "bearerAuth": []
@@ -9804,9 +9102,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name"
-                ],
+                "required": ["name"],
                 "properties": {
                   "name": {
                     "type": "string"
@@ -9836,9 +9132,7 @@
       },
       "get": {
         "summary": "List all team types",
-        "tags": [
-          "TeamTypes"
-        ],
+        "tags": ["TeamTypes"],
         "security": [
           {
             "bearerAuth": []
@@ -9863,9 +9157,7 @@
     "/team-types/{id}": {
       "get": {
         "summary": "Get team type by ID",
-        "tags": [
-          "TeamTypes"
-        ],
+        "tags": ["TeamTypes"],
         "security": [
           {
             "bearerAuth": []
@@ -9901,9 +9193,7 @@
       },
       "put": {
         "summary": "Update a team type",
-        "tags": [
-          "TeamTypes"
-        ],
+        "tags": ["TeamTypes"],
         "security": [
           {
             "bearerAuth": []
@@ -9963,9 +9253,7 @@
       },
       "delete": {
         "summary": "Delete a team type",
-        "tags": [
-          "TeamTypes"
-        ],
+        "tags": ["TeamTypes"],
         "security": [
           {
             "bearerAuth": []
@@ -10003,9 +9291,7 @@
     "/testimonials": {
       "post": {
         "summary": "Create a new testimonial",
-        "tags": [
-          "Testimonials"
-        ],
+        "tags": ["Testimonials"],
         "security": [
           {
             "bearerAuth": []
@@ -10020,10 +9306,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "author_name",
-                  "description"
-                ],
+                "required": ["author_name", "description"],
                 "properties": {
                   "author_name": {
                     "type": "string"
@@ -10074,9 +9357,7 @@
       },
       "get": {
         "summary": "List all testimonials",
-        "tags": [
-          "Testimonials"
-        ],
+        "tags": ["Testimonials"],
         "security": [
           {
             "bearerAuth": []
@@ -10101,9 +9382,7 @@
     "/testimonials/{id}": {
       "get": {
         "summary": "Get testimonial by ID",
-        "tags": [
-          "Testimonials"
-        ],
+        "tags": ["Testimonials"],
         "security": [
           {
             "bearerAuth": []
@@ -10139,9 +9418,7 @@
       },
       "put": {
         "summary": "Update a testimonial",
-        "tags": [
-          "Testimonials"
-        ],
+        "tags": ["Testimonials"],
         "security": [
           {
             "bearerAuth": []
@@ -10219,9 +9496,7 @@
       },
       "delete": {
         "summary": "Delete a testimonial",
-        "tags": [
-          "Testimonials"
-        ],
+        "tags": ["Testimonials"],
         "security": [
           {
             "bearerAuth": []
@@ -10259,9 +9534,7 @@
     "/users": {
       "post": {
         "summary": "Create a new user (admin only)",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "security": [
           {
             "bearerAuth": []
@@ -10276,12 +9549,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "email",
-                  "password",
-                  "name",
-                  "role_id"
-                ],
+                "required": ["email", "password", "name", "role_id"],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -10335,9 +9603,7 @@
       },
       "get": {
         "summary": "List users with pagination and filtering",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "security": [
           {
             "bearerAuth": []
@@ -10375,12 +9641,7 @@
             "name": "sort_by",
             "schema": {
               "type": "string",
-              "enum": [
-                "name",
-                "email",
-                "role_id",
-                "created_at"
-              ],
+              "enum": ["name", "email", "role_id", "created_at"],
               "default": "created_at"
             }
           },
@@ -10389,10 +9650,7 @@
             "name": "sort_order",
             "schema": {
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ],
+              "enum": ["asc", "desc"],
               "default": "desc"
             }
           },
@@ -10430,9 +9688,7 @@
     "/users/{id}": {
       "get": {
         "summary": "Get user by ID",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "security": [
           {
             "bearerAuth": []
@@ -10471,9 +9727,7 @@
       },
       "put": {
         "summary": "Update user",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "security": [
           {
             "bearerAuth": []
@@ -10543,9 +9797,7 @@
       },
       "delete": {
         "summary": "Delete user (hard delete - permanently removes from database)",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "security": [
           {
             "bearerAuth": []
@@ -10586,9 +9838,7 @@
     "/users/{id}/activate": {
       "post": {
         "summary": "Activate user (sets is_active to true)",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "security": [
           {
             "bearerAuth": []
@@ -10629,9 +9879,7 @@
     "/users/{id}/deactivate": {
       "post": {
         "summary": "Deactivate user (soft delete)",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "security": [
           {
             "bearerAuth": []
@@ -10672,9 +9920,7 @@
     "/users/import": {
       "post": {
         "summary": "Import multiple users (admin only)",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "security": [
           {
             "bearerAuth": []
@@ -10691,12 +9937,7 @@
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "required": [
-                    "email",
-                    "password",
-                    "name",
-                    "role_id"
-                  ],
+                  "required": ["email", "password", "name", "role_id"],
                   "properties": {
                     "email": {
                       "type": "string",
@@ -10750,9 +9991,7 @@
     "/users/profile/me": {
       "get": {
         "summary": "Get current user's profile",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "security": [
           {
             "bearerAuth": []
@@ -10775,9 +10014,7 @@
       },
       "put": {
         "summary": "Update current user's profile",
-        "tags": [
-          "Users"
-        ],
+        "tags": ["Users"],
         "security": [
           {
             "bearerAuth": []
@@ -10839,9 +10076,7 @@
     "/hr/assets": {
       "get": {
         "summary": "List HR assets",
-        "tags": [
-          "HR Assets"
-        ],
+        "tags": ["HR Assets"],
         "security": [
           {
             "bearerAuth": []
@@ -10889,9 +10124,7 @@
       },
       "post": {
         "summary": "Create HR asset",
-        "tags": [
-          "HR Assets"
-        ],
+        "tags": ["HR Assets"],
         "security": [
           {
             "bearerAuth": []
@@ -10917,9 +10150,7 @@
     "/hr/assets/{id}": {
       "get": {
         "summary": "Get asset details",
-        "tags": [
-          "HR Assets"
-        ],
+        "tags": ["HR Assets"],
         "security": [
           {
             "bearerAuth": []
@@ -10944,9 +10175,7 @@
       },
       "patch": {
         "summary": "Update asset",
-        "tags": [
-          "HR Assets"
-        ],
+        "tags": ["HR Assets"],
         "security": [
           {
             "bearerAuth": []
@@ -10980,9 +10209,7 @@
       },
       "delete": {
         "summary": "Delete asset",
-        "tags": [
-          "HR Assets"
-        ],
+        "tags": ["HR Assets"],
         "security": [
           {
             "bearerAuth": []
@@ -11009,9 +10236,7 @@
     "/hr/employees/{employeeId}/contracts": {
       "get": {
         "summary": "List employee contracts",
-        "tags": [
-          "HR Contracts"
-        ],
+        "tags": ["HR Contracts"],
         "security": [
           {
             "bearerAuth": []
@@ -11046,9 +10271,7 @@
       },
       "post": {
         "summary": "Create employee contract",
-        "tags": [
-          "HR Contracts"
-        ],
+        "tags": ["HR Contracts"],
         "security": [
           {
             "bearerAuth": []
@@ -11092,9 +10315,7 @@
     "/hr/employees/{employeeId}/contracts/{contractId}": {
       "get": {
         "summary": "Get contract details",
-        "tags": [
-          "HR Contracts"
-        ],
+        "tags": ["HR Contracts"],
         "security": [
           {
             "bearerAuth": []
@@ -11135,9 +10356,7 @@
       },
       "patch": {
         "summary": "Update contract",
-        "tags": [
-          "HR Contracts"
-        ],
+        "tags": ["HR Contracts"],
         "security": [
           {
             "bearerAuth": []
@@ -11187,9 +10406,7 @@
       },
       "delete": {
         "summary": "Delete contract",
-        "tags": [
-          "HR Contracts"
-        ],
+        "tags": ["HR Contracts"],
         "security": [
           {
             "bearerAuth": []
@@ -11225,9 +10442,7 @@
     "/hr/employees": {
       "get": {
         "summary": "List employees",
-        "tags": [
-          "HR Employees"
-        ],
+        "tags": ["HR Employees"],
         "security": [
           {
             "bearerAuth": []
@@ -11246,9 +10461,7 @@
     "/hr/employees/{id}": {
       "get": {
         "summary": "Get employee details",
-        "tags": [
-          "HR Employees"
-        ],
+        "tags": ["HR Employees"],
         "security": [
           {
             "bearerAuth": []
@@ -11279,9 +10492,7 @@
       },
       "patch": {
         "summary": "Update employee",
-        "tags": [
-          "HR Employees"
-        ],
+        "tags": ["HR Employees"],
         "security": [
           {
             "bearerAuth": []
@@ -11324,9 +10535,7 @@
       },
       "delete": {
         "summary": "Delete employee",
-        "tags": [
-          "HR Employees"
-        ],
+        "tags": ["HR Employees"],
         "security": [
           {
             "bearerAuth": []
@@ -11359,9 +10568,7 @@
     "/hr/helpdesk": {
       "get": {
         "summary": "List helpdesk tickets",
-        "tags": [
-          "HR Helpdesk"
-        ],
+        "tags": ["HR Helpdesk"],
         "security": [
           {
             "bearerAuth": []
@@ -11410,9 +10617,7 @@
       },
       "post": {
         "summary": "Create helpdesk ticket",
-        "tags": [
-          "HR Helpdesk"
-        ],
+        "tags": ["HR Helpdesk"],
         "security": [
           {
             "bearerAuth": []
@@ -11438,9 +10643,7 @@
     "/hr/helpdesk/{id}": {
       "get": {
         "summary": "Get ticket details",
-        "tags": [
-          "HR Helpdesk"
-        ],
+        "tags": ["HR Helpdesk"],
         "security": [
           {
             "bearerAuth": []
@@ -11465,9 +10668,7 @@
       },
       "patch": {
         "summary": "Update ticket",
-        "tags": [
-          "HR Helpdesk"
-        ],
+        "tags": ["HR Helpdesk"],
         "security": [
           {
             "bearerAuth": []
@@ -11501,9 +10702,7 @@
       },
       "delete": {
         "summary": "Delete ticket",
-        "tags": [
-          "HR Helpdesk"
-        ],
+        "tags": ["HR Helpdesk"],
         "security": [
           {
             "bearerAuth": []
@@ -11530,9 +10729,7 @@
     "/hr/helpdesk/{id}/answer": {
       "post": {
         "summary": "Answer helpdesk ticket",
-        "tags": [
-          "HR Helpdesk"
-        ],
+        "tags": ["HR Helpdesk"],
         "security": [
           {
             "bearerAuth": []
@@ -11574,9 +10771,7 @@
     "/hr/auth/login": {
       "post": {
         "summary": "HR login",
-        "tags": [
-          "HR Auth"
-        ],
+        "tags": ["HR Auth"],
         "requestBody": {
           "required": true,
           "content": {
@@ -11607,9 +10802,7 @@
     "/hr/auth/logout": {
       "post": {
         "summary": "HR logout",
-        "tags": [
-          "HR Auth"
-        ],
+        "tags": ["HR Auth"],
         "security": [
           {
             "bearerAuth": []
@@ -11628,9 +10821,7 @@
     "/hr/auth/me": {
       "get": {
         "summary": "Get current HR user",
-        "tags": [
-          "HR Auth"
-        ],
+        "tags": ["HR Auth"],
         "security": [
           {
             "bearerAuth": []
@@ -11667,9 +10858,7 @@
     "/hr/leaves": {
       "get": {
         "summary": "List all leave requests",
-        "tags": [
-          "HR Leaves"
-        ],
+        "tags": ["HR Leaves"],
         "security": [
           {
             "bearerAuth": []
@@ -11695,9 +10884,7 @@
     "/hr/employees/{employeeId}/leaves": {
       "get": {
         "summary": "List employee leave requests",
-        "tags": [
-          "HR Leaves"
-        ],
+        "tags": ["HR Leaves"],
         "security": [
           {
             "bearerAuth": []
@@ -11732,9 +10919,7 @@
       },
       "post": {
         "summary": "Create leave request",
-        "tags": [
-          "HR Leaves"
-        ],
+        "tags": ["HR Leaves"],
         "security": [
           {
             "bearerAuth": []
@@ -11771,9 +10956,7 @@
     "/hr/leaves/{id}": {
       "patch": {
         "summary": "Update leave request",
-        "tags": [
-          "HR Leaves"
-        ],
+        "tags": ["HR Leaves"],
         "security": [
           {
             "bearerAuth": []
@@ -11809,9 +10992,7 @@
     "/hr/leaves/{id}/cancel": {
       "post": {
         "summary": "Cancel leave request",
-        "tags": [
-          "HR Leaves"
-        ],
+        "tags": ["HR Leaves"],
         "security": [
           {
             "bearerAuth": []
@@ -11838,9 +11019,7 @@
     "/hr/leaves/{id}/approve": {
       "post": {
         "summary": "Approve leave request",
-        "tags": [
-          "HR Leaves"
-        ],
+        "tags": ["HR Leaves"],
         "security": [
           {
             "bearerAuth": []
@@ -11867,9 +11046,7 @@
     "/hr/leaves/{id}/reject": {
       "post": {
         "summary": "Reject leave request",
-        "tags": [
-          "HR Leaves"
-        ],
+        "tags": ["HR Leaves"],
         "security": [
           {
             "bearerAuth": []
@@ -11896,9 +11073,7 @@
     "/hr/payroll": {
       "get": {
         "summary": "Get all payroll records",
-        "tags": [
-          "HR Payroll"
-        ],
+        "tags": ["HR Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -11946,9 +11121,7 @@
       },
       "post": {
         "summary": "Create payroll records",
-        "tags": [
-          "HR Payroll"
-        ],
+        "tags": ["HR Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -11977,9 +11150,7 @@
     "/hr/payroll/upload": {
       "post": {
         "summary": "Upload payroll CSV",
-        "tags": [
-          "HR Payroll"
-        ],
+        "tags": ["HR Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -12010,9 +11181,7 @@
     "/hr/payroll/{id}": {
       "get": {
         "summary": "Get payroll details",
-        "tags": [
-          "HR Payroll"
-        ],
+        "tags": ["HR Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -12044,9 +11213,7 @@
       },
       "patch": {
         "summary": "Update payroll record",
-        "tags": [
-          "HR Payroll"
-        ],
+        "tags": ["HR Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -12080,9 +11247,7 @@
       },
       "delete": {
         "summary": "Delete payroll record",
-        "tags": [
-          "HR Payroll"
-        ],
+        "tags": ["HR Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -12109,9 +11274,7 @@
     "/hr/payroll/{id}/payslip": {
       "get": {
         "summary": "Get payslip signed URL",
-        "tags": [
-          "HR Payroll"
-        ],
+        "tags": ["HR Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -12138,9 +11301,7 @@
     "/hr/payroll/send-emails": {
       "post": {
         "summary": "Send payslip emails",
-        "tags": [
-          "HR Payroll"
-        ],
+        "tags": ["HR Payroll"],
         "security": [
           {
             "bearerAuth": []
@@ -12175,9 +11336,7 @@
     "/hr/policies": {
       "get": {
         "summary": "List all policies",
-        "tags": [
-          "HR Policies"
-        ],
+        "tags": ["HR Policies"],
         "security": [
           {
             "bearerAuth": []
@@ -12231,9 +11390,7 @@
       },
       "post": {
         "summary": "Create new policy",
-        "tags": [
-          "HR Policies"
-        ],
+        "tags": ["HR Policies"],
         "security": [
           {
             "bearerAuth": []
@@ -12259,9 +11416,7 @@
     "/hr/policies/{id}": {
       "get": {
         "summary": "Get policy details",
-        "tags": [
-          "HR Policies"
-        ],
+        "tags": ["HR Policies"],
         "security": [
           {
             "bearerAuth": []
@@ -12286,9 +11441,7 @@
       },
       "patch": {
         "summary": "Update policy",
-        "tags": [
-          "HR Policies"
-        ],
+        "tags": ["HR Policies"],
         "security": [
           {
             "bearerAuth": []
@@ -12322,9 +11475,7 @@
       },
       "delete": {
         "summary": "Delete policy",
-        "tags": [
-          "HR Policies"
-        ],
+        "tags": ["HR Policies"],
         "security": [
           {
             "bearerAuth": []
@@ -12351,9 +11502,7 @@
     "/hr/policies/{id}/download": {
       "get": {
         "summary": "Download policy file",
-        "tags": [
-          "HR Policies"
-        ],
+        "tags": ["HR Policies"],
         "security": [
           {
             "bearerAuth": []

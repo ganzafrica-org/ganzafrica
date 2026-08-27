@@ -103,4 +103,17 @@ describe("MOD-01 contracts", () => {
       listContractsByEmployee("00000000-0000-0000-0000-000000000000"),
     ).rejects.toMatchObject({ statusCode: 404 });
   });
+
+  it("blocks HR from setting TERMINATED directly on create or update (LCM-02 only)", async () => {
+    const { employee } = await makeEmployeeUser({ employmentType: "staff" });
+
+    await expect(
+      createContract(employee.id, { ...baseInput, status: "TERMINATED" }),
+    ).rejects.toMatchObject({ statusCode: 422, code: "CONTRACT_STATUS_NOT_SETTABLE" });
+
+    const created = await createContract(employee.id, baseInput);
+    await expect(
+      updateContract(employee.id, created.id, { status: "TERMINATED" }),
+    ).rejects.toMatchObject({ statusCode: 422, code: "CONTRACT_STATUS_NOT_SETTABLE" });
+  });
 });

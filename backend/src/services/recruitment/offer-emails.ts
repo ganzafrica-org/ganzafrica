@@ -2,7 +2,7 @@
  * REC-05 offer/hire emails (link-bearing). Kept separate from the REC-02 stage templates since
  * these carry secure links and post-accept next-steps.
  */
-function shell(bodyHtml: string): string {
+export function shell(bodyHtml: string): string {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
 <body style="margin:0;font-family:Arial,sans-serif;background:#f9f9f9;">
@@ -18,7 +18,7 @@ function shell(bodyHtml: string): string {
 </body></html>`;
 }
 
-function button(url: string, label: string): string {
+export function button(url: string, label: string): string {
   return `<p style="text-align:center;margin:28px 0;">
     <a href="${url}" style="background:#045F3C;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:bold;">${label}</a>
   </p>`;
@@ -54,6 +54,9 @@ export function welcomeEmail(input: {
   const setup = input.setPasswordLink
     ? `<p>To get started, set up your account:</p>${button(input.setPasswordLink, "Set up your account")}`
     : `<p>You can sign in with your existing GanzAfrica account to begin onboarding.</p>`;
+  const setupText = input.setPasswordLink
+    ? `To get started, set up your account: ${input.setPasswordLink}`
+    : `You can sign in with your existing GanzAfrica account to begin onboarding.`;
   return {
     subject: `Welcome to GanzAfrica — ${input.positionTitle}`,
     html: shell(
@@ -62,5 +65,8 @@ export function welcomeEmail(input: {
        position. Your onboarding will begin shortly.</p>
        ${setup}`,
     ),
+    // Plain-text part — without one, some clients (and inbox preview snippets) render an
+    // html-only email as blank, since they read the text part for the preview/fallback.
+    text: `Hi ${input.firstName},\n\nWelcome aboard! We're thrilled you've accepted the ${input.positionTitle} position. Your onboarding will begin shortly.\n\n${setupText}\n\nWarm regards,\nThe GanzAfrica Recruitment Team`,
   };
 }

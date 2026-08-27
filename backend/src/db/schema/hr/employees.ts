@@ -1,4 +1,13 @@
-import { pgTable, uuid, integer, text, date, check, type AnyPgColumn } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  uuid,
+  integer,
+  text,
+  date,
+  boolean,
+  check,
+  type AnyPgColumn,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { timestampFields } from "../common";
 import { users } from "../users";
@@ -36,8 +45,17 @@ export const employees = pgTable(
 
     // 'fellow' | 'analyst' | 'staff' | 'contractor' | 'intern'
     employment_type: text("employment_type").notNull().default("staff"),
-    // 'onboarding' | 'active' | 'on_leave' | 'offboarding' | 'exited'
+    // 'pending' | 'onboarding' | 'active' | 'on_leave' | 'offboarding' | 'exited'
+    // `pending`: just created, hasn't acted on any onboarding task yet. Flips to `onboarding` on
+    // their first task action (process.service.ts's completeTask/skipTask), then `active` once
+    // the onboarding process instance completes (maybeCompleteInstance) — both system-owned, not
+    // HR-settable (see HR_SETTABLE_STATUSES in employees.types.ts).
     status: text("status").notNull().default("active"),
+    // Deactivation (reversible — "delete employee" was replaced with this). Independent of
+    // `status`, which is HR-lifecycle state owned by the onboarding/offboarding process engine
+    // (`exited` is reserved for LCM-02, not yet built) — a deactivated employee keeps whatever
+    // status they had, they're just hidden from the active roster and can't sign in.
+    is_active: boolean("is_active").notNull().default(true),
 
     hired_at: date("hired_at"),
     exited_at: date("exited_at"),
@@ -50,7 +68,7 @@ export const employees = pgTable(
     ),
     statusCheck: check(
       "employees_status_check",
-      sql`${t.status} IN ('onboarding','active','on_leave','offboarding','exited')`,
+      sql`${t.status} IN ('pending','onboarding','active','on_leave','offboarding','exited')`,
     ),
   }),
 );

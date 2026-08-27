@@ -1,177 +1,106 @@
-// ✅ Data integrated — uses useEmployees()
-// Fake data removed: none (page already used API hooks; server-side filters removed for client-side pattern)
-// Fields not in API response: avatar (mapped from avatarUrl), name (built from firstName/lastName when missing)
-
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { AlertCircle, Edit, Trash2 } from "lucide-react";
+import { Briefcase } from "lucide-react";
 import { EmployeeManagementContent } from "@/components/sections/employee/employee-tabs-management";
 import { StatsHeader } from "@/components/sections/header";
-import { EmployeeSheet } from "@/components/sections/sheets/employee-sheet";
-import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import {
   useEmployees,
-  useEmployeeStats,
-  useUpdateEmployee,
-  useDeleteEmployee,
+  useDepartments,
+  useDeactivateEmployee,
+  useReactivateEmployee,
+  useResendInvite,
 } from "@/hooks/useEmployees";
-import { Briefcase } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import type { Employee } from "@/types/api";
+import { getStatusBadge } from "@/lib/helpers/employee-util";
+import type { Employee, EmployeeStats } from "@/types/api";
 import { AddEmployeeSheet } from "@/components/sections/sheets/add-employee-sheet";
+import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
+import { EmployeeSheet } from "@/components/sections/sheets/employee-sheet";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useAuth } from "@/hooks/useAuth";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 25;
 
-export const getStatusBadge = (status: string) => {
-  switch (status?.toLowerCase().replace(/\s+/g, "_")) {
-    case "active":
-      return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
-    case "on_leave":
-      return <Badge className="bg-amber-100 text-amber-800 border-amber-200">On Leave</Badge>;
-    case "inactive":
-      return <Badge className="bg-red-100 text-red-800 border-red-200">Inactive</Badge>;
-    case "terminated":
-      return <Badge variant="outline">{status}</Badge>;
-    default:
-      return <Badge variant="outline">{status ?? "—"}</Badge>;
-  }
-};
-
-const getCountryFlag = (country: string) => {
-  const flags = {
-    Rwanda: "🇷🇼",
-    Kenya: "🇰🇪",
-    "South Africa": "🇿🇦",
-    Uganda: "🇺🇬",
-    Tanzania: "🇹🇿",
-  };
-  return flags[country as keyof typeof flags] || "🌍";
-};
-
-const normalizeStatus = (status?: string) => (status ?? "").toLowerCase().replace(/\s+/g, "_");
-
+/** DataTable/employee-tabs-management still expect a flat display row — this is the only place that shape is built. */
 const mapEmployeeForDisplay = (emp: Employee) => ({
-  ...emp,
-  avatar: emp.avatarUrl ?? "",
-  name: emp.name || `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim() || "—",
+  id: emp.id,
+  name: `${emp.first_name} ${emp.last_name}`.trim(),
+  email: emp.work_email ?? emp.personal_email ?? "—",
+  position: emp.job_title ?? "—",
   department: emp.department ?? "—",
-  location: emp.location ?? "—",
-  country: emp.country ?? "—",
+  status: emp.status,
+  joinDate: emp.hired_at ?? "",
+  avatar: emp.picture ?? "",
+  manager: emp.manager ? `${emp.manager.first_name} ${emp.manager.last_name}`.trim() : "—",
+  hasAccount: !!emp.account,
+  homeCountry: emp.home_country,
+  isActive: emp.is_active,
 });
 
-const Page = () => {
+function computeStats(data: Employee[], total: number): EmployeeStats {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  return {
+    total,
+    active: data.filter((e) => e.status === "active").length,
+    onLeave: data.filter((e) => e.status === "on_leave").length,
+    newThisMonth: data.filter((e) => e.hired_at && new Date(e.hired_at) >= startOfMonth).length,
+  };
+}
+
+const PageContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [countryFilter, setCountryFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState("active");
   const [page, setPage] = useState(1);
-
-  const { data: employeesResponse, isLoading, isError } = useEmployees();
-  const { data: statsData, isLoading: isLoadingStats } = useEmployeeStats();
-
-  const employeeList = Array.isArray(employeesResponse?.data)
-    ? employeesResponse.data
-    : Array.isArray(employeesResponse)
-      ? employeesResponse
-      : [];
-
-  const normalizedEmployees = useMemo(
-    () => employeeList.map(mapEmployeeForDisplay),
-    [employeeList],
-  );
-
-  const filteredEmployees = normalizedEmployees.filter((employee) => {
-    const query = searchTerm.toLowerCase();
-    const matchesSearch =
-      !query ||
-      employee.name?.toLowerCase().includes(query) ||
-      employee.email?.toLowerCase().includes(query) ||
-      employee.position?.toLowerCase().includes(query) ||
-      employee.employeeId?.toLowerCase().includes(query);
-    const matchesStatus =
-      statusFilter === "all" || normalizeStatus(employee.status) === statusFilter;
-    const matchesDepartment =
-      departmentFilter === "all" || (employee.department ?? "—") === departmentFilter;
-    const matchesCountry = countryFilter === "all" || (employee.country ?? "—") === countryFilter;
-    return matchesSearch && matchesStatus && matchesDepartment && matchesCountry;
-  });
-
-  const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / PAGE_SIZE));
-  const paginatedEmployees = filteredEmployees.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  const countries = useMemo(
-    () =>
-      Array.from(
-        new Set(normalizedEmployees.map((emp) => emp.country).filter((c) => c && c !== "—")),
-      ).sort(),
-    [normalizedEmployees],
-  );
-
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState<any>(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [deactivatingEmployee, setDeactivatingEmployee] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const searchParams = useSearchParams();
+  const deactivateEmployee = useDeactivateEmployee();
+  const reactivateEmployee = useReactivateEmployee();
+  const resendInvite = useResendInvite();
+  const { roles } = useAuth();
+  // employees:manage (HR only) — director/program_manager have employees:read and can view this
+  // page's directory, but the backend 403s them on activation changes, so don't offer an action
+  // that'll fail.
+  const canManageEmployees = roles.includes("hr") || roles.includes("admin");
 
-  const updateMutation = useUpdateEmployee();
-  const deleteMutation = useDeleteEmployee();
+  const {
+    data: employeesResponse,
+    isLoading,
+    isError,
+  } = useEmployees({
+    search: searchTerm || undefined,
+    status: statusFilter === "all" ? undefined : statusFilter,
+    department: departmentFilter === "all" ? undefined : departmentFilter,
+    active: activeFilter as "active" | "inactive" | "all",
+    page,
+    limit: PAGE_SIZE,
+  });
+  const { data: departments } = useDepartments();
 
-  const handleSaveEdit = async () => {
-    try {
-      await updateMutation.mutateAsync({
-        id: selectedEmployee.id,
-        payload: editForm,
-      });
-      setIsEditing(false);
-      setSelectedEmployee(editForm);
-    } catch (error) {
-      console.error("Save failed", error);
-    }
-  };
+  const total = employeesResponse?.total ?? 0;
+  const totalPages = employeesResponse?.pages ?? 1;
+  const employeeList = useMemo(() => employeesResponse?.data ?? [], [employeesResponse]);
 
-  const mappedStats = statsData
-    ? [
-        {
-          icon: Briefcase,
-          label: "Total Employee",
-          value: statsData.total.toString(),
-        },
-        {
-          icon: Briefcase,
-          label: "Active workers",
-          value: statsData.active.toString(),
-        },
-        {
-          icon: Briefcase,
-          label: "On Leave",
-          value: statsData.onLeave.toString(),
-        },
-        {
-          icon: Briefcase,
-          label: "New This Month",
-          value: statsData.newThisMonth.toString(),
-        },
-      ]
-    : [];
+  const displayEmployees = useMemo(() => employeeList.map(mapEmployeeForDisplay), [employeeList]);
+  const stats = useMemo(() => computeStats(employeeList, total), [employeeList, total]);
 
-  const handleDeleteEmployee = async (id: string) => {
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDelete = async () => {
-    try {
-      await deleteMutation.mutateAsync(selectedEmployee.id);
-      setShowDeleteConfirm(false);
-      setShowDetailsDialog(false);
-      setSelectedEmployee(null);
-    } catch (error) {
-      console.error("Delete failed", error);
-    }
-  };
+  const mappedStats = [
+    { icon: Briefcase, label: "Total Employees", value: stats.total.toString() },
+    { icon: Briefcase, label: "Active", value: stats.active.toString() },
+    { icon: Briefcase, label: "On Leave", value: stats.onLeave.toString() },
+    { icon: Briefcase, label: "New This Month", value: stats.newThisMonth.toString() },
+  ];
 
   const sections = EmployeeManagementContent({
     searchTerm,
@@ -180,29 +109,28 @@ const Page = () => {
     setStatusFilter,
     departmentFilter,
     setDepartmentFilter,
-    countryFilter,
-    setCountryFilter,
-    filteredEmployees: paginatedEmployees,
-    setSelectedEmployee: (emp: any) => {
-      setSelectedEmployee(emp);
-      setSelectedEmployeeId(emp.id);
-    },
-    setShowDetailsDialog,
-    setIsEditing,
-    setEditForm,
-    handleDeleteEmployee,
-    countries,
-    getCountryFlag,
-    getStatusBadge,
+    activeFilter,
+    setActiveFilter,
+    departments: departments ?? [],
+    filteredEmployees: displayEmployees,
+    onSelectEmployee: (row: { id: string }) => setSelectedEmployeeId(row.id),
+    onDeactivateEmployee: (row: { id: string; name: string }) => setDeactivatingEmployee(row),
+    onReactivateEmployee: (row: { id: string; name: string }) => reactivateEmployee.mutate(row.id),
+    onResendInvite: (row: { id: string; name: string }) => resendInvite.mutate(row.id),
+    canManageActivation: canManageEmployees,
     setShowAddSheet,
+    getStatusBadge,
   });
-
-  const [scrolled, setScrolled] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, statusFilter, departmentFilter, countryFilter]);
+  }, [searchTerm, statusFilter, departmentFilter, activeFilter]);
+
+  // Deep link from the org chart (or anywhere else): /employees?employee=<id> opens the sheet.
+  useEffect(() => {
+    const employeeId = searchParams.get("employee");
+    if (employeeId) setSelectedEmployeeId(employeeId);
+  }, [searchParams]);
 
   useEffect(() => {
     const mainEl = document.querySelector("main.overflow-auto") as HTMLElement | null;
@@ -234,9 +162,9 @@ const Page = () => {
           subtitle="Manage your team"
           scrolled={scrolled}
           stats={mappedStats}
-          isLoading={isLoadingStats}
+          isLoading={isLoading}
         />
-        <Tabs defaultValue="employees" className="flex flex-col">
+        <Tabs defaultValue="employees" className="w-full flex flex-col">
           <div>{sections.renderFilterBar()}</div>
 
           <TabsContent value="employees">
@@ -289,86 +217,45 @@ const Page = () => {
           </TabsContent>
         </Tabs>
 
-        {showDetailsDialog && selectedEmployee && (
-          <ReusableSheet
-            open={showDetailsDialog}
-            onOpenChange={setShowDetailsDialog}
-            footer={
-              <div className="flex w-full gap-3">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="flex-1 border-red-500 text-red-500 hover:text-white hover:bg-red-600 shadow-md shadow-red-200"
-                  onClick={() => handleDeleteEmployee(selectedEmployee.id)}
-                >
-                  <Trash2 className="h-4 w-4" /> {isEditing ? " Deleting employee" : " Delete"}
-                </Button>
-                <Button
-                  className="flex-1 bg-transparent border border-brand-accent hover:border-none hover:bg-brand-accent text-brand-accent hover:text-white shadow-md shadow-blue-200"
-                  onClick={() => {
-                    if (isEditing) {
-                      handleSaveEdit();
-                    } else {
-                      setIsEditing(true);
-                      setEditForm({ ...selectedEmployee });
-                    }
-                  }}
-                >
-                  <Edit className="h-4 w-4" /> {isEditing ? "Save Changes" : "Edit"}
-                </Button>
-              </div>
-            }
-          >
-            <EmployeeSheet
-              selectedEmployee={selectedEmployee}
-              isEditing={isEditing}
-              editForm={editForm}
-              setEditForm={setEditForm}
-            />
-          </ReusableSheet>
-        )}
-        {showDeleteConfirm && (
-          <div className="fixed inset-0 z-150 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                  <Trash2 className="h-5 w-5 text-red-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900">Delete Employee</h3>
-                  <p className="text-sm text-slate-500">This action cannot be undone.</p>
-                </div>
-              </div>
-
-              <p className="text-sm text-slate-600">
-                Are you sure you want to delete{" "}
-                <span className="font-semibold text-slate-900">{selectedEmployee?.name}</span>? They
-                will be permanently removed from the system.
-              </p>
-
-              <div className="flex gap-3 pt-1">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setShowDeleteConfirm(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                  onClick={confirmDelete}
-                  disabled={deleteMutation.isPending}
-                >
-                  {deleteMutation.isPending ? "Deleting..." : "Yes, Delete"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
         <AddEmployeeSheet open={showAddSheet} onOpenChange={setShowAddSheet} />
+
+        <ReusableSheet
+          open={!!selectedEmployeeId}
+          onOpenChange={(open) => !open && setSelectedEmployeeId(null)}
+          maxWidth="w-full sm:max-w-4xl"
+        >
+          {selectedEmployeeId && (
+            <EmployeeSheet employeeId={selectedEmployeeId} onOpenEmployee={setSelectedEmployeeId} />
+          )}
+        </ReusableSheet>
+
+        <ConfirmDialog
+          open={!!deactivatingEmployee}
+          onOpenChange={(open) => !open && setDeactivatingEmployee(null)}
+          title="Deactivate employee?"
+          description={
+            deactivatingEmployee
+              ? `${deactivatingEmployee.name} will be hidden from the active directory and won't be able to sign in. Their contracts, documents, leave history, and assets all stay intact — you can reactivate them anytime.`
+              : ""
+          }
+          confirmLabel="Deactivate employee"
+          isConfirming={deactivateEmployee.isPending}
+          onConfirm={() => {
+            if (!deactivatingEmployee) return;
+            deactivateEmployee.mutate(deactivatingEmployee.id, {
+              onSuccess: () => setDeactivatingEmployee(null),
+            });
+          }}
+        />
       </div>
     </div>
   );
 };
+
+const Page = () => (
+  <Suspense fallback={null}>
+    <PageContent />
+  </Suspense>
+);
 
 export default Page;

@@ -3,10 +3,18 @@
  * promoting themselves or HR clobbering personal fields.
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { resetDb } from "../setup";
 import { db } from "../../src/db/client";
-import { employees, users, user_roles, roles } from "../../src/db/schema";
+import {
+  employees,
+  process_instances,
+  process_tasks,
+  hr_contracts,
+  users,
+  user_roles,
+  roles,
+} from "../../src/db/schema";
 import {
   listEmployees,
   getEmployeeDetail,
@@ -15,8 +23,19 @@ import {
   updateMyProfile,
   getMyEmployeeRecord,
   listDepartments,
+  deactivateEmployee,
+  reactivateEmployee,
+  getEmployeeStatusCounts,
 } from "../../src/services/hr/employees-core.service";
-import { makeUser, makeEmployee, makeEmployeeUser, ensureRole } from "../factories";
+import {
+  makeUser,
+  makeEmployee,
+  makeEmployeeUser,
+  makeContract,
+  makeDocument,
+  makeProcessTemplate,
+  ensureRole,
+} from "../factories";
 import { AppError } from "../../src/middlewares";
 
 describe("MOD-01 directory", () => {
@@ -89,9 +108,43 @@ describe("MOD-01 directory", () => {
     expect(row.account?.email).toBe(report.user.email);
   });
 
+  it("surfaces the ACTIVE contract's currency as contract_currency, batched (no N+1)", async () => {
+    const withActive = await makeEmployeeUser({ firstName: "Kesi", employmentType: "staff" });
+    await makeContract({ employeeId: withActive.employee.id, currency: "KES", status: "ACTIVE" });
+    const withDraftOnly = await makeEmployeeUser({
+      firstName: "Draftonly",
+      employmentType: "staff",
+    });
+    await makeContract({ employeeId: withDraftOnly.employee.id, currency: "UGX", status: "DRAFT" });
+    await makeEmployeeUser({ firstName: "Nocontract", employmentType: "staff" });
+
+    const list = await listEmployees({ search: "" });
+    const byName = (n: string) => list.data.find((r) => r.first_name === n);
+    expect(byName("Kesi")?.contract_currency).toBe("KES");
+    expect(byName("Draftonly")?.contract_currency).toBeNull();
+    expect(byName("Nocontract")?.contract_currency).toBeNull();
+  });
+
   it("lists distinct departments", async () => {
     await seedDirectory();
     expect((await listDepartments()).sort()).toEqual(["Engineering", "Programs"]);
+  });
+
+  it("counts employees by status, excluding deactivated ones, for the landing page", async () => {
+    await seedDirectory(); // 2 active, 1 on_leave, 1 onboarding
+    const { employee: toDeactivate } = await makeEmployeeUser({ employmentType: "staff" });
+    await deactivateEmployee(toDeactivate.id, hrUserId);
+
+    const counts = await getEmployeeStatusCounts();
+    expect(counts).toMatchObject({
+      active: 2,
+      on_leave: 1,
+      onboarding: 1,
+      pending: 0,
+      offboarding: 0,
+      exited: 0,
+    });
+    expect(counts.total).toBe(4); // the deactivated one is excluded
   });
 });
 
@@ -132,7 +185,7 @@ describe("MOD-01 field-set enforcement", () => {
     expect((await updateEmployeeAsHr(employee.id, { status: "on_leave" })).status).toBe("on_leave");
   });
 
-  it("lets an employee edit their own personal fields", async () => {
+  it("lets an employee edit their own personal fields, and reads them back on detail", async () => {
     const { user, employee } = await makeEmployeeUser({ employmentType: "staff" });
     const updated = await updateMyProfile(user.id, { phone: "0788123456", home_city: "Kigali" });
     expect(updated.phone).toBe("0788123456");
@@ -140,6 +193,11 @@ describe("MOD-01 field-set enforcement", () => {
     // Unchanged HR field.
     const [row] = await db.select().from(employees).where(eq(employees.id, employee.id));
     expect(row.status).toBe("active");
+
+    // The self-editable fields must round-trip through the detail/me response, not just the DB row.
+    const detail = await getEmployeeDetail(user.id, employee.id);
+    expect(detail.phone).toBe("0788123456");
+    expect(detail.home_city).toBe("Kigali");
   });
 
   it("rejects an employee editing an HR-owned field", async () => {
@@ -175,6 +233,27 @@ describe("MOD-01 detail and access", () => {
     expect(detail.contract).toBeNull();
   });
 
+  it("counts documents the employee owns — self-uploaded and contract-linked — not documents belonging to someone else", async () => {
+    const hr = await makeEmployeeUser({ role: "hr", employmentType: "staff" });
+    const subject = await makeEmployeeUser({ employmentType: "staff" });
+    const other = await makeEmployeeUser({ employmentType: "staff" });
+
+    // Self-uploaded by the subject.
+    await makeDocument({ createdById: subject.employee.id });
+    // Uploaded by HR (the common real-world case) but linked to the subject's own contract —
+    // created_by_employee_id alone would miss this one.
+    const contract = await makeContract({ employeeId: subject.employee.id });
+    await makeDocument({ createdById: hr.employee.id, contractId: contract.id });
+    // Belongs entirely to a different employee — must not leak into the subject's count.
+    await makeDocument({ createdById: other.employee.id });
+
+    const detail = await getEmployeeDetail(hr.user.id, subject.employee.id);
+    expect(detail.counts.documents).toBe(2);
+
+    const otherDetail = await getEmployeeDetail(hr.user.id, other.employee.id);
+    expect(otherDetail.counts.documents).toBe(1);
+  });
+
   it("lets an employee read their own detail but not another's", async () => {
     const a = await makeEmployeeUser({ employmentType: "staff" });
     const b = await makeEmployeeUser({ employmentType: "staff" });
@@ -206,23 +285,37 @@ describe("MOD-01 detail and access", () => {
 });
 
 describe("MOD-01 manual create with user linking", () => {
+  let hrUserId: number;
+
   beforeEach(async () => {
     await resetDb();
     await ensureRole("employee");
     await ensureRole("hr");
+    hrUserId = (await makeUser({ role: "hr" })).id;
+    await makeProcessTemplate({
+      createdBy: hrUserId,
+      employmentTypes: null,
+      tasks: [
+        { title: "Sign employment contract", kind: "contract_signing", is_blocking: true },
+        { title: "Welcome", kind: "checklist" },
+      ],
+    });
   });
 
   it("creates a fresh users account with the employee role", async () => {
-    const created = await createEmployee({
-      first_name: "New",
-      last_name: "Hire",
-      personal_email: "new.hire@example.com",
-      job_title: "Analyst",
-      department: "Data",
-      employment_type: "analyst",
-    });
+    const created = await createEmployee(
+      {
+        first_name: "New",
+        last_name: "Hire",
+        personal_email: "new.hire@example.com",
+        job_title: "Analyst",
+        department: "Data",
+        employment_type: "analyst",
+      },
+      hrUserId,
+    );
 
-    expect(created.status).toBe("active");
+    expect(created.status).toBe("pending");
 
     const [account] = await db.select().from(users).where(eq(users.email, "new.hire@example.com"));
     expect(account).toBeTruthy();
@@ -239,11 +332,14 @@ describe("MOD-01 manual create with user linking", () => {
     const existing = await makeUser({ email: "reuse@example.com", role: "staff" });
     const [before] = await db.select().from(users).where(eq(users.id, existing.id));
 
-    const created = await createEmployee({
-      first_name: "Reuse",
-      last_name: "Account",
-      personal_email: "reuse@example.com",
-    });
+    const created = await createEmployee(
+      {
+        first_name: "Reuse",
+        last_name: "Account",
+        personal_email: "reuse@example.com",
+      },
+      hrUserId,
+    );
 
     const [linked] = await db.select().from(employees).where(eq(employees.id, created.id));
     expect(linked.user_id).toBe(existing.id);
@@ -257,17 +353,160 @@ describe("MOD-01 manual create with user linking", () => {
   });
 
   it("409s on a duplicate employee email", async () => {
-    await createEmployee({
-      first_name: "First",
-      last_name: "Person",
-      personal_email: "dup@example.com",
-    });
-    await expect(
-      createEmployee({
-        first_name: "Second",
+    await createEmployee(
+      {
+        first_name: "First",
         last_name: "Person",
         personal_email: "dup@example.com",
-      }),
+      },
+      hrUserId,
+    );
+    await expect(
+      createEmployee(
+        {
+          first_name: "Second",
+          last_name: "Person",
+          personal_email: "dup@example.com",
+        },
+        hrUserId,
+      ),
     ).rejects.toMatchObject({ statusCode: 409, code: "EMPLOYEE_EMAIL_TAKEN" });
+  });
+
+  it("instantiates the default onboarding process, snapshotting its tasks (incl. contract_signing)", async () => {
+    const created = await createEmployee(
+      {
+        first_name: "Ona",
+        last_name: "Boarding",
+        personal_email: "ona.boarding@example.com",
+        employment_type: "staff",
+      },
+      hrUserId,
+    );
+
+    const [instance] = await db
+      .select()
+      .from(process_instances)
+      .where(
+        and(
+          eq(process_instances.employee_id, created.id),
+          eq(process_instances.type, "onboarding"),
+        ),
+      );
+    expect(instance).toBeTruthy();
+    expect(instance.status).toBe("in_progress");
+
+    const tasks = await db
+      .select()
+      .from(process_tasks)
+      .where(eq(process_tasks.instance_id, instance.id));
+    expect(tasks.map((t) => t.title)).toEqual(
+      expect.arrayContaining(["Sign employment contract", "Welcome"]),
+    );
+    expect(tasks.find((t) => t.title === "Sign employment contract")?.kind).toBe(
+      "contract_signing",
+    );
+  });
+
+  it("rolls back the whole creation when no active onboarding template applies", async () => {
+    await resetDb();
+    await ensureRole("employee");
+    await ensureRole("hr");
+    hrUserId = (await makeUser({ role: "hr" })).id;
+    // No template seeded this time.
+
+    await expect(
+      createEmployee(
+        {
+          first_name: "No",
+          last_name: "Template",
+          personal_email: "no.template@example.com",
+        },
+        hrUserId,
+      ),
+    ).rejects.toMatchObject({ statusCode: 422, code: "TEMPLATE_UNAVAILABLE" });
+
+    // Nothing survives: no employee, no linked user.
+    expect(await db.select().from(employees)).toHaveLength(0);
+    const accounts = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, "no.template@example.com"));
+    expect(accounts).toHaveLength(0);
+  });
+});
+
+describe("MOD-01 deactivate/reactivate employee (replaces the old hard delete)", () => {
+  let hrUserId: number;
+
+  beforeEach(async () => {
+    await resetDb();
+    await ensureRole("employee");
+    await ensureRole("hr");
+    hrUserId = (await makeUser({ role: "hr" })).id;
+  });
+
+  it("deactivates the employee and their account, without touching the row or their contract", async () => {
+    const { user, employee } = await makeEmployeeUser({ employmentType: "staff" });
+    await makeContract({ employeeId: employee.id });
+
+    await deactivateEmployee(employee.id, hrUserId);
+
+    const [row] = await db.select().from(employees).where(eq(employees.id, employee.id));
+    expect(row).toBeTruthy(); // still exists — this is reversible, not a delete
+    expect(row.is_active).toBe(false);
+    expect(
+      await db.select().from(hr_contracts).where(eq(hr_contracts.employee_ref_id, employee.id)),
+    ).toHaveLength(1); // contract history untouched
+
+    const [account] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(account.is_active).toBe(false); // login blocked
+  });
+
+  it("reactivate flips both employee and account back to active", async () => {
+    const { user, employee } = await makeEmployeeUser({ employmentType: "staff" });
+    await deactivateEmployee(employee.id, hrUserId);
+
+    await reactivateEmployee(employee.id);
+
+    const [row] = await db.select().from(employees).where(eq(employees.id, employee.id));
+    expect(row.is_active).toBe(true);
+    const [account] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(account.is_active).toBe(true);
+  });
+
+  it("404s deactivating/reactivating an unknown employee", async () => {
+    const badId = "00000000-0000-0000-0000-000000000000";
+    await expect(deactivateEmployee(badId, hrUserId)).rejects.toMatchObject({ statusCode: 404 });
+    await expect(reactivateEmployee(badId)).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it("refuses to let HR deactivate their own employee record", async () => {
+    const employee = await makeEmployee({ userId: hrUserId, employmentType: "staff" });
+    await expect(deactivateEmployee(employee.id, hrUserId)).rejects.toMatchObject({
+      statusCode: 422,
+      code: "SELF_DEACTIVATE",
+    });
+  });
+
+  it("directory: hides deactivated employees by default, surfaces them under ?active=inactive|all", async () => {
+    const { employee: activeOne } = await makeEmployeeUser({
+      firstName: "Ada",
+      employmentType: "staff",
+    });
+    const { employee: inactiveOne } = await makeEmployeeUser({
+      firstName: "Grace",
+      employmentType: "staff",
+    });
+    await deactivateEmployee(inactiveOne.id, hrUserId);
+
+    const defaultList = await listEmployees({});
+    expect(defaultList.data.map((r) => r.id)).toEqual([activeOne.id]);
+
+    const inactiveList = await listEmployees({ active: "inactive" });
+    expect(inactiveList.data.map((r) => r.id)).toEqual([inactiveOne.id]);
+
+    const allList = await listEmployees({ active: "all" });
+    expect(allList.data.map((r) => r.id).sort()).toEqual([activeOne.id, inactiveOne.id].sort());
   });
 });

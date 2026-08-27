@@ -23,12 +23,22 @@ import { Card } from "@workspace/ui/components/card";
 import apiClient from "@/lib/api-client";
 import { AtSign, LockKeyhole, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider"; // Update path if needed
+import { redirectToApp } from "@/lib/sso";
 
 interface LoginFormProps {
   userType?: string | null; // 'alumni' or null
+  /**
+   * Relative path within the HR app to land on post-login (e.g. from an invite email's
+   * set-password link). Only a same-app relative path is honored — never followed if it looks
+   * like an absolute/protocol-relative URL, to avoid turning this into an open redirect.
+   */
+  next?: string | null;
 }
 
-export function LoginForm({ userType }: LoginFormProps) {
+const isSafeRelativePath = (path: string | null | undefined): path is string =>
+  !!path && path.startsWith("/") && !path.startsWith("//");
+
+export function LoginForm({ userType, next }: LoginFormProps) {
   const router = useRouter();
   const { refreshUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -73,11 +83,7 @@ export function LoginForm({ userType }: LoginFormProps) {
         await refreshUser();
         setLoginError(null);
         showSuccessToast({ message: "Login successful" });
-        if (userType === "alumni") {
-          router.push("/platform-selection?user=alumni");
-        } else {
-          router.push("/platform-selection");
-        }
+        goToNextOrPlatformSelection();
       }
     } catch (error: any) {
       // Check if the error is due to user not found (404) or if the message indicates user doesn't exist
@@ -125,17 +131,29 @@ export function LoginForm({ userType }: LoginFormProps) {
       // Verification sets the session cookie server-side; nothing is stored client-side.
       await refreshUser();
       showSuccessToast({ message: "Authentication successful" });
-      if (userType === "alumni") {
-        router.push("/platform-selection?user=alumni");
-      } else {
-        router.push("/platform-selection");
-      }
+      goToNextOrPlatformSelection();
     } catch (error: any) {
       showErrorToast({
         message: error.response?.data?.message || "Verification failed",
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Shared by password login and 2FA verification. A safe `next` (e.g. from an invite email's
+  // set-password link) skips the platform-selection chooser and drops the user straight into the
+  // HR app at that path; otherwise this is the normal multi-app flow.
+  const goToNextOrPlatformSelection = () => {
+    if (isSafeRelativePath(next)) {
+      const hrAppUrl = process.env.NEXT_PUBLIC_HR_URL || "http://localhost:3006";
+      redirectToApp("hr", hrAppUrl, next);
+      return;
+    }
+    if (userType === "alumni") {
+      router.push("/platform-selection?user=alumni");
+    } else {
+      router.push("/platform-selection");
     }
   };
 

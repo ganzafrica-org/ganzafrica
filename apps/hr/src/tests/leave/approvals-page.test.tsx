@@ -3,7 +3,7 @@ import { screen, waitFor, fireEvent } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/mocks/server";
 import { renderWithClient } from "@/tests/recruitment/test-utils";
-import ApprovalsPage from "@/app/leave/approvals/page";
+import { LeaveApprovalsSheet } from "@/components/sections/leave/leave-approvals-sheet";
 
 const API = "http://localhost:3002/api";
 
@@ -23,13 +23,17 @@ const pending = {
   created_at: "2026-02-01T00:00:00Z",
 };
 
-describe("Leave approvals page", () => {
+function renderSheet() {
+  renderWithClient(<LeaveApprovalsSheet open onOpenChange={() => {}} />);
+}
+
+describe("Leave approvals sheet", () => {
   it("renders the pending queue", async () => {
     server.use(
       http.get(`${API}/hr/leave/pending-approvals`, () => HttpResponse.json({ leaves: [pending] })),
     );
 
-    renderWithClient(<ApprovalsPage />);
+    renderSheet();
 
     expect(await screen.findByText("3 working days")).toBeInTheDocument();
     expect(screen.getByText("Family trip")).toBeInTheDocument();
@@ -40,7 +44,7 @@ describe("Leave approvals page", () => {
       http.get(`${API}/hr/leave/pending-approvals`, () => HttpResponse.json({ leaves: [] })),
     );
 
-    renderWithClient(<ApprovalsPage />);
+    renderSheet();
 
     expect(await screen.findByText("Nothing waiting on you")).toBeInTheDocument();
   });
@@ -57,7 +61,7 @@ describe("Leave approvals page", () => {
       }),
     );
 
-    renderWithClient(<ApprovalsPage />);
+    renderSheet();
     fireEvent.click(await screen.findByRole("button", { name: /approve/i }));
 
     await waitFor(() => expect(approved).toBe(true));
@@ -73,7 +77,7 @@ describe("Leave approvals page", () => {
       }),
     );
 
-    renderWithClient(<ApprovalsPage />);
+    renderSheet();
     fireEvent.click(await screen.findByRole("button", { name: /reject/i }));
 
     // Confirm with an empty note → blocked client-side.

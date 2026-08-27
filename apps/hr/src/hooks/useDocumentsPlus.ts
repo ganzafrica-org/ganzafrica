@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { documentsPlusService } from "@/services/documents-plus.service";
+import { toast } from "@/lib/toast";
 
 export function useDocumentSearch(q: string) {
   return useQuery({
@@ -23,7 +24,9 @@ export function useSetRetention() {
   return useMutation({
     mutationFn: ({ id, retainUntil }: { id: string; retainUntil: string | null }) =>
       documentsPlusService.setRetention(id, retainUntil),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["documents", "retention", "preview"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "retention", "preview"] });
+      toast.success("Retention updated");
+    },
   });
 }

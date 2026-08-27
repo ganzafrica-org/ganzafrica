@@ -33,3 +33,33 @@ export function countWorkingDays(start: Date, end: Date, holidays: ReadonlySet<s
   }
   return days;
 }
+
+export type SummaryWindow = "week" | "month" | "year";
+
+/**
+ * [from, to] for the window containing `now`, in UTC — same Date.UTC/getUTCDay/setUTCDate
+ * convention as the rest of this file, so this doesn't drift from the leave-day math above.
+ * "week" is Monday-Sunday (ISO week).
+ */
+export function windowBounds(
+  window: SummaryWindow,
+  now: Date = new Date(),
+): { from: Date; to: Date } {
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth();
+  const d = now.getUTCDate();
+
+  if (window === "year") {
+    return { from: new Date(Date.UTC(y, 0, 1)), to: new Date(Date.UTC(y, 11, 31)) };
+  }
+  if (window === "month") {
+    return { from: new Date(Date.UTC(y, m, 1)), to: new Date(Date.UTC(y, m + 1, 0)) };
+  }
+
+  // ISO week: Monday..Sunday. getUTCDay() is 0=Sun..6=Sat; treat Sunday as day 7 so the offset
+  // back to Monday is always 0-6, not a negative wrap.
+  const dow = now.getUTCDay() === 0 ? 7 : now.getUTCDay();
+  const monday = new Date(Date.UTC(y, m, d - (dow - 1)));
+  const sunday = new Date(Date.UTC(y, m, d - (dow - 1) + 6));
+  return { from: monday, to: sunday };
+}

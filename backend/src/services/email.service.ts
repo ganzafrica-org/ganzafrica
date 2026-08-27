@@ -4,27 +4,33 @@ import { AppError } from "../middlewares";
 
 const logger = new Logger("EmailService");
 
-const FROM_ADDRESS = "no-reply@ganzafrica.org";
-
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
 const isEmailConfigured = () => !!resend;
 
 // Generic function to send emails
-export async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(to: string, subject: string, html: string, text?: string) {
   if (!resend) {
+    // No RESEND_API_KEY (typical for local dev) — nothing gets delivered, so surface every link
+    // the email would have contained, otherwise there's no way to click through it locally.
+    const links = [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
     logger.warn(
-      `Resend not configured (missing RESEND_API_KEY). Skipping email to ${to} with subject: ${subject}`,
+      `Resend not configured (missing RESEND_API_KEY). Skipping email to ${to} with subject: ${subject}` +
+        (links.length ? `\nLink(s): ${links.join(", ")}` : ""),
     );
     return null;
   }
 
   try {
+    // A text part is included whenever the caller has one — several clients (and inbox preview
+    // snippets) render an html-only email as blank, since they read the text part for the
+    // preview/fallback rather than parsing the html.
     const { data, error } = await resend.emails.send({
-      from: `GanzAfrica <${FROM_ADDRESS}>`,
+      from: env.RESEND_FROM_EMAIL,
       to,
       subject,
       html,
+      ...(text ? { text } : {}),
     });
 
     if (error) {
@@ -42,7 +48,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
 
 // Send email verification email
 export async function sendVerificationEmail(to: string, data: { token: string; expiresAt: Date }) {
-  const verificationUrl = `${env.WEBSITE_URL}/verify-email?token=${data.token}`;
+  const verificationUrl = `${env.PORTAL_URL}/verify-email?token=${data.token}`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -64,8 +70,13 @@ export async function sendVerificationEmail(to: string, data: { token: string; e
 }
 
 // Send password reset email
-export async function sendPasswordResetEmail(to: string, data: { token: string; expiresAt: Date }) {
-  const resetUrl = `${env.WEBSITE_URL}/reset-password?token=${data.token}`;
+export async function sendPasswordResetEmail(
+  to: string,
+  data: { token: string; expiresAt: Date; next?: string },
+) {
+  const resetUrl = new URL("/reset-password", env.PORTAL_URL);
+  resetUrl.searchParams.set("token", data.token);
+  if (data.next) resetUrl.searchParams.set("next", data.next);
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -88,7 +99,7 @@ export async function sendPasswordResetEmail(to: string, data: { token: string; 
 
 // Send welcome email
 export async function sendWelcomeEmail(to: string, name: string) {
-  const loginUrl = `${env.WEBSITE_URL}/login`;
+  const loginUrl = `${env.PORTAL_URL}/login`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

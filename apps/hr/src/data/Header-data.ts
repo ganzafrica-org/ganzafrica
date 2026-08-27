@@ -13,6 +13,10 @@ import {
   Users,
   Wallet,
   Clock,
+  Star,
+  Target,
+  CheckCircle,
+  Trophy,
 } from "lucide-react";
 export type HeaderStat = {
   icon: LucideIcon | React.ReactElement;
@@ -171,6 +175,34 @@ export const TimeOffStats: HeaderStat[] = [
     label: "Poor",
     value: "2",
     delta: { direction: "down", value: "2%" },
+  },
+];
+
+export const PerformanceStats: HeaderStat[] = [
+  {
+    icon: Star,
+    label: "Average Rating",
+    value: "4.2",
+    delta: { direction: "up", value: "0.3" },
+    comparison: "From last quarter",
+  },
+  {
+    icon: Target,
+    label: "Goal Completion",
+    value: "85%",
+    comparison: "Q4 2024 average",
+  },
+  {
+    icon: CheckCircle,
+    label: "Reviews Completed",
+    value: "68",
+    comparison: "15 pending reviews",
+  },
+  {
+    icon: Trophy,
+    label: "High Performers",
+    value: "23",
+    comparison: "Rating 4.5+ employees",
   },
 ];
 

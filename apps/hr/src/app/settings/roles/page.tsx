@@ -16,10 +16,10 @@ export default function RolesPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-3 flex-1 max-w-md">
           <Input placeholder="Search roles..." className="h-10" />
-          <select className="px-4 py-2 border border-gray-300 rounded-lg text-sm">
+          <select className="px-4 py-2 border border-border rounded-lg text-sm bg-background text-foreground">
             <option>Role</option>
           </select>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg text-sm">
+          <select className="px-4 py-2 border border-border rounded-lg text-sm bg-background text-foreground">
             <option>Access scope</option>
           </select>
         </div>
@@ -28,28 +28,34 @@ export default function RolesPage() {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-lg border border-border overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-muted/50 border-b border-border">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Role</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Scope</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-muted-foreground">
+                Name
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-muted-foreground">
+                Role
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-muted-foreground">
+                Scope
+              </th>
             </tr>
           </thead>
           <tbody>
             {role_data.map((item) => (
               <tr
                 key={item.id}
-                className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                className="border-b border-border hover:bg-muted/50 cursor-pointer"
                 onClick={() => setShowModal(true)}
               >
                 <td className="px-6 py-4">
-                  <div className="font-medium text-gray-900">{item.name}</div>
-                  <div className="text-sm text-gray-600">{item.email}</div>
+                  <div className="font-medium text-foreground">{item.name}</div>
+                  <div className="text-sm text-muted-foreground">{item.email}</div>
                 </td>
                 <td className="px-6 py-4 text-sm text-blue-600">{item.role}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{item.scope}</td>
+                <td className="px-6 py-4 text-sm text-muted-foreground">{item.scope}</td>
               </tr>
             ))}
           </tbody>
@@ -63,8 +69,8 @@ export default function RolesPage() {
       <div className="w-[80%]">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Roles and permissions</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-3xl font-bold text-foreground">Roles and permissions</h1>
+            <p className="text-muted-foreground mt-1">
               Manage roles, permissions, managers and admins for your organization
             </p>
           </div>
@@ -89,18 +95,18 @@ export default function RolesPage() {
         onClose={() => setShowModal(false)}
       >
         <div className="space-y-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
+          <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-lg p-4 flex gap-3">
             <span className="text-blue-600">ⓘ</span>
-            <p className="text-sm text-blue-700">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
               Certain sections of this policy are restricted to preserve its structure and ensure
               compliance
             </p>
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Organization access</h3>
-            <div className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-              <span className="font-medium text-gray-900">GanzAfrica</span>
+            <h3 className="font-semibold text-foreground mb-4">Organization access</h3>
+            <div className="bg-card border border-border rounded-lg p-4 flex items-center justify-between">
+              <span className="font-medium text-foreground">GanzAfrica</span>
               <Button variant="outline" size="sm">
                 Grant access
               </Button>

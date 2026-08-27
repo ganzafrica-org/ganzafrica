@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast";
 import { useRankingCriteria, useRankingMutations } from "@/hooks/useRecruitment";
 
 /**
@@ -23,7 +23,6 @@ import { useRankingCriteria, useRankingMutations } from "@/hooks/useRecruitment"
 export function RankingCriteriaEditor({ opportunityId }: { opportunityId: number }) {
   const { data: criteria } = useRankingCriteria(opportunityId);
   const m = useRankingMutations(opportunityId);
-  const { toast } = useToast();
   const [keyword, setKeyword] = useState("");
   const [weight, setWeight] = useState("1");
 
@@ -93,7 +92,7 @@ export function RankingCriteriaEditor({ opportunityId }: { opportunityId: number
           disabled={m.rescore.isPending}
           onClick={() =>
             m.rescore.mutate(undefined, {
-              onSuccess: (r) => toast({ title: `Re-scored ${r.scored} application(s)` }),
+              onSuccess: (r) => toast.success(`Re-scored ${r.scored} application(s)`),
             })
           }
         >

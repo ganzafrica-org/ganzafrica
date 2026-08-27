@@ -15,6 +15,7 @@ const limiter = rateLimit({
 });
 
 router.get("/view/:token", limiter, validate(v.tokenSchema), c.viewByToken);
+router.get("/view/:token/document", limiter, validate(v.tokenSchema), c.tokenDocument);
 router.post("/submit/:token", limiter, validate(v.signTokenSchema), c.signExternal);
 
 export default router;

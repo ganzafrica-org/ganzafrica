@@ -50,13 +50,23 @@ Extends `process.service.ts`:
   any time before completion (event-logged in notes).
 - `completeInstance` offboarding hook (overrides LCM-01's):
   1. `employees.status='exited'`, `exited_at=last_working_day`.
-  2. `revokeAllSessionsForUser(user_id)`.
-  3. Alumni rule: `employment_type ∈ {fellow, analyst}` OR `grant_alumni` → upsert `alumni`
+  2. **Re-parent direct reports (MOD-02):** for each employee whose `manager_id` is this
+     employee, call `org.service.ts`'s `setManager(reportId, thisEmployee.manager_id, {userId:
+null})` — a system-triggered call (no HTTP actor), still going through the same cycle
+     check (flattening a chain by one level cannot itself introduce a cycle, but the call stays
+     uniform with every other write path rather than bypassing it). Run this before step 1 sets
+     `status='exited'`, since `setManager`'s own guard rejects assigning an exited employee as a
+     manager — reading `thisEmployee.manager_id` first and reassigning reports to it is what
+     lets the chain close over the exiting employee instead of leaving them dangling. Until this
+     hook runs (or if it's skipped in an older build), MOD-02's `getOrgTree` defensively floats
+     an orphaned subtree to the chart root rather than dropping it.
+  3. `revokeAllSessionsForUser(user_id)`.
+  4. Alumni rule: `employment_type ∈ {fellow, analyst}` OR `grant_alumni` → upsert `alumni`
      into user_roles + welcome-to-alumni email (template incl. alumni app link); else no grant.
-  4. Remove `employee` role (self-service access ends).
-  5. `users.is_active`: stays true iff user now holds `alumni` (or admin/mentor); else false.
-  6. Contract status → TERMINATED (active contract rows for the employee).
-  7. Notification to HR + manager.
+  5. Remove `employee` role (self-service access ends).
+  6. `users.is_active`: stays true iff user now holds `alumni` (or admin/mentor); else false.
+  7. Contract status → TERMINATED (active contract rows for the employee).
+  8. Notification to HR + manager.
      All in one transaction except emails (post-commit).
 - Offboardee view: same filtered GET as LCM-01 (`/hr/processes/:id` as subject). Employees
   NOT being offboarded see nothing new anywhere (the "hasn't even gotten to offboarding"

@@ -16,15 +16,29 @@ import {
   CalendarClock,
   Check,
   CircleDot,
+  Eye,
   EyeOff,
   FileSignature,
   Laptop,
   Lock,
+  PenLine,
   SkipForward,
   Umbrella,
   Upload,
 } from "lucide-react";
-import { useCompleteTask, useSkipTask } from "@/hooks/useProcesses";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCompleteTask, useSkipTask, usePatchTask } from "@/hooks/useProcesses";
+import { useContracts, useMyContracts } from "@/hooks/useContracts";
+import { useMySignatures } from "@/hooks/useSigning";
+import { ContractSigningStatus } from "@/components/processes/contract-signing-status";
+import { ContractViewSheet } from "@/components/sections/contracts/contract-view-sheet";
+import { TaskSignDialog } from "@/components/processes/task-sign-dialog";
 import type { ProcessTask, TaskKind } from "@/services/processes.service";
 
 const KIND_ICON: Record<TaskKind, React.ComponentType<{ className?: string }>> = {
@@ -56,19 +70,65 @@ interface Props {
   canManage: boolean;
   /** Viewer is the assignee, so they may complete it. */
   isMine: boolean;
+  /** Only needed to link a contract to a contract_signing task (HR viewing the detail page). */
+  employeeId?: string;
 }
 
-export function TaskRow({ task, canManage, isMine }: Props) {
+export function TaskRow({ task, canManage, isMine, employeeId }: Props) {
   const [skipOpen, setSkipOpen] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [viewingContract, setViewingContract] = useState(false);
+  const [signingRequestId, setSigningRequestId] = useState<number | null>(null);
 
   const complete = useCompleteTask();
   const skip = useSkipTask();
+  const patchTask = usePatchTask();
 
   const Icon = KIND_ICON[task.kind] ?? CircleDot;
   const resolved = task.status !== "pending";
   const actionable = !resolved && (isMine || canManage);
+
+  const linkedContractId = (task.link_ref as { contract_id?: string } | null)?.contract_id ?? null;
+  const showContractLinking =
+    task.kind === "contract_signing" && canManage && !!employeeId && !resolved;
+  const needsLinkedContract = task.kind === "contract_signing" && !!linkedContractId;
+  // Only unsent contracts make sense to send for signature — an ACTIVE one is already signed
+  // (probably via the manual Contracts-tab path), and a TERMINATED/EXPIRED one shouldn't be.
+  const { data: employeeContracts } = useContracts(
+    employeeId && (showContractLinking || needsLinkedContract) ? employeeId : "",
+  );
+  const linkableContracts = employeeContracts?.filter((c) => c.status === "DRAFT") ?? [];
+  // Self-viewing (no employeeId — see app/employees/onboarding/me/page.tsx) needs their own
+  // contract list instead of the HR-only /hr/employees/:id/contracts one above.
+  const { data: myContracts } = useMyContracts(!employeeId && needsLinkedContract);
+  const linkedContract = needsLinkedContract
+    ? ((employeeId ? employeeContracts : myContracts)?.find((c) => c.id === linkedContractId) ??
+      null)
+    : null;
+
+  // "My turn to sign" — independent of isMine/canManage: in the sequential HR-then-employee
+  // flow, whoever's turn it is has a "sent" request against this same contract ref, regardless
+  // of whether they're the onboarding task's assignee.
+  const { data: mySignatures } = useMySignatures();
+  const myPendingSignature =
+    needsLinkedContract && linkedContractId
+      ? (mySignatures?.find(
+          (r) => r.ref_kind === "contract" && r.ref_id === linkedContractId && r.status === "sent",
+        ) ?? null)
+      : null;
+
+  async function onLinkContract(contractId: string) {
+    setError(null);
+    try {
+      await patchTask.mutateAsync({ taskId: task.id, link_ref: { contract_id: contractId } });
+    } catch (e) {
+      setError(
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          "Could not link this contract.",
+      );
+    }
+  }
 
   async function onComplete() {
     setError(null);
@@ -140,6 +200,58 @@ export function TaskRow({ task, canManage, isMine }: Props) {
           {!resolved && KIND_HINT[task.kind] && (
             <p className="mt-0.5 text-xs text-muted-foreground">{KIND_HINT[task.kind]}</p>
           )}
+
+          {task.kind === "contract_signing" && linkedContractId && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <ContractSigningStatus
+                refKind="contract"
+                refId={linkedContractId}
+                variant="compact"
+              />
+              {linkedContract && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => setViewingContract(true)}
+                >
+                  <Eye className="mr-1 size-3" /> View
+                </Button>
+              )}
+              {myPendingSignature && (
+                <Button
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => setSigningRequestId(myPendingSignature.id)}
+                >
+                  <PenLine className="mr-1 size-3" /> Sign
+                </Button>
+              )}
+            </div>
+          )}
+          {showContractLinking && !linkedContractId && (
+            <div className="mt-1.5 max-w-xs">
+              {linkableContracts.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No draft contract to send yet — create one on the Contracts tab first.
+                </p>
+              ) : (
+                <Select onValueChange={onLinkContract} disabled={patchTask.isPending}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Link a contract to send for signature" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {linkableContracts.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.jobTitle} — {new Date(c.startDate).toLocaleDateString()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
+
           {task.notes && task.status === "skipped" && (
             <p className="mt-1 text-sm text-slate-600">Note: {task.notes}</p>
           )}
@@ -202,6 +314,23 @@ export function TaskRow({ task, canManage, isMine }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {needsLinkedContract && (
+        <ContractViewSheet
+          contract={linkedContract}
+          open={viewingContract}
+          onOpenChange={setViewingContract}
+          isHr={canManage}
+        />
+      )}
+      {needsLinkedContract && (
+        <TaskSignDialog
+          request={
+            signingRequestId ? (mySignatures?.find((r) => r.id === signingRequestId) ?? null) : null
+          }
+          onClose={() => setSigningRequestId(null)}
+        />
+      )}
     </div>
   );
 }

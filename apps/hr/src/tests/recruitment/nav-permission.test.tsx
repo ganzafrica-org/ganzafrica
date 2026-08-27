@@ -15,6 +15,16 @@ vi.mock("@/hooks/useAuth", () => ({
 }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
 vi.mock("next-themes", () => ({ useTheme: () => ({ theme: "light", setTheme: vi.fn() }) }));
+vi.mock("@/hooks/useNotifications", () => ({
+  useUnreadNotificationCount: () => ({ data: 0 }),
+  useMarkAllNotificationsRead: () => ({ mutate: vi.fn(), isPending: false }),
+  useNotifications: () => ({
+    data: { data: [], total: 0, unreadCount: 0 },
+    isLoading: false,
+    error: null,
+  }),
+  useMarkNotificationRead: () => ({ mutate: vi.fn() }),
+}));
 
 import { Navbar } from "@/components/navbar";
 

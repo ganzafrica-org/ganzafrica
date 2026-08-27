@@ -2,9 +2,10 @@ import path from "path";
 import { and, asc, desc, eq, ilike, inArray, isNull, ne, or } from "drizzle-orm";
 import { db, withDbTransaction } from "@/db/client";
 import { employees } from "@/db/schema/hr/employees";
-import { requireEmployee, type AccessContext } from "./employee-context";
+import { requireEmployee, isManagerOf, type AccessContext } from "./employee-context";
 import { hr_contracts } from "@/db/schema/hr/contract";
 import { hr_documents } from "@/db/schema/hr/document";
+import { hr_leaves } from "@/db/schema/hr/leave";
 import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
 import { extractText } from "@/services/text-extraction.service";
@@ -20,7 +21,8 @@ export type DocumentCategory =
   | "Forms & Applications"
   | "Training Materials"
   | "Compliance & Legal"
-  | "Onboarding Materials";
+  | "Onboarding Materials"
+  | "Leave Attachment";
 
 export type DocumentStatus = "PUBLISHED" | "DRAFT" | "ARCHIVED";
 
@@ -55,6 +57,7 @@ export interface CreateDocumentInput {
   createdById: string;
   access?: DocumentACL;
   contractId?: string;
+  leaveId?: string;
 }
 
 export interface UpdateDocumentInput {
@@ -75,6 +78,7 @@ const VALID_CATEGORIES: DocumentCategory[] = [
   "Training Materials",
   "Compliance & Legal",
   "Onboarding Materials",
+  "Leave Attachment",
 ];
 
 function bytesToHuman(bytes: number): string {
@@ -109,6 +113,15 @@ async function assertContractExists(contractId: string): Promise<void> {
   if (!rows.length) throw new AppError("Linked contract record not found in DB", 404);
 }
 
+async function assertLeaveExists(leaveId: string): Promise<void> {
+  const rows = await db
+    .select({ id: hr_leaves.id })
+    .from(hr_leaves)
+    .where(eq(hr_leaves.id, leaveId))
+    .limit(1);
+  if (!rows.length) throw new AppError("Linked leave request not found in DB", 404);
+}
+
 async function contractOwnerEmployeeId(contractId: string | null): Promise<string | null> {
   if (!contractId) return null;
   const [row] = await db
@@ -119,19 +132,43 @@ async function contractOwnerEmployeeId(contractId: string | null): Promise<strin
   return row?.employeeId ?? null;
 }
 
+/** True when `ctxEmployeeId` owns the leave, or is anywhere in its owner's manager chain. */
+async function leaveDocumentAccess(
+  leaveId: string | null,
+  ctxEmployeeId: string | null,
+): Promise<boolean> {
+  if (!leaveId || !ctxEmployeeId) return false;
+  const [row] = await db
+    .select({ employeeId: hr_leaves.employee_id })
+    .from(hr_leaves)
+    .where(eq(hr_leaves.id, leaveId))
+    .limit(1);
+  const ownerId = row?.employeeId ?? null;
+  if (!ownerId) return false;
+  if (ownerId === ctxEmployeeId) return true;
+  return isManagerOf(ctxEmployeeId, ownerId);
+}
+
 export interface DocumentACLSubject {
   access: DocumentACL | null;
   /** The employee_ref_id of the linked contract, resolved by the caller (or null/undefined if none). */
   contractEmployeeId?: string | null;
+  /**
+   * True when this is a leave attachment (hr_documents.leave_id set) and the caller is either the
+   * leave's own owner or their resolved approver (manager-chain) — resolved by the caller via
+   * leaveDocumentAccess, since it needs an async isManagerOf walk this synchronous check can't do.
+   */
+  leaveAccess?: boolean;
 }
 
 /**
  * ACL enforcement: single source of truth for document access checks, used by both the list
  * filter and the download check.
  *
- * Rules (MOD-05 §3, frozen):
+ * Rules (MOD-05 §3, frozen; leave attachments per punch-list #5):
  * - hr / admin roles -> always readable.
  * - Document linked to a contract owned by this employee -> always readable.
+ * - Leave attachment owned by, or awaiting decision from, this employee -> always readable.
  * - ACL null/empty -> readable only by hr/admin (already handled above).
  * - Any-clause match on roles / employee_ids / departments -> readable.
  * - Otherwise -> not readable.
@@ -142,6 +179,8 @@ export function canReadDocument(ctx: DocumentAccessContext, doc: DocumentACLSubj
   if (doc.contractEmployeeId && ctx.employeeId && doc.contractEmployeeId === ctx.employeeId) {
     return true;
   }
+
+  if (doc.leaveAccess) return true;
 
   const acl = doc.access;
   if (!acl) return false;
@@ -171,7 +210,10 @@ async function fetchReadableDocument(
   if (doc.status === "ARCHIVED") throw new AppError("Document not found", 404);
 
   const contractEmployeeId = await contractOwnerEmployeeId(doc.contract_id);
-  if (!canReadDocument(ctx, { access: doc.access as DocumentACL, contractEmployeeId })) {
+  const leaveAccess = await leaveDocumentAccess(doc.leave_id, ctx.employeeId);
+  if (
+    !canReadDocument(ctx, { access: doc.access as DocumentACL, contractEmployeeId, leaveAccess })
+  ) {
     throw new AppError("Access denied: you do not have permission to access this document", 403);
   }
   return doc;
@@ -392,7 +434,8 @@ export async function getDocument(id: string, ctx: DocumentAccessContext) {
   const p = rows[0];
 
   const contractEmployeeId = await contractOwnerEmployeeId(p.contract_id);
-  if (!canReadDocument(ctx, { access: p.access as DocumentACL, contractEmployeeId })) {
+  const leaveAccess = await leaveDocumentAccess(p.leave_id, ctx.employeeId);
+  if (!canReadDocument(ctx, { access: p.access as DocumentACL, contractEmployeeId, leaveAccess })) {
     throw new AppError("Access denied: you do not have permission to view this document", 403);
   }
 
@@ -439,6 +482,12 @@ export async function createDocument(input: CreateDocumentInput) {
     await assertContractExists(input.contractId);
   }
 
+  if (input.category === "Leave Attachment") {
+    if (!input.leaveId) {
+      throw new AppError("Leave request must be linked. leaveId is required.", 400);
+    }
+    await assertLeaveExists(input.leaveId);
+  }
   const inserted = await db
     .insert(hr_documents)
     .values({
@@ -455,6 +504,7 @@ export async function createDocument(input: CreateDocumentInput) {
       created_by_employee_id: input.createdById,
       access: input.access ?? {},
       contract_id: input.category === "Contract Templates" ? input.contractId : null,
+      leave_id: input.category === "Leave Attachment" ? input.leaveId : null,
     })
     .returning();
 

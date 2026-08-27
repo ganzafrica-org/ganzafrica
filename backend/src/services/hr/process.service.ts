@@ -25,6 +25,9 @@ import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
 import { ensureBalances } from "./leave-core.service";
 import { isManagerOf } from "./employee-context";
+import { createSequentialRequests, getTemplateByName } from "../signing.service";
+
+const EMPLOYMENT_CONTRACT_TEMPLATE_NAME = "Employment Contract";
 
 export type ProcessType = "onboarding" | "offboarding";
 export type AssigneeClass = "hr" | "it" | "manager" | "finance" | "employee";
@@ -373,6 +376,28 @@ async function runKindHook(
   }
 }
 
+/**
+ * An employee starts at `pending` (employees-core.service.ts::createEmployee) even though their
+ * onboarding checklist already exists — they haven't done anything yet. The first action on any
+ * task of that checklist (done or skipped, doesn't matter which) is what "starting onboarding"
+ * means, so that's the hook point; onboarding→active is the existing maybeCompleteInstance path
+ * below, unchanged.
+ */
+async function maybeStartOnboarding(instance: typeof process_instances.$inferSelect) {
+  if (instance.type !== "onboarding") return;
+  const [employee] = await db
+    .select({ status: employees.status })
+    .from(employees)
+    .where(eq(employees.id, instance.employee_id))
+    .limit(1);
+  if (employee?.status === "pending") {
+    await db
+      .update(employees)
+      .set({ status: "onboarding", updated_at: new Date() })
+      .where(eq(employees.id, instance.employee_id));
+  }
+}
+
 export async function completeTask(actorUserId: number, taskId: number, notes?: string) {
   const { task, instance } = await requireTask(db, taskId);
   if (task.status !== "pending") {
@@ -380,6 +405,7 @@ export async function completeTask(actorUserId: number, taskId: number, notes?: 
   }
   await assertCanActOnTask(db, actorUserId, task);
   await runKindHook(task, instance);
+  await maybeStartOnboarding(instance);
 
   const [updated] = await db
     .update(process_tasks)
@@ -411,6 +437,7 @@ export async function skipTask(actorUserId: number, taskId: number, notes: strin
   if (task.is_blocking && !(await isHrOrAdmin(db, actorUserId))) {
     throw new AppError("Only HR can skip a blocking task", 403, "BLOCKING_SKIP_FORBIDDEN");
   }
+  await maybeStartOnboarding(instance);
 
   const [updated] = await db
     .update(process_tasks)
@@ -622,7 +649,11 @@ export async function reassignTask(
     due_date?: string | null;
     link_ref?: Record<string, unknown>;
   },
+  actorUserId: number,
 ) {
+  const [before] = await db.select().from(process_tasks).where(eq(process_tasks.id, taskId));
+  if (!before) throw new AppError("Task not found", 404, "TASK_NOT_FOUND");
+
   const set: Record<string, unknown> = { updated_at: new Date() };
   if (patch.assignee_user_id !== undefined) set.assignee_user_id = patch.assignee_user_id;
   if (patch.due_date !== undefined) set.due_date = patch.due_date;
@@ -634,7 +665,70 @@ export async function reassignTask(
     .where(eq(process_tasks.id, taskId))
     .returning();
   if (!row) throw new AppError("Task not found", 404, "TASK_NOT_FOUND");
+
+  const beforeContractId = (before.link_ref as Record<string, unknown> | null)?.contract_id;
+  const afterContractId = (row.link_ref as Record<string, unknown> | null)?.contract_id;
+  if (row.kind === "contract_signing" && afterContractId && afterContractId !== beforeContractId) {
+    const [instance] = await db
+      .select()
+      .from(process_instances)
+      .where(eq(process_instances.id, row.instance_id))
+      .limit(1);
+    if (instance) {
+      await startContractSigning({
+        contractId: afterContractId as string,
+        employeeId: instance.employee_id,
+        hrUserId: actorUserId,
+      });
+    }
+  }
+
   return row;
+}
+
+/**
+ * Kicks off the HR-then-employee signing sequence when a contract gets linked to a
+ * contract_signing task. HR is the actor who did the linking (they're presumed to be the
+ * countersigning HR rep); the employee is resolved from the onboarding instance's employee row.
+ * Both are internal signers — the employee already has an authenticated users account by the
+ * time onboarding exists, so there's no need for the external emailed-token path.
+ */
+async function startContractSigning(input: {
+  contractId: string;
+  employeeId: string;
+  hrUserId: number;
+}): Promise<void> {
+  const template = await getTemplateByName(EMPLOYMENT_CONTRACT_TEMPLATE_NAME);
+  if (!template) {
+    throw new AppError(
+      `No "${EMPLOYMENT_CONTRACT_TEMPLATE_NAME}" signature template configured — create one in ` +
+        `Settings → E-Signing Templates before linking a contract to this task.`,
+      422,
+      "SIGNING_TEMPLATE_MISSING",
+    );
+  }
+
+  const [employee] = await db
+    .select({
+      userId: employees.user_id,
+      firstName: employees.first_name,
+      lastName: employees.last_name,
+    })
+    .from(employees)
+    .where(eq(employees.id, input.employeeId))
+    .limit(1);
+  if (!employee) throw new AppError("Employee not found", 404, "EMPLOYEE_NOT_FOUND");
+
+  await createSequentialRequests(
+    {
+      template_id: template.id,
+      subject: `Employment contract — ${employee.firstName} ${employee.lastName}`,
+      ref_kind: "contract",
+      ref_id: input.contractId,
+      signerUserIds: [input.hrUserId, employee.userId],
+    },
+    input.hrUserId,
+  );
 }
 
 /** Stops the checklist without judging the employee's status — HR decides that separately. */

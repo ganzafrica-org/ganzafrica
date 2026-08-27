@@ -464,43 +464,63 @@ export async function updateSessionActivity(sessionId: string): Promise<boolean>
  * @param {string} ipAddress - User's IP address
  * @returns {Promise<boolean>} - Result of operation
  */
+async function mintPasswordResetToken(
+  userId: number,
+  ipAddress: string,
+): Promise<{ token: string; expiresAt: Date }> {
+  const token = crypto.randomBytes(32).toString("hex");
+  const tokenHash = await bcrypt.hash(token, SALT_ROUNDS);
+  const expiresAt = new Date(Date.now() + parseTimeToMs("1h"));
+
+  // Invalidate any existing password reset tokens
+  await db
+    .update(password_reset_tokens)
+    .set({ used: true })
+    .where(and(eq(password_reset_tokens.user_id, userId), eq(password_reset_tokens.used, false)));
+
+  // Create new password reset token
+  await db.insert(password_reset_tokens).values({
+    user_id: userId,
+    token_hash: tokenHash,
+    expires_at: expiresAt,
+    used: false,
+    ip_address: ipAddress,
+    created_at: new Date(),
+    updated_at: new Date(),
+  });
+
+  return { token, expiresAt };
+}
+
 export async function sendPasswordReset(
   userId: number,
   email: string,
   ipAddress: string,
 ): Promise<boolean> {
   try {
-    const token = crypto.randomBytes(32).toString("hex");
-    const tokenHash = await bcrypt.hash(token, SALT_ROUNDS);
-    const expiresAt = new Date(Date.now() + parseTimeToMs("1h"));
-
-    // Invalidate any existing password reset tokens
-    await db
-      .update(password_reset_tokens)
-      .set({ used: true })
-      .where(and(eq(password_reset_tokens.user_id, userId), eq(password_reset_tokens.used, false)));
-
-    // Create new password reset token
-    await db.insert(password_reset_tokens).values({
-      user_id: userId,
-      token_hash: tokenHash,
-      expires_at: expiresAt,
-      used: false,
-      ip_address: ipAddress,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
-
-    await sendPasswordResetEmail(email, {
-      token,
-      expiresAt,
-    });
-
+    const { token, expiresAt } = await mintPasswordResetToken(userId, ipAddress);
+    await sendPasswordResetEmail(email, { token, expiresAt });
     return true;
   } catch (error) {
     logger.error("Password reset token creation error", error);
     throw new AppError("Failed to send password reset email", 500);
   }
+}
+
+/**
+ * Mint a set-password link without sending the standalone "reset your password" email — for
+ * callers (e.g. the new-employee invite) that fold the link into their own branded email instead.
+ */
+export async function createSetPasswordLink(
+  userId: number,
+  ipAddress: string,
+  next?: string,
+): Promise<string> {
+  const { token } = await mintPasswordResetToken(userId, ipAddress);
+  const url = new URL("/reset-password", env.PORTAL_URL);
+  url.searchParams.set("token", token);
+  if (next) url.searchParams.set("next", next);
+  return url.toString();
 }
 
 /**
@@ -562,24 +582,21 @@ export async function verifyEmailToken(token: string, userId: number): Promise<b
 }
 
 /**
- * Reset user password
+ * Reset user password. The token is an opaque random value (mintPasswordResetToken) — it does
+ * not encode the user id, so the only way to find the matching row is to bcrypt-compare against
+ * every unused, unexpired token in the table (the same approach findAccountUserByHandoffCode-style
+ * lookups use). Not a JWT — must not go through verifyToken.
  * @param {string} token - Password reset token
- * @param {number} userId - User ID
  * @param {string} newPassword - New password
  * @returns {Promise<boolean>} - Result of operation
  */
-export async function resetPassword(
-  token: string,
-  userId: number,
-  newPassword: string,
-): Promise<boolean> {
+export async function resetPassword(token: string, newPassword: string): Promise<boolean> {
   return await withDbTransaction(async (txDb) => {
-    // Verify the token first
     let validToken = null;
     const tokens = await txDb
       .select()
       .from(password_reset_tokens)
-      .where(and(eq(password_reset_tokens.user_id, userId), eq(password_reset_tokens.used, false)));
+      .where(eq(password_reset_tokens.used, false));
 
     for (const dbToken of tokens) {
       try {
@@ -600,6 +617,8 @@ export async function resetPassword(
     if (validToken.expires_at < new Date()) {
       throw new AppError("Password reset token has expired", 400);
     }
+
+    const userId = validToken.user_id;
 
     // Hash the new password
     const passwordHash = await hashPassword(newPassword);

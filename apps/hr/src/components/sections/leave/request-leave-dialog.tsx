@@ -20,8 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, CalendarDays, Loader2 } from "lucide-react";
-import { useRequestLeave, useValidateLeave } from "@/hooks/useLeaveBalances";
+import { AlertTriangle, CalendarDays, Loader2, Upload } from "lucide-react";
+import {
+  useRequestLeave,
+  useValidateLeave,
+  useUploadLeaveAttachment,
+} from "@/hooks/useLeaveBalances";
 import type { LeaveTypeName, LeaveValidation } from "@/services/leave-balances.service";
 
 const TYPES: { value: LeaveTypeName; label: string }[] = [
@@ -43,11 +47,13 @@ export function RequestLeaveDialog({ open, onOpenChange }: Props) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [preview, setPreview] = useState<LeaveValidation | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const validate = useValidateLeave();
   const submit = useRequestLeave();
+  const uploadAttachment = useUploadLeaveAttachment();
 
   const rangeComplete = Boolean(startDate && endDate);
 
@@ -78,6 +84,7 @@ export function RequestLeaveDialog({ open, onOpenChange }: Props) {
     setStartDate("");
     setEndDate("");
     setReason("");
+    setAttachment(null);
     setPreview(null);
     setError(null);
   }, [open]);
@@ -88,7 +95,19 @@ export function RequestLeaveDialog({ open, onOpenChange }: Props) {
   async function onSubmit() {
     setError(null);
     try {
-      await submit.mutateAsync({ type, startDate, endDate, reason: reason || undefined });
+      const created = await submit.mutateAsync({
+        type,
+        startDate,
+        endDate,
+        reason: reason || undefined,
+      });
+      if (attachment) {
+        // Best-effort: the request itself already succeeded, so a failed attachment upload
+        // shouldn't be treated as a failed submission — the requester can add it later.
+        await uploadAttachment
+          .mutateAsync({ leaveId: created.id, file: attachment })
+          .catch(() => {});
+      }
       onOpenChange(false);
     } catch (e) {
       const message =
@@ -190,6 +209,23 @@ export function RequestLeaveDialog({ open, onOpenChange }: Props) {
               placeholder="Optional context for your approver"
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="leave-attachment">Attachment (optional)</Label>
+            <label
+              htmlFor="leave-attachment"
+              className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50"
+            >
+              <Upload className="h-4 w-4 shrink-0" />
+              {attachment ? attachment.name : "Attach a supporting document (optional)…"}
+              <input
+                id="leave-attachment"
+                type="file"
+                className="hidden"
+                onChange={(e) => setAttachment(e.target.files?.[0] ?? null)}
+              />
+            </label>
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}

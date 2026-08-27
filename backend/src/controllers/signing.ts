@@ -96,6 +96,18 @@ export const auditTrail = async (req: Request, res: Response) => {
     return handleError(res, e, "Audit Trail Error");
   }
 };
+export const listByRef = async (req: Request, res: Response) => {
+  try {
+    const requests = await signing.listByRefForViewer(
+      Number(req.user!.id),
+      req.query.ref_kind as string,
+      req.query.ref_id as string,
+    );
+    return res.json({ requests });
+  } catch (e) {
+    return handleError(res, e, "List By Ref Error");
+  }
+};
 
 // --- Internal signer (authenticated) ---
 export const mySignatures = async (req: Request, res: Response) => {
@@ -103,6 +115,15 @@ export const mySignatures = async (req: Request, res: Response) => {
     return res.json({ requests: await signing.listForSigner(Number(req.user!.id)) });
   } catch (e) {
     return handleError(res, e, "My Signatures Error");
+  }
+};
+export const myRequestDocument = async (req: Request, res: Response) => {
+  try {
+    return res.json(
+      await signing.getRequestDocumentUrl(Number(req.params.id), Number(req.user!.id)),
+    );
+  } catch (e) {
+    return handleError(res, e, "Get Request Document Error");
   }
 };
 export const signInternal = async (req: Request, res: Response) => {
@@ -130,6 +151,15 @@ export const viewByToken = async (req: Request, res: Response) => {
     return res.json(view);
   } catch (e) {
     return handleError(res, e, "View Sign Error");
+  }
+};
+export const tokenDocument = async (req: Request, res: Response) => {
+  try {
+    const view = await signing.getTokenDocumentUrl(req.params.token);
+    if (view.state !== "valid") return res.status(410).json({ state: view.state });
+    return res.json({ url: view.url });
+  } catch (e) {
+    return handleError(res, e, "Get Token Document Error");
   }
 };
 export const signExternal = async (req: Request, res: Response) => {

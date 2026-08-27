@@ -7,7 +7,7 @@ import { screen, waitFor, fireEvent, cleanup } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/mocks/server";
 import { renderWithClient } from "@/tests/recruitment/test-utils";
-import OnboardingDetailPage from "@/app/onboarding/[id]/page";
+import OnboardingDetailPage from "@/app/employees/onboarding/[id]/page";
 
 const API = "http://localhost:3002/api";
 
@@ -60,6 +60,10 @@ function mockDetail(tasks: unknown[], canManage = true) {
         can_manage: canManage,
       }),
     ),
+    // Fetched by TaskRow's contract_signing linking control (ProcessStatus passes employeeId
+    // through) — empty by default so it renders the "no draft contract yet" hint.
+    http.get(`${API}/hr/employees/${instance.employee_id}/contracts`, () => HttpResponse.json([])),
+    http.get(`${API}/hr/signing/requests`, () => HttpResponse.json({ requests: [] })),
   );
 }
 

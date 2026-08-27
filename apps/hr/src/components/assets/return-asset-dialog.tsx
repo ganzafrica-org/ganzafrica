@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useReturnAsset } from "@/hooks/useAssets";
 import type { Asset } from "@/types/api";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 interface ReturnAssetDialogProps {
   asset: Asset | null;
@@ -41,7 +41,7 @@ export function ReturnAssetDialog({ asset, onOpenChange }: ReturnAssetDialogProp
 
   const handleSubmit = async () => {
     if (!asset || !condition.trim()) {
-      toast.error("Describe the condition of the returned asset");
+      toast.danger("Describe the condition of the returned asset");
       return;
     }
     try {
@@ -51,8 +51,8 @@ export function ReturnAssetDialog({ asset, onOpenChange }: ReturnAssetDialogProp
       });
       toast.success("Asset returned");
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? "Failed to return asset");
+    } catch {
+      // Global mutation error handler shows the toast.
     }
   };
 

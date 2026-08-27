@@ -53,59 +53,219 @@ export interface RefreshTokenResponse {
   refreshToken: string;
 }
 
-// --- EMPLOYEE ---
-export type EmployeeType = "STAFF" | "FELLOW" | "CONSULTANT";
+// --- EMPLOYEE (matches backend/src/types/employees.types.ts) ---
+export type EmploymentType = "fellow" | "analyst" | "staff" | "contractor" | "intern";
+export type EmployeeLifecycleStatus =
+  | "pending"
+  | "onboarding"
+  | "active"
+  | "on_leave"
+  | "offboarding"
+  | "exited";
 
-export interface Employee {
-  name: string;
-  role: string;
+export interface EmployeeManagerRef {
   id: string;
-  employeeId: string; // e.g. "GZ001"
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
+}
+
+export interface EmployeeAccountRef {
   email: string;
-  phone: string;
-  position: string;
-  department: string;
-  location: string;
-  country: string;
-  status: "Active" | "On Leave" | "Inactive" | "Terminated";
-  joinDate: string; // ISO date string
-  age?: number;
-  gender?: string;
-  address?: string;
-  managerId?: string;
-  managerName?: string;
-  salary?: number;
-  skills?: string[];
-  avatarUrl?: string;
-  contractId?: string;
-  type: EmployeeType;
+  is_active: boolean;
 }
 
+export interface EmployeeContractSummary {
+  id: string;
+  job_title: string;
+  status: string;
+  start_date: string;
+  end_date: string | null;
+}
+
+/** The shape GET /hr/employees, GET /hr/employees/:id, and GET /hr/employees/me all return. */
+export interface Employee {
+  id: string;
+  user_id: number;
+  first_name: string;
+  last_name: string;
+  work_email: string | null;
+  personal_email: string | null;
+  employee_number: string | null;
+  job_title: string | null;
+  department: string | null;
+  employment_type: EmploymentType;
+  status: EmployeeLifecycleStatus;
+  picture: string | null;
+  phone: string | null;
+  citizenship: string | null;
+  home_country: string | null;
+  home_city: string | null;
+  hired_at: string | null;
+  manager: EmployeeManagerRef | null;
+  /** Null when the employees row has no linked users account (a data gap HR can repair). */
+  account: EmployeeAccountRef | null;
+  /** Currency of the employee's ACTIVE contract, if any — the directory's country-flag proxy. */
+  contract_currency: string | null;
+  /** Reversible deactivation (replaces the old delete action) — independent of `status`. */
+  is_active: boolean;
+  /** Present on detail/me responses only (GET /hr/employees, the directory list, omits these). */
+  counts?: { assets: number; open_leave: number; documents: number };
+  contract?: EmployeeContractSummary | null;
+  /** Present on GET /hr/employees/me only. */
+  roles?: string[];
+}
+
+/** POST /hr/employees body — legacy staff manual add. */
 export interface CreateEmployeeRequest {
-  firstName: string;
-  lastName: string;
-  personalEmail: string;
-  workEmail?: string | null;
+  first_name: string;
+  last_name: string;
+  personal_email: string;
+  work_email?: string | null;
+  employee_number?: string | null;
+  job_title?: string | null;
+  department?: string | null;
+  employment_type?: EmploymentType;
+  manager_id?: string | null;
+  hired_at?: string | null;
   phone?: string | null;
-  picture?: string | null;
   citizenship?: string | null;
-  homeCountry?: string | null;
-  homeCity?: string | null;
-  role?: "EMPLOYEE" | "IT" | "HR";
-  platformUserId?: number;
+  home_country?: string | null;
+  home_city?: string | null;
 }
 
-export type UpdateEmployeeRequest = Partial<CreateEmployeeRequest>;
+/** PATCH /hr/employees/:id body — HR-editable fields only (employees-core.service.ts HR_EDITABLE_FIELDS). */
+export type UpdateEmployeeRequest = Partial<{
+  first_name: string;
+  last_name: string;
+  employee_number: string | null;
+  work_email: string | null;
+  job_title: string | null;
+  department: string | null;
+  employment_type: EmploymentType;
+  status: "active" | "on_leave";
+  hired_at: string | null;
+}>;
 
+/** PATCH /hr/employees/me/profile body — self-editable fields only (SELF_EDITABLE_FIELDS). */
+export type UpdateMyProfileRequest = Partial<{
+  phone: string | null;
+  picture: string | null;
+  personal_email: string;
+  home_city: string | null;
+  home_country: string | null;
+  citizenship: string | null;
+}>;
+
+/** GET /hr/org-chart node shape (MOD-02) — recursive, roots have no implicit parent. */
+export interface OrgTreeNode {
+  id: string;
+  name: string;
+  job_title: string | null;
+  department: string | null;
+  picture: string | null;
+  children: OrgTreeNode[];
+}
+
+/** PATCH /hr/employees/:id/manager body. */
+export interface SetManagerRequest {
+  manager_id: string | null;
+}
+
+/** 422 body on a cycle rejection: `{"error":"cycle","path":[names]}`. */
+export interface CycleErrorResponse {
+  error: "cycle";
+  path: string[];
+}
+
+/** GET /hr/org-chart/unresolved row (MOD-02 backfill worklist). */
+export interface UnresolvedManagerRow {
+  id: string;
+  employee_id: string;
+  raw_text: string;
+  employee_name: string;
+}
+
+/** Computed client-side from the directory response — there is no backend /hr/employees/stats route. */
 export interface EmployeeStats {
   total: number;
   active: number;
   onLeave: number;
   newThisMonth: number;
-  [key: string]: number; // any other stats the backend returns
 }
+
+/**
+ * GET /hr/employees response shape. Deliberately not PaginatedResponse<T> above — this endpoint
+ * returns `pages`, not `totalPages`.
+ */
+export interface EmployeeDirectoryResponse {
+  data: Employee[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+/** GET /hr/employees/stats response shape — real counts for the HR landing page. */
+export interface EmployeeStatusCounts {
+  pending: number;
+  onboarding: number;
+  active: number;
+  on_leave: number;
+  offboarding: number;
+  exited: number;
+  total: number;
+}
+
+/** GET /hr/employees/departments/stats response shape — real per-department counts for the
+ *  employees/department page's headerStats. */
+export interface DepartmentStat {
+  department: string;
+  total: number;
+  active: number;
+  on_leave: number;
+}
+
+export interface DepartmentStatsSummary {
+  total_departments: number;
+  total_employees: number;
+  departments: DepartmentStat[];
+}
+
+// --- CONTRACTS (matches backend/src/types/contract.types.ts — camelCase, unlike Employee above) ---
+export type ContractEmploymentTerm = "indefinite" | "definite";
+export type ContractEmploymentType = "full-time" | "part-time";
+export type ContractCompensationType = "hourly" | "salaried";
+export type ContractSalaryScale = "annual" | "monthly" | "weekly" | "daily";
+export type ContractStatus = "DRAFT" | "ACTIVE" | "EXPIRED" | "TERMINATED";
+
+export interface Contract {
+  id: string;
+  employeeId: string;
+  jobTitle: string;
+  department: string | null;
+  workLocation: string | null;
+  manager: string | null;
+  reportTo: string | null;
+  startDate: string;
+  employmentTerm: ContractEmploymentTerm;
+  endDate: string | null;
+  employmentType: ContractEmploymentType;
+  daysPerWeek: number | null;
+  compensationType: ContractCompensationType;
+  salaryScale: ContractSalaryScale | null;
+  currency: string;
+  baseMonthlyRate: string | null;
+  grossAnnualRate: string | null;
+  employmentAgreementUrl: string | null;
+  status: ContractStatus;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateContractRequest = Omit<Contract, "id" | "employeeId" | "createdAt" | "updatedAt">;
+
+export type UpdateContractRequest = Partial<CreateContractRequest>;
 
 // --- LEAVE ---
 export interface Leave {
@@ -313,12 +473,27 @@ export interface HelpdeskAnswerPayload {
   status?: TicketStatus;
 }
 
+/**
+ * The actual GET /hr/notifications row shape (raw hr_notifications columns) — not the
+ * `{title, body, createdAt, read}` shape this type previously declared, which never matched
+ * what the backend returns (found while mounting the notification UI, MOD-02 Phase 2).
+ */
 export interface NotificationItem {
   id: string;
+  type: string;
+  priority: "LOW" | "NORMAL" | "HIGH" | "CRITICAL";
+  status: "UNREAD" | "READ" | "ARCHIVED";
   title: string;
-  body: string;
-  createdAt: string;
-  read: boolean;
+  message: string;
+  read_at: string | null;
+  created_at: string;
+}
+
+/** GET /hr/notifications response — not PaginatedResponse<T>, it has no page/limit/totalPages. */
+export interface NotificationListResponse {
+  data: NotificationItem[];
+  total: number;
+  unreadCount: number;
 }
 
 export interface AssetMaintenance {
@@ -435,7 +610,10 @@ export type DocumentStatus = "PUBLISHED" | "DRAFT" | "ARCHIVED";
 export interface HrDocument {
   id: string;
   document_name: string;
-  category: DocumentCategory;
+  // "Leave Attachment" (punch-list #5) is created only via POST /hr/leave/:id/attachments, not
+  // the generic Create Document form, so it's a valid read value without being in
+  // DOCUMENT_CATEGORIES (that list drives the form's category dropdown).
+  category: DocumentCategory | "Leave Attachment";
   version: string;
   description: string;
   department: string;
@@ -469,3 +647,31 @@ export interface UpdateDocumentRequest {
   access?: DocumentACL;
   contractId?: string;
 }
+
+// --- DOCUMENT CATEGORY TEMPLATES (v1, additive) ---
+// A standalone entity ("Add the option to create a document template", Things-to-work-on.md),
+// deliberately decoupled from DOCUMENT_CATEGORIES/HrDocument.category above — lets HR design how
+// documents in a category should look (a name + one of four brand colors + simple branding
+// fields). Auto-generating an hr_documents row from one of these templates is deferred follow-up
+// work, not built here.
+export const DOCUMENT_CATEGORY_TEMPLATE_COLORS = ["green", "yellow", "blue", "orange"] as const;
+export type DocumentCategoryTemplateColor = (typeof DOCUMENT_CATEGORY_TEMPLATE_COLORS)[number];
+
+export interface DocumentCategoryTemplate {
+  id: string;
+  name: string;
+  color: DocumentCategoryTemplateColor;
+  header_text: string | null;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateDocumentCategoryTemplateRequest {
+  name: string;
+  color: DocumentCategoryTemplateColor;
+  header_text?: string;
+  description?: string;
+}
+
+export interface UpdateDocumentCategoryTemplateRequest extends Partial<CreateDocumentCategoryTemplateRequest> {}
