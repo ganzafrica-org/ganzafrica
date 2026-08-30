@@ -112,7 +112,7 @@ describe("AddEmployeeSheet — contract + signing entry point", () => {
     });
   }, 15000);
 
-  it("shows the signing entry point only once a contract exists, and links it to the onboarding task", async () => {
+  it("routes the new contract for signature automatically, with no manual step to skip", async () => {
     let patchedLinkRef: unknown = null;
     server.use(
       http.post(`${API}/hr/employees`, () =>
@@ -166,18 +166,16 @@ describe("AddEmployeeSheet — contract + signing entry point", () => {
 
     renderWithClient(<AddEmployeeSheet open onOpenChange={vi.fn()} />);
 
-    // Before any contract exists, nothing about signing is on screen.
-    expect(screen.queryByRole("button", { name: /send for signature/i })).not.toBeInTheDocument();
+    // Before any contract exists, there is nothing to route yet — no manual button either way.
+    expect(screen.queryByText(/route for signature/i)).not.toBeInTheDocument();
 
     await fillProfileStep();
     await fillMinimalContract();
     await userEvent.click(screen.getByRole("button", { name: /create employee/i }));
 
-    const sendButton = await screen.findByRole("button", { name: /send for signature/i });
-    await userEvent.click(sendButton);
-
+    // No button to click — the panel fires the PATCH itself the moment the task resolves.
     await waitFor(() => expect(patchedLinkRef).toEqual({ contract_id: CONTRACT_ID }));
-    expect(await screen.findByRole("button", { name: /sent to hr for signature/i })).toBeDisabled();
+    expect(await screen.findByText(/sent for signature.*employee must sign/i)).toBeInTheDocument();
   }, 15000);
 
   it("blocks submission with a validation error when the now-mandatory contract fields are left empty", async () => {
