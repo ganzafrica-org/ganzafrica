@@ -17,7 +17,7 @@ import {
   type SignatureRequest,
 } from "../db/schema/signing";
 import { mintLink, consumeLink, peekLink, revokeLinks } from "./secure-links.service";
-import { activateViaSignature } from "./hr/contract.service";
+import { activateViaSignature, recordSignedContractDocument } from "./hr/contract.service";
 import { getPresignedDownload } from "./storage.service";
 
 const DEFAULT_SIGN_TTL_DAYS = 30;
@@ -43,6 +43,13 @@ export async function createTemplate(
     })
     .returning();
   return row;
+}
+
+export async function setTemplateFileKey(templateId: number, fileKey: string): Promise<void> {
+  await db
+    .update(signature_templates)
+    .set({ file_key: fileKey, updated_at: new Date() })
+    .where(eq(signature_templates.id, templateId));
 }
 
 export async function listTemplates() {
@@ -277,6 +284,17 @@ async function completeSequenceStep(requestId: number): Promise<void> {
     // signature sequence completes, and the contract needs to know. See contract.service.ts's
     // activateViaSignature for why this bypasses the manual employment_agreement_url guard.
     await activateViaSignature(signedReq.ref_id, signedReq.signed_file_key);
+
+    // Only give the signature its own hr_documents row when a real base file backs it — a
+    // fields-only template's fabricated `signed/request-N.json` key has nothing in storage.
+    const [template] = await db
+      .select({ file_key: signature_templates.file_key })
+      .from(signature_templates)
+      .where(eq(signature_templates.id, signedReq.template_id))
+      .limit(1);
+    if (template?.file_key && signedReq.signed_file_key) {
+      await recordSignedContractDocument(signedReq.ref_id, signedReq.signed_file_key);
+    }
   }
 }
 

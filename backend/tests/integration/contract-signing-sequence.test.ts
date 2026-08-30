@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { eq, and } from "drizzle-orm";
 import { resetDb } from "../setup";
 import { db } from "../../src/db/client";
-import { hr_contracts, process_tasks } from "../../src/db/schema";
+import { hr_contracts, hr_documents, process_tasks } from "../../src/db/schema";
 import {
   instantiateProcess,
   completeTask,
@@ -18,6 +18,9 @@ import { makeEmployeeUser, makeProcessTemplate, makeUser, ensureRole } from "../
 
 vi.mock("../../src/services/email.service", () => ({
   sendEmail: vi.fn(async () => ({ id: "x" })),
+}));
+vi.mock("../../src/services/storage.service", () => ({
+  getObjectBuffer: vi.fn(async () => Buffer.from("%PDF-1.4 fake signed contract bytes")),
 }));
 
 async function taskNamed(instanceId: number, title: string) {
@@ -48,8 +51,11 @@ async function makeDraftContract(employeeId: string) {
   return contract;
 }
 
-async function seedEmploymentContractTemplate(createdBy: number) {
-  const template = await signing.createTemplate({ name: "Employment Contract" }, createdBy);
+async function seedEmploymentContractTemplate(createdBy: number, fileKey?: string) {
+  const template = await signing.createTemplate(
+    { name: "Employment Contract", file_key: fileKey },
+    createdBy,
+  );
   await signing.addField(template.id, {
     key: "hr_signature",
     label: "HR Signature",
@@ -229,5 +235,52 @@ describe("onboarding contract-signing sequence", () => {
 
     const done = await completeTask(hrUserId, task.id);
     expect(done.status).toBe("done");
+
+    // Fields-only template — signedKey is a fabricated key with nothing behind it in storage, so
+    // no hr_documents row should be created (would otherwise be a broken/undownloadable document).
+    const docs = await db
+      .select()
+      .from(hr_documents)
+      .where(eq(hr_documents.contract_id, contract.id));
+    expect(docs).toHaveLength(0);
+  });
+
+  it("gives a fully-signed contract its own hr_documents row when the template has a real base file", async () => {
+    await seedEmploymentContractTemplate(hrUserId, "uploads/document/employment-contract.pdf");
+    const subject = await makeEmployeeUser({ employmentType: "staff" });
+    await makeProcessTemplate({
+      createdBy: hrUserId,
+      employmentTypes: null,
+      tasks: [{ title: "Sign contract", kind: "contract_signing", is_blocking: true }],
+    });
+    const contract = await makeDraftContract(subject.employee.id);
+    const instance = await instantiateProcess("onboarding", subject.employee.id, {
+      actorUserId: hrUserId,
+    });
+    const task = await taskNamed(instance.id, "Sign contract");
+    await reassignTask(task.id, { link_ref: { contract_id: contract.id } }, hrUserId);
+
+    const [hrReq] = await signing.listByRef("contract", contract.id);
+    await signing.signInternal(hrReq.id, hrUserId, { hr_signature: "HR" });
+    const employeeReq = (await signing.listByRef("contract", contract.id))[1];
+    await signing.signInternal(employeeReq.id, subject.user.id, { employee_signature: "Employee" });
+
+    const docs = await db
+      .select()
+      .from(hr_documents)
+      .where(eq(hr_documents.contract_id, contract.id));
+    expect(docs).toHaveLength(1);
+    expect(docs[0].created_by_employee_id).toBe(subject.employee.id);
+    expect(docs[0].category).toBe("Contract Templates");
+    expect(docs[0].file_path).toBe("uploads/document/employment-contract.pdf");
+
+    // Idempotent: calling the recorder again for the same signed key must not duplicate the row.
+    const { recordSignedContractDocument } = await import("../../src/services/hr/contract.service");
+    await recordSignedContractDocument(contract.id, "uploads/document/employment-contract.pdf");
+    const docsAfterRetry = await db
+      .select()
+      .from(hr_documents)
+      .where(eq(hr_documents.contract_id, contract.id));
+    expect(docsAfterRetry).toHaveLength(1);
   });
 });

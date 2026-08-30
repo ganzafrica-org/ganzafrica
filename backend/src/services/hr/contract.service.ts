@@ -1,8 +1,10 @@
 ﻿import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { hr_contracts } from "@/db/schema";
+import { hr_documents } from "@/db/schema/hr/document";
 import { AppError } from "@/middlewares";
 import { requireEmployee } from "./employee-context";
+import { getObjectBuffer } from "../storage.service";
 import {
   HR_SETTABLE_CONTRACT_STATUSES,
   type CompensationType,
@@ -240,6 +242,62 @@ export async function activateViaSignature(
 
   if (!updated) throw new AppError("Contract not found", 404);
   return mapContract(updated);
+}
+
+function bytesToHuman(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+  return `${value.toFixed(1)} ${units[unitIndex]}`;
+}
+
+/**
+ * Gives a fully-executed e-signature its own hr_documents row, so it counts and shows up
+ * alongside every other document about the employee (see employees-core.service.ts's document
+ * count, which unions on hr_documents.contract_id). Only called once a real base file backs the
+ * signature (signing.service.ts's completeSequenceStep checks the template has a file_key) —
+ * a fields-only template's fabricated `signed/request-N.json` key has nothing behind it in
+ * storage, so it would create a broken/undownloadable document row.
+ */
+export async function recordSignedContractDocument(
+  contractId: string,
+  signedFileKey: string,
+): Promise<void> {
+  const [existing] = await db
+    .select({ id: hr_documents.id })
+    .from(hr_documents)
+    .where(and(eq(hr_documents.contract_id, contractId), eq(hr_documents.file_path, signedFileKey)))
+    .limit(1);
+  if (existing) return;
+
+  const [contract] = await db
+    .select()
+    .from(hr_contracts)
+    .where(eq(hr_contracts.id, contractId))
+    .limit(1);
+  if (!contract?.employee_ref_id) return;
+
+  const buf = await getObjectBuffer(signedFileKey);
+
+  await db.insert(hr_documents).values({
+    document_name: `${contract.job_title} — Signed Employment Contract`,
+    category: "Contract Templates",
+    version: "1",
+    description: "Signed via e-signature.",
+    department: contract.department ?? "General",
+    file_path: signedFileKey,
+    file_size: bytesToHuman(buf.length),
+    downloads: 0,
+    versions: [],
+    created_by_employee_id: contract.employee_ref_id,
+    access: {},
+    contract_id: contractId,
+  });
 }
 
 export async function deleteContract(employeeId: string, contractId: string): Promise<void> {
