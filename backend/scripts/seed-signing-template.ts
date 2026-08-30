@@ -4,19 +4,47 @@
  * should review/adjust them via the existing template builder (Settings → E-Signing Templates);
  * this just unblocks the flow end-to-end rather than leaving it silently broken with no template.
  *
- *   pnpm db:seed:signing
+ * Without a base file (`file_key`), the template is fields-only — every signer sees "No document
+ * file is attached to this template" and the signed result has nothing real to view or count as a
+ * document. Pass a local file to upload as that base document:
  *
- * Idempotent — the template is created once by name (matches seed-onboarding-template.ts).
+ *   pnpm db:seed:signing -- /path/to/employment-contract.pdf
+ *
+ * Re-running with a new path replaces the base file on the existing template (that's the intended
+ * way to swap in a real document later). With no path and no existing file_key, a minimal
+ * placeholder PDF is generated so the signing flow is still exercisable end-to-end.
+ *
+ *   pnpm db:seed:signing
  */
+import fs from "fs";
+import path from "path";
 import { eq } from "drizzle-orm";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import PDFDocument from "pdfkit";
 import { db } from "../src/db/client";
 import { roles, user_roles, users } from "../src/db/schema";
-import { addField, createTemplate, getTemplateByName } from "../src/services/signing.service";
+import {
+  addField,
+  createTemplate,
+  getTemplateByName,
+  setTemplateFileKey,
+} from "../src/services/signing.service";
 import { Logger } from "../src/config";
+import env from "../src/config/env";
 
 const logger = new Logger("SeedSigningTemplate");
 
 const TEMPLATE_NAME = "Employment Contract";
+
+const s3Client = new S3Client({
+  endpoint: env.DO_SPACES_ENDPOINT,
+  region: env.DO_SPACES_REGION,
+  credentials: {
+    accessKeyId: env.DO_SPACES_ACCESS_KEY,
+    secretAccessKey: env.DO_SPACES_SECRET_KEY,
+  },
+  forcePathStyle: false,
+});
 
 async function firstHrUserId(): Promise<number> {
   const [hr] = await db
@@ -32,20 +60,71 @@ async function firstHrUserId(): Promise<number> {
   return anyUser.id;
 }
 
+function generatePlaceholderPdf(): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument();
+    const chunks: Buffer[] = [];
+    doc.on("data", (chunk) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+    doc.fontSize(20).text("Employment Contract", { align: "center" });
+    doc
+      .moveDown()
+      .fontSize(12)
+      .text(
+        "Placeholder base document — replace by re-running this seed script with a real file:\n" +
+          "pnpm db:seed:signing -- /path/to/employment-contract.pdf",
+      );
+    doc.end();
+  });
+}
+
+async function uploadBaseDocument(localPath?: string): Promise<string> {
+  const buffer = localPath ? fs.readFileSync(localPath) : await generatePlaceholderPdf();
+  const originalName = localPath ? path.basename(localPath) : "employment-contract-placeholder.pdf";
+  const key = `uploads/document/${Date.now()}-${Math.round(Math.random() * 1e9)}-${originalName.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: env.DO_SPACES_BUCKET,
+      Key: key,
+      Body: buffer,
+      ACL: "private",
+      ContentType: "application/pdf",
+    }),
+  );
+  return key;
+}
+
 async function main() {
+  const localPath = process.argv[2];
+  if (localPath && !fs.existsSync(localPath)) {
+    throw new Error(`File not found: ${localPath}`);
+  }
+
   const existing = await getTemplateByName(TEMPLATE_NAME);
   if (existing) {
-    logger.info(`Template "${TEMPLATE_NAME}" already exists (id ${existing.id})`);
+    if (!localPath && existing.file_key) {
+      logger.info(
+        `Template "${TEMPLATE_NAME}" already exists (id ${existing.id}) with a base file — nothing to do.`,
+      );
+      return;
+    }
+    const fileKey = await uploadBaseDocument(localPath);
+    await setTemplateFileKey(existing.id, fileKey);
+    logger.info(`Updated "${TEMPLATE_NAME}" (id ${existing.id}) base file → ${fileKey}`);
     return;
   }
 
   const createdBy = await firstHrUserId();
+  const fileKey = await uploadBaseDocument(localPath);
   const template = await createTemplate(
     {
       name: TEMPLATE_NAME,
       description:
-        "Placeholder employment contract signature template seeded for LCM-01's contract_signing " +
-        "task. Review and adjust fields via the template builder before relying on this in production.",
+        "Employment contract signature template seeded for LCM-01's contract_signing task. " +
+        "Review and adjust fields via the template builder before relying on this in production.",
+      file_key: fileKey,
     },
     createdBy,
   );
