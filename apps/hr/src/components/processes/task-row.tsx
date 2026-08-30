@@ -274,7 +274,7 @@ export function TaskRow({ task, canManage, isMine, employeeId }: Props) {
 
       {actionable && (
         <div className="flex shrink-0 gap-2">
-          {canManage && (
+          {canManage && task.kind !== "contract_signing" && (
             <Button
               variant="outline"
               size="sm"
@@ -301,7 +301,7 @@ export function TaskRow({ task, canManage, isMine, employeeId }: Props) {
           <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="e.g. Contractor already holds a signed master agreement"
+            placeholder="e.g. Asset unavailable this week, will assign once restocked"
             rows={3}
           />
           <DialogFooter>

@@ -260,3 +260,30 @@ describe("TaskRow — contract_signing: view before sign + sign action", () => {
     });
   });
 });
+
+describe("TaskRow — contract_signing cannot be skipped", () => {
+  it("hides the Skip button for a contract_signing task even when the viewer can manage", async () => {
+    mockCommon();
+    renderWithClient(
+      <TaskRow task={contractSigningTask} canManage isMine={false} employeeId="emp-1" />,
+    );
+
+    // Wait for the row's async data (contract, signatures) to settle before asserting absence.
+    await screen.findByRole("button", { name: /view/i });
+    expect(screen.queryByRole("button", { name: /^skip$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^done$/i })).toBeInTheDocument();
+  });
+
+  it("still shows Skip for a manageable, non-contract_signing task", async () => {
+    mockCommon();
+    renderWithClient(
+      <TaskRow
+        task={task({ id: 2, title: "Upload ID", kind: "document_upload" })}
+        canManage
+        isMine={false}
+      />,
+    );
+
+    expect(await screen.findByRole("button", { name: /^skip$/i })).toBeInTheDocument();
+  });
+});

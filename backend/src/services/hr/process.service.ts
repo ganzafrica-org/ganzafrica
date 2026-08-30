@@ -433,6 +433,16 @@ export async function skipTask(actorUserId: number, taskId: number, notes: strin
   }
   await assertCanActOnTask(db, actorUserId, task);
 
+  // Every employee must sign their employment contract — unlike other kinds, this gate has no
+  // legitimate waiver, so skip is refused outright rather than left to a free-text note.
+  if (task.kind === "contract_signing") {
+    throw new AppError(
+      "Contract signing cannot be skipped — link a contract and send it for signature instead",
+      422,
+      "CONTRACT_SIGNING_NOT_SKIPPABLE",
+    );
+  }
+
   // Blocking work can only be waived by HR — an assignee cannot skip past a gate.
   if (task.is_blocking && !(await isHrOrAdmin(db, actorUserId))) {
     throw new AppError("Only HR can skip a blocking task", 403, "BLOCKING_SKIP_FORBIDDEN");
