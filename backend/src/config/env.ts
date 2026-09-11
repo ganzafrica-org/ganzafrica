@@ -45,7 +45,10 @@ const envSchema = z.object({
   // Payroll - comma-separated emails that receive net salary in USD (Format 1 USD employees)
   USD_SALARY_EMAILS: z.string().optional().default(""),
 
-  // Email (optional - only required if email functionality is used)
+  // Email — Azure Communication Services. Optional so local dev can run without it (unconfigured
+  // sends are logged, not delivered). RESEND_* is kept as a fallback provider for local/dev use.
+  ACS_CONNECTION_STRING: z.string().nullish(),
+  ACS_FROM_EMAIL: z.string().default("GanzAfrica <donotreply@ganzafrica.org>"),
   RESEND_API_KEY: z.string().nullish(),
   RESEND_FROM_EMAIL: z.string().default("GanzAfrica <no-reply@ganzafrica.org>"),
   EMAIL_FROM: z.string().nullish(),

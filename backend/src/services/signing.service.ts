@@ -235,7 +235,6 @@ export async function createSignerSequence(
     );
     created.push(req);
   }
-
   if (input.mode === "parallel") {
     for (const req of created) await sendRequest(req.id);
   } else {

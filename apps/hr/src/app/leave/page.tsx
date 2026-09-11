@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeaveProvider } from "@/components/sections/calendar/LeaveContext";
 import { LeaveCalendar } from "@/components/sections/calendar/LeaveCalendar";
 import { Button } from "@/components/ui/button";
+
 import {
   Calendar,
   CheckCircle2,
@@ -28,6 +29,7 @@ import {
   Wallet,
   XCircle,
 } from "lucide-react";
+
 import { BalanceCards } from "@/components/sections/leave/balance-cards";
 import { RequestLeaveDialog } from "@/components/sections/leave/request-leave-dialog";
 import { LeaveApprovalsSheet } from "@/components/sections/leave/leave-approvals-sheet";

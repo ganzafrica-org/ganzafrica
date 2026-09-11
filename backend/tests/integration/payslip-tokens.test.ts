@@ -41,6 +41,7 @@ describe("payslip access tokens", () => {
     const token = await payslipTokenService.mintPayslipToken(payroll.id);
     const res = await supertest(app).get(`/api/payslips/view/${token}`);
     expect(res.status).toBe(302);
+
     const location = new URL(res.headers.location);
     expect(location.hostname).toContain("blob.core.windows.net");
     expect(location.searchParams.get("sp")).toBe("r"); // read-only permission

@@ -41,6 +41,25 @@ export async function sendEmail(to: string, subject: string, html: string, text?
     return null;
   }
 
+  // A text part is included whenever the caller has one — several clients (and inbox preview
+  // snippets) render an html-only email as blank, since they read the text part for the
+  // preview/fallback rather than parsing the html.
+  if (acsClient) {
+    try {
+      const poller = await acsClient.beginSend({
+        senderAddress: parseSender(env.ACS_FROM_EMAIL),
+        content: { subject, html, ...(text ? { plainText: text } : {}) },
+        recipients: { to: [{ address: to }] },
+      });
+      const result = await poller.pollUntilDone();
+      logger.info(`Email sent via ACS: ${result.id}`);
+      return result;
+    } catch (error) {
+      logger.error("ACS email error", error);
+      throw new AppError("Failed to send email", 500);
+    }
+  }
+
   try {
     // A text part is included whenever the caller has one — several clients (and inbox preview
     // snippets) render an html-only email as blank, since they read the text part for the

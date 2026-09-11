@@ -13,7 +13,7 @@ import env from "../config/env";
 import { Logger } from "../config";
 
 const logger = new Logger("StorageService");
-const MAX_PRESIGN_SECONDS = 7 * 24 * 60 * 60;
+const MAX_SAS_SECONDS = 7 * 24 * 60 * 60;
 
 const sharedKeyCredential = new StorageSharedKeyCredential(
   env.AZURE_STORAGE_ACCOUNT,
@@ -24,8 +24,8 @@ const privateContainer = blobServiceClient.getContainerClient(env.AZURE_STORAGE_
 
 /** Presigned (SAS) GET for a private blob. Default 5 minutes; capped at 7 days. */
 export async function getPresignedDownload(key: string, expiresIn = 300): Promise<string> {
-  if (expiresIn > MAX_PRESIGN_SECONDS) {
-    throw new Error("presigned URLs cannot exceed 7 days");
+  if (expiresIn > MAX_SAS_SECONDS) {
+    throw new Error("SAS URLs cannot exceed 7 days");
   }
   const blobClient = privateContainer.getBlobClient(key);
   const url = await blobClient.generateSasUrl({

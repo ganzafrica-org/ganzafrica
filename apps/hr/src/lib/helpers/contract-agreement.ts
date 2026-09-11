@@ -2,6 +2,7 @@ import { contractsService } from "@/services/contracts.service";
 import { documentsService } from "@/services/documents.service";
 import { documentCategoryTemplatesService } from "@/services/document-category-templates.service";
 import { renderBrandedDocumentHtml } from "@/lib/helpers/document-branding";
+
 import {
   toCreateContractRequest,
   type ContractFormState,
@@ -122,7 +123,6 @@ export async function saveContractWithAgreement(params: {
   if (!source) return created;
 
   const doc = await attachAgreement(created.id, payload.jobTitle, payload.department, source);
-
   return contractsService.updateContract(employeeId, created.id, {
     employmentAgreementUrl: doc.id,
     status: needsAgreementBeforeActive ? "ACTIVE" : undefined,

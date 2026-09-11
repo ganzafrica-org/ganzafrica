@@ -12,9 +12,17 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 
 // getObjectBuffer hits real Azure Blob Storage (search-indexing + the /content viewer endpoint);
 // stub it so neither path makes a real network call. Individual tests override the resolved value.
+
 vi.mock("../../src/services/storage.service", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/services/storage.service")>();
-  return { ...actual, getObjectBuffer: vi.fn().mockResolvedValue(Buffer.from("")) };
+  return {
+    ...actual,
+    getObjectBuffer: vi.fn().mockResolvedValue(Buffer.from("")),
+    getPresignedDownload: vi.fn(
+      async (key: string, expiresIn = 300) =>
+        `https://teststorage.blob.core.windows.net/uploads/${key}?sig=test&se=exp-${expiresIn}`,
+    ),
+  };
 });
 
 import app from "../../src/app";
@@ -40,6 +48,7 @@ import {
 } from "../../src/services/hr/document.service";
 import * as policyService from "../../src/services/hr/policy.service";
 import * as storageService from "../../src/services/storage.service";
+
 import { privateUpload, default as publicUpload } from "../../src/middlewares/upload";
 import env from "../../src/config/env";
 
@@ -253,6 +262,7 @@ describe("MOD-05 documents & policies", () => {
       const allowed = await fellow.agent.get(`${API}/documents/${doc.id}/download`);
       expect(allowed.status).toBe(302);
       expect(allowed.headers.location).toContain(`/${doc.file_path}?`);
+
       const downloadUrl = new URL(allowed.headers.location);
       const downloadExpiresAt = new Date(downloadUrl.searchParams.get("se")!).getTime();
       expect((downloadExpiresAt - Date.now()) / 1000).toBeGreaterThan(290);
@@ -284,6 +294,7 @@ describe("MOD-05 documents & policies", () => {
       const viewExpiresAt = new Date(viewUrl.searchParams.get("se")!).getTime();
       expect((viewExpiresAt - Date.now()) / 1000).toBeGreaterThan(890);
       expect((viewExpiresAt - Date.now()) / 1000).toBeLessThan(910); // 15 min
+
       // Real stored filename (S3 key basename), not the human document_name — the frontend needs
       // the actual extension to pick a renderer.
       expect(allowed.body.data.fileName).toBe(doc.file_path.split("/").pop());

@@ -278,12 +278,11 @@ export async function updatePayroll(id: number, data: Partial<CreatePayrollData>
 /**
  * Update payslip file information
  */
-export async function updatePayslipFile(id: number, fileUrl: string, fileKey: string) {
+export async function updatePayslipFile(id: number, fileKey: string) {
   try {
     const [payroll] = await db
       .update(payrolls)
       .set({
-        payslip_file_url: fileUrl,
         payslip_file_key: fileKey,
         updated_at: new Date(),
       })

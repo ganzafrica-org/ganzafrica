@@ -114,7 +114,9 @@ describe("create-document ACL — real multipart route, create then verify", () 
       const documentId = createRes.body.data.id;
       expect(documentId).toBeTruthy();
       expect(createRes.body.data.access).toEqual({ departments: ["Programs"] });
+
       expect(uploadedObjects.length).toBe(1); // the real upload middleware went through the upload path
+
       // The storage-level bug this test guards: previously `access` was persisted as a jsonb
       // *string* scalar (double-encoded), not a jsonb object — see file header.
       expect(await accessJsonbType(documentId)).toBe("object");

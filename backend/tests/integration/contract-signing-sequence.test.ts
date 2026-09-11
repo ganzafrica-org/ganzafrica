@@ -84,6 +84,7 @@ async function seedEmploymentContractTemplate(createdBy: number, fileKey?: strin
     { name: "Employment Contract", file_key: fileKey },
     createdBy,
   );
+
   await signing.addField(template.id, {
     key: "hr_signature",
     label: "HR Signature",
@@ -259,6 +260,7 @@ describe("onboarding contract-signing sequence", () => {
       .from(hr_contracts)
       .where(eq(hr_contracts.id, contract.id));
     expect(afterBoth.status).toBe("ACTIVE");
+
     // Fields-only template — there's no real document behind the signature, so the agreement
     // pointer stays null rather than a dead reference nothing can resolve.
     expect(afterBoth.employment_agreement_url).toBeNull();

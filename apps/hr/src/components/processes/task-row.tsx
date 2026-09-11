@@ -101,6 +101,7 @@ export function TaskRow({ task, canManage, isMine, employeeId }: Props) {
   );
   const linkableContracts = employeeContracts?.filter((c) => c.status === "DRAFT") ?? [];
   // Self-viewing (no employeeId — see app/onboarding/me/page.tsx) needs their own
+
   // contract list instead of the HR-only /hr/employees/:id/contracts one above.
   const { data: myContracts } = useMyContracts(!employeeId && needsLinkedContract);
   const linkedContract = needsLinkedContract

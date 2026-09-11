@@ -31,6 +31,7 @@ const TEST_ENV: Record<string, string> = {
 for (const [k, v] of Object.entries(TEST_ENV)) {
   if (!process.env[k]) process.env[k] = v;
 }
+
 // Real secrets never touch tests (see file doc above). RESEND_API_KEY needs the same "set it here
 // first" treatment as everything above: config/env.ts's dotenv.config() only fills in vars that
 // aren't already present in process.env, and this file's setupFiles hook runs before that — so

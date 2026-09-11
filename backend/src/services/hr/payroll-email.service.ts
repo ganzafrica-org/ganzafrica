@@ -109,11 +109,10 @@ export async function generateAndSendPayslip(payrollId: number): Promise<boolean
 
     const { payroll, user } = payrollData;
 
-    // Check if payslip already generated
-    let payslipUrl = payroll.payslip_file_url;
+    // Check if payslip already generated (keyed by the private blob key)
     let payslipKey = payroll.payslip_file_key;
 
-    if (!payslipUrl) {
+    if (!payslipKey) {
       // Generate PDF — pass all fields so the correct format is rendered
       const payrollType = payroll.payroll_type || "rwf";
       const pdfData = {
@@ -155,11 +154,10 @@ export async function generateAndSendPayslip(payrollId: number): Promise<boolean
       };
 
       const result = await pdfService.generateAndUploadPayslip(pdfData);
-      payslipUrl = result.url;
       payslipKey = result.key;
 
-      // Update payroll with file info
-      await payrollService.updatePayslipFile(payrollId, payslipUrl, payslipKey);
+      // Store only the private key; there is no permanent public URL for payslips.
+      await payrollService.updatePayslipFile(payrollId, payslipKey);
     }
 
     if (!payslipKey) {

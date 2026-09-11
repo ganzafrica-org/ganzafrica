@@ -11,10 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEmployees } from "@/hooks/useEmployees";
+
 import { useDocumentCategoryTemplates } from "@/hooks/useDocumentCategoryTemplates";
 import { QuillEditor } from "@/components/sections/documents/quill-editor";
 import { escapeHtml } from "@/lib/helpers/document-branding";
 import { cn } from "@/lib/utils";
+
 import type { CreateContractRequest, HrDocument } from "@/types/api";
 
 export type ContractFormState = Partial<CreateContractRequest>;
@@ -33,6 +35,7 @@ interface ContractFormFieldsProps {
   value: ContractFormState;
   onChange: (patch: ContractFormState) => void;
   /** Newly-picked agreement file, not yet uploaded (upload happens on save — see
+
    *  lib/helpers/contract-agreement.ts). Kept out of `value` because it isn't JSON-serializable.
    *  Mutually exclusive with `agreementTemplateId` — picking one clears the other. */
   agreementFile: File | null;
@@ -48,6 +51,7 @@ interface ContractFormFieldsProps {
   onAgreementTemplateContentChange: (html: string) => void;
   /** Employee's full name — used only to pre-fill the generated agreement's "Employee" line. */
   employeeName?: string;
+
   /** The document currently on file when editing an existing contract, if any. */
   existingAgreementDocument?: HrDocument | null;
   onViewExistingAgreement?: () => void;

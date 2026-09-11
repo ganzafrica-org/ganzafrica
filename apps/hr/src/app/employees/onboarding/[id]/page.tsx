@@ -14,8 +14,8 @@ import { StatsHeader } from "@/components/sections/header";
 export default function OnboardingDetailPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
-  const [scrolled, setScrolled] = useState(false);
 
+  const [scrolled, setScrolled] = useState(false);
   const { data, isLoading, isError } = useProcess(Number.isNaN(id) ? null : id);
   const cancel = useCancelProcess();
 

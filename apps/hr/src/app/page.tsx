@@ -12,8 +12,10 @@ import {
 } from "lucide-react";
 import { LeaveSummaryCard } from "@/components/sections/home-cards/LeaveSummaryCard";
 import { LeaveHistoryCard } from "@/components/sections/home-cards/LeaveHistoryCard";
+
 import { LeaveRequestsCard } from "@/components/sections/home-cards/LeaveRequestsCard";
 import { AssetsWithIssueCard } from "@/components/sections/home-cards/AssetsWithIssueCard";
+
 import { ScheduleCard } from "@/components/sections/home-cards/ScheduleCard";
 import { EmploymentStatusCard } from "@/components/sections/home-cards/EmploymentStatusCard";
 import { ApplicantsCard } from "@/components/sections/home-cards/ApplicantsCard";

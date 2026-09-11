@@ -184,6 +184,7 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   const [agreementFile, setAgreementFile] = useState<File | null>(null);
   const [agreementTemplateId, setAgreementTemplateId] = useState<string | null>(null);
   const [agreementTemplateContent, setAgreementTemplateContent] = useState("");
+
   const [error, setError] = useState<string | null>(null);
   const [createdResult, setCreatedResult] = useState<CreatedResult | null>(null);
 

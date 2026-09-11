@@ -551,6 +551,7 @@ export async function createDocument(input: CreateDocumentInput) {
       created_by_employee_id: input.createdById,
       access: input.access ?? {},
       contract_id: input.category === "Contract Templates" ? (input.contractId ?? null) : null,
+
       leave_id: input.category === "Leave Attachment" ? input.leaveId : null,
     })
     .returning();

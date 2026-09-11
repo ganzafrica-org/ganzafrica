@@ -1,23 +1,10 @@
-﻿import PDFDocument from "pdfkit";
+import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
-import {
-  BlobServiceClient,
-  StorageSharedKeyCredential,
-  BlobSASPermissions,
-} from "@azure/storage-blob";
-import env from "../../config/env";
-import { Logger } from "../../config";
-import { deleteObject, getPresignedDownload, putObject } from "../storage.service";
+import { Logger } from "../config";
+import { deleteObject, getPresignedDownload, putObject } from "./storage.service";
 
 const logger = new Logger("PDFService");
-
-const sharedKeyCredential = new StorageSharedKeyCredential(
-  env.AZURE_STORAGE_ACCOUNT,
-  env.AZURE_STORAGE_ACCOUNT_KEY,
-);
-const blobServiceClient = new BlobServiceClient(env.AZURE_STORAGE_ENDPOINT, sharedKeyCredential);
-const privateContainer = blobServiceClient.getContainerClient(env.AZURE_STORAGE_CONTAINER_PRIVATE);
 
 export interface PayslipData {
   name: string;
@@ -726,44 +713,26 @@ export async function uploadPayslipToSpaces(
       : period.replace(/[^a-zA-Z0-9-]/g, "_");
     const key = `hr/${cleanName}/${month}/payslip.pdf`;
 
-    const blockBlobClient = privateContainer.getBlockBlobClient(key);
-    await blockBlobClient.uploadData(pdfBuffer, {
-      blobHTTPHeaders: { blobContentType: "application/pdf" },
-      metadata: { employeeName, period, generatedAt: new Date().toISOString() },
-    });
+    await putObject(key, pdfBuffer, "application/pdf");
 
-    const permanentUrl = blockBlobClient.url;
-    logger.info(`Payslip uploaded to Azure Blob Storage: ${key}`);
-    return { url: permanentUrl, key };
+    // Payslips are private; there is no permanent public URL. Callers store the key and mint a
+    // fresh SAS link on demand via generateSignedPayslipUrl.
+    logger.info(`Payslip uploaded to storage: ${key}`);
+    return { key };
   } catch (error) {
-    logger.error("Error uploading payslip to Azure Blob Storage:", error);
+    logger.error("Error uploading payslip to storage:", error);
     throw error;
   }
 }
 
-const MAX_PRESIGN_SECONDS = 7 * 24 * 60 * 60; // SAS hard cap (mirrors the old S3 SigV4 cap)
+// Azure SAS links cap at 7 days; payslip links live for the full week.
+const PAYSLIP_URL_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
 
 export async function generateSignedPayslipUrl(
   key: string,
-  expiresIn: number = 300, // 5 minutes — payslip links go through the token redirect, not raw SAS
+  expiresIn: number = PAYSLIP_URL_EXPIRY_SECONDS,
 ): Promise<string> {
-  if (expiresIn > MAX_PRESIGN_SECONDS) {
-    // Guards the original bug: presigned URLs silently cap at 7 days, so anything longer is a lie.
-    throw new Error("presigned URLs cannot exceed 7 days; use a payslip access token instead");
-  }
-  try {
-    const blobClient = privateContainer.getBlobClient(key);
-    const signedUrl = await blobClient.generateSasUrl({
-      permissions: BlobSASPermissions.parse("r"),
-      expiresOn: new Date(Date.now() + expiresIn * 1000),
-    });
-    logger.info(`Generated signed URL for ${key}, expires in ${expiresIn}s`);
-    return signedUrl;
-  } catch (error) {
-    logger.error("Error generating signed URL:", error);
-    throw error;
-  }
-  return getPresignedDownload(key, expiresIn);
+  return getPresignedDownload(key, Math.min(expiresIn, PAYSLIP_URL_EXPIRY_SECONDS));
 }
 
 export async function generateAndUploadPayslip(data: PayslipData) {
@@ -778,11 +747,5 @@ export async function generateAndUploadPayslip(data: PayslipData) {
 }
 
 export async function deletePayslipFromSpaces(key: string): Promise<void> {
-  try {
-    await privateContainer.getBlockBlobClient(key).deleteIfExists();
-    logger.info(`Payslip deleted from Azure Blob Storage: ${key}`);
-  } catch (error) {
-    logger.error(`Error deleting payslip from Azure Blob Storage (${key}):`, error);
-    throw error;
-  }
+  await deleteObject(key);
 }

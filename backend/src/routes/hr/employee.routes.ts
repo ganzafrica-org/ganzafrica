@@ -23,12 +23,14 @@ router.use(authenticate);
 
 // Self-service — must precede /:id so "me" is not parsed as a uuid.
 router.get("/me", c.getMe);
+
 // upload.single("picture") is a no-op when the request is plain JSON (no "picture" file part) —
 // same upload middleware assets.routes.ts uses for asset images, reused here rather than
 // standing up separate upload infrastructure for a single profile-photo field.
 router.patch(
   "/me/profile",
   upload.single("picture"),
+
   validate(v.updateProfileSchema),
   c.updateMyProfile,
 );

@@ -15,8 +15,10 @@ import {
 import { makeEmployeeUser, makeLeavePolicy, ensureRole } from "../factories";
 
 const sendEmailMock = vi.fn(async () => ({ id: "x" }));
+
 vi.mock("../../src/services/email.service", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../src/services/email.service")>()),
+
   sendEmail: (...args: unknown[]) => sendEmailMock(...args),
 }));
 

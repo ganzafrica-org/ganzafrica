@@ -3,7 +3,6 @@
  * the contract_signing task kind has something to send. Field labels here are placeholders — HR
  * should review/adjust them via the existing template builder (Settings → E-Signing Templates);
  * this just unblocks the flow end-to-end rather than leaving it silently broken with no template.
- *
  * Without a base file (`file_key`), the template is fields-only — every signer sees "No document
  * file is attached to this template" and the signed result has nothing real to view or count as a
  * document. Pass a local file to upload as that base document:
@@ -104,6 +103,7 @@ async function main() {
     const fileKey = await uploadBaseDocument(localPath);
     await setTemplateFileKey(existing.id, fileKey);
     logger.info(`Updated "${TEMPLATE_NAME}" (id ${existing.id}) base file → ${fileKey}`);
+
     return;
   }
 

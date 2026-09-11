@@ -22,7 +22,6 @@ export const employeesService = {
     active?: "active" | "inactive" | "all";
   }) {
     const response = await httpClient.get<EmployeeDirectoryResponse>("/hr/employees", { params });
-    console.log("HHHHHHHHHHHHH", response);
     return response.data;
   },
   async getEmployeeById(id: string) {
@@ -41,6 +40,16 @@ export const employeesService = {
   async getStatusCounts() {
     const response = await httpClient.get<EmployeeStatusCounts>("/hr/employees/stats");
     return response.data;
+  },
+  async getDepartmentStats() {
+    const response = await httpClient.get<DepartmentStatsSummary>(
+      "/hr/employees/departments/stats",
+    );
+    return response.data;
+  },
+  async createEmployee(payload: CreateEmployeeRequest) {
+    const response = await httpClient.post<{ employee: Employee }>("/hr/employees", payload);
+    return response.data.employee;
   },
   async getDepartmentStats() {
     const response = await httpClient.get<DepartmentStatsSummary>(

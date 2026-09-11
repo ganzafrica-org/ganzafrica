@@ -7,6 +7,7 @@
  * exercised for real rather than by calling service functions directly.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
+
 import { fakeAzureStorageBlobModule, type FakeUploadInfo } from "../helpers/mock-azure-storage";
 
 const { uploadedObjects } = vi.hoisted(() => ({
@@ -30,6 +31,7 @@ vi.mock("../../src/services/storage.service", async (importOriginal) => {
 
 vi.mock("../../src/services/email.service", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../src/services/email.service")>()),
+
   sendEmail: vi.fn(async () => ({ id: "x" })),
 }));
 

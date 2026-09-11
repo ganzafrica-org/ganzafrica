@@ -8,9 +8,11 @@
  * test employee, which never has history hanging off it in other people's records), this also
  * clears RESTRICT-constrained references an employee can leave in OTHER rows just by having used
  * the app: authored documents/policies (created_by_employee_id — nulled, the row itself is kept),
+
  * requested asset maintenance (requester_employee_id — nulled), any asset they're currently
  * holding (returned to AVAILABLE), and asset-assignment history (employee_id is NOT NULL — those
  * history rows are deleted).
+
  *
  * Defaults to keeping the three seed-test-users.ts accounts. Pass emails to override the
  * keep-list entirely.
@@ -86,6 +88,7 @@ async function wipeOne(client: PoolClient, employeeId: string, userId: number) {
     `UPDATE hr_asset_maintenance SET requester_employee_id = NULL WHERE requester_employee_id = $1`,
     [employeeId],
   );
+
   // Any asset this employee currently holds must return to AVAILABLE first — hr_assets.
   // assigned_to_employee_id is ON DELETE SET NULL, but nothing resets `status`, so without this
   // the asset is left stuck ASSIGNED with no assignee, unable to be assigned to anyone else ever
@@ -99,6 +102,7 @@ async function wipeOne(client: PoolClient, employeeId: string, userId: number) {
   );
   // employee_id here is NOT NULL (append-only assignment-history timeline) — can't null it, so
   // the history rows go.
+
   await client.query(`DELETE FROM hr_asset_assignments WHERE employee_id = $1`, [employeeId]);
 
   // hr_documents.contract_id has no cascade, so contract-linked documents must go before the

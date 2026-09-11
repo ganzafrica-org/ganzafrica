@@ -16,7 +16,9 @@ import {
 import { AccessBuilder } from "@/components/sections/documents/access-builder";
 import { QuillEditor } from "@/components/sections/documents/quill-editor";
 import { useCreateDocument, useUpdateDocument } from "@/hooks/useDocuments";
+
 import { useDocumentCategoryTemplates } from "@/hooks/useDocumentCategoryTemplates";
+
 import {
   DOCUMENT_CATEGORIES,
   type DocumentACL,

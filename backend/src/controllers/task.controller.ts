@@ -2,12 +2,14 @@ import { Request, Response } from "express";
 import { taskService } from "../services/task.service";
 import * as userService from "../services/user.service";
 import { AppError } from "../middlewares";
-import { constants, Logger, env } from "../config";
+import { constants, Logger } from "../config";
 import { getFileSubdirectory } from "../middlewares/upload";
+import { getPresignedDownload } from "../services/storage.service";
 
 const logger = new Logger("TaskController");
 
 /**
+
  * Helper function to get the public URL for uploaded files
  * Uses CDN URL if available, otherwise falls back to the direct blob URL
  */
@@ -22,6 +24,7 @@ function getFileUrl(location: string): string {
 }
 
 /**
+
  * @swagger
  * components:
  *   schemas:
@@ -1033,9 +1036,14 @@ export const uploadTaskAttachments = async (req: Request, res: Response) => {
     // Update task with new attachments
     await taskService.updateTask(taskId, { attachments: allAttachments }, userId);
 
+    // Return each new file with a ready-to-use short-lived download URL.
+    const filesWithUrls = await Promise.all(
+      uploadedFiles.map(async (f) => ({ ...f, url: await getPresignedDownload(f.key, 300) })),
+    );
+
     res.status(200).json({
       message: "Files uploaded successfully",
-      files: uploadedFiles,
+      files: filesWithUrls,
     });
   } catch (error) {
     logger.error("Upload task attachments error", error);

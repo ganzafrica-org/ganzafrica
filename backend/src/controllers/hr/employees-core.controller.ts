@@ -208,6 +208,7 @@ export const updateMyProfile = async (req: Request, res: Response) => {
     // shape assets.controller.ts's buildImageInputs reads from req.files.
     const file = req.file as (Express.Multer.File & { location?: string }) | undefined;
     const patch = file ? { ...req.body, picture: getFileUrl(file.location!) } : req.body;
+
     return res.json({ me: await employees.updateMyProfile(actorId(req), patch) });
   } catch (e) {
     return handleError(res, e, "Update Profile Error");

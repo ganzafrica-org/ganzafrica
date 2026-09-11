@@ -100,6 +100,7 @@ export const cancelLeave = async (req: Request, res: Response) => {
 };
 
 /** the upload middleware augments the uploaded file with `location`/`key` (not part of Express.Multer.File). */
+
 function uploadedFile(req: Request) {
   const file = req.file as unknown as { key?: string; size?: number; originalname?: string };
   if (!file?.key) return undefined;

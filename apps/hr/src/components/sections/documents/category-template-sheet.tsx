@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -111,6 +112,7 @@ export function CategoryTemplateSheet({ open, onOpenChange }: CategoryTemplateSh
   const [editingTemplate, setEditingTemplate] = useState<DocumentCategoryTemplate | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm());
+
   const logoFileInputRef = useRef<HTMLInputElement>(null);
 
   const isSaving = createTemplate.isPending || updateTemplate.isPending;

@@ -1,21 +1,16 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
-  basePath: process.env.NODE_ENV === "production" ? "/internal" : "",
+  output: "standalone",
+  // Build runs from apps/internal, so the monorepo root is two levels up.
+  outputFileTracingRoot: path.join(process.cwd(), "../../"),
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**.digitaloceanspaces.com",
-      },
-      {
-        protocol: "https",
-        hostname: "**.ganzafrica.org",
-      },
-      {
-        protocol: "https",
-        hostname: "ganzafrica.org",
-      },
+      { protocol: "https", hostname: "**.blob.core.windows.net" },
+      { protocol: "https", hostname: "**.digitaloceanspaces.com" },
+      { protocol: "https", hostname: "**.ganzafrica.org" },
+      { protocol: "https", hostname: "ganzafrica.org" },
     ],
   },
 };

@@ -4,6 +4,7 @@ import { makeUser } from "../factories";
 
 vi.mock("../../src/services/email.service", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../src/services/email.service")>()),
+
   sendEmail: vi.fn(async () => ({ id: "x" })),
 }));
 vi.mock("../../src/services/storage.service", () => ({

@@ -4,8 +4,10 @@
  * personal_email OR their linked user's login email, so it works whichever one you pass.
  *
  * Deletes, in FK-safe order: password reset/verification/2FA tokens, sessions, signature
+
  * requests+events and documents tied to their contracts, any assets they're holding are returned
  * to AVAILABLE and their assignment history removed, then the employee row (which cascades to
+
  * hr_contracts, process_instances, process_tasks, hr_leaves, etc. per the schema's ON DELETE
  * CASCADE), then the linked user account (user_roles cascades).
  *

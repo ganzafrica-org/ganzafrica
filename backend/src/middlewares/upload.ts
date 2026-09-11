@@ -1,3 +1,4 @@
+import type { Request } from "express";
 import multer from "multer";
 import type { Request } from "express";
 import { PassThrough } from "stream";
@@ -54,62 +55,47 @@ const allowedVideoTypes = [
 ];
 const allowedDocumentTypes = [
   "application/pdf",
-  // Word documents
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  // Spreadsheets
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  // Presentations
   "application/vnd.ms-powerpoint",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  // Text files
   "text/plain",
   "text/csv",
   "text/html",
   "text/css",
   "text/javascript",
   "application/json",
-  // Archives
   "application/zip",
   "application/x-zip-compressed",
   "application/x-rar-compressed",
   "application/x-7z-compressed",
-  // Other common formats
   "application/rtf",
   "application/xml",
   "text/xml",
   "application/vnd.oasis.opendocument.text",
   "application/vnd.oasis.opendocument.spreadsheet",
   "application/vnd.oasis.opendocument.presentation",
-  // Additional formats
-  "application/octet-stream", // Generic binary
-  "application/x-binary", // Generic binary
+  "application/octet-stream",
+  "application/x-binary",
 ];
 const allowedFileTypes = [...allowedImageTypes, ...allowedVideoTypes, ...allowedDocumentTypes];
 
-/**
- * Helper function to determine subdirectory based on mimetype
- */
+/** Determine the subdirectory (image / video / document) from a mimetype. */
 export function getFileSubdirectory(mimetype: string): string {
-  if (allowedImageTypes.includes(mimetype)) {
-    return "image";
-  } else if (allowedVideoTypes.includes(mimetype)) {
-    return "video";
-  } else if (allowedDocumentTypes.includes(mimetype)) {
-    return "document";
-  } else if (mimetype.startsWith("image/")) {
-    return "image";
-  } else if (mimetype.startsWith("video/")) {
-    return "video";
-  } else if (mimetype.startsWith("audio/")) {
-    return "document"; // Audio files go to documents
-  } else if (mimetype.startsWith("application/") || mimetype.startsWith("text/")) {
-    return "document";
-  }
-  return "document"; // Default fallback
+  if (allowedImageTypes.includes(mimetype)) return "image";
+  if (allowedVideoTypes.includes(mimetype)) return "video";
+  if (allowedDocumentTypes.includes(mimetype)) return "document";
+  if (mimetype.startsWith("image/")) return "image";
+  if (mimetype.startsWith("video/")) return "video";
+  return "document";
 }
 
+/**
+ * Public URL for an object in the public container. Private objects are never public — read them
+ * back through `getPresignedDownload` (a SAS URL) instead.
+ */
 export function getFileUrl(location: string): string {
   if (env.AZURE_STORAGE_CDN_URL) {
     return location.replace(
@@ -129,11 +115,9 @@ interface MulterRequest extends Express.Request {}
 
 const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterCallback): void => {
   // Allow if mimetype is in allowed list (handle undefined/empty from some proxies)
+
   const mimetype = file.mimetype || "";
-  if (mimetype && allowedFileTypes.includes(mimetype)) {
-    cb(null, true);
-    return;
-  }
+  if (mimetype && allowedFileTypes.includes(mimetype)) return cb(null, true);
 
   // Special handling for generic binary types - check file extension
   if (mimetype === "application/octet-stream" || mimetype === "application/x-binary") {
@@ -179,41 +163,7 @@ const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterC
 
   // Check for common file extensions even with unknown mimetypes
   const extension = file.originalname.toLowerCase().split(".").pop();
-  const commonExtensions = [
-    "pdf",
-    "doc",
-    "docx",
-    "xls",
-    "xlsx",
-    "ppt",
-    "pptx",
-    "txt",
-    "csv",
-    "rtf",
-    "zip",
-    "rar",
-    "7z",
-    "json",
-    "xml",
-    "html",
-    "css",
-    "js",
-    "jpg",
-    "jpeg",
-    "png",
-    "gif",
-    "webp",
-    "svg",
-    "mp4",
-    "webm",
-    "ogg",
-    "mov",
-    "avi",
-    "mkv",
-    "bmp",
-    "tiff",
-    "ico",
-  ];
+  if (extension && commonExtensions.includes(extension)) return cb(null, true);
 
   if (extension && commonExtensions.includes(extension)) {
     cb(null, true);

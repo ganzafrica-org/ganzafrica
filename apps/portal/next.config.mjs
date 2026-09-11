@@ -1,7 +1,12 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Use basePath conditionally based on environment
-  basePath: process.env.NODE_ENV === "production" ? "/portal" : "",
+  output: "standalone",
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   transpilePackages: ["@workspace/ui"],
   images: {
     remotePatterns: [
@@ -9,6 +14,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
         pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.blob.core.windows.net",
       },
       {
         protocol: "https",

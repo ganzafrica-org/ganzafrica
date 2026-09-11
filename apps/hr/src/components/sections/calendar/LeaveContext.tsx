@@ -10,6 +10,7 @@ import {
   PublicHoliday,
 } from "@/types/leave";
 import { doRangesOverlap } from "@/lib/date-utils";
+
 import { useLeaveCalendar, useRelevantHolidays } from "@/hooks/useLeaveBalances";
 import type { CalendarLeaveEvent, PublicHolidayApi } from "@/services/leave-balances.service";
 
@@ -85,6 +86,14 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setPublicHolidays((holidays ?? []).map(toPublicHoliday));
   }, [holidays]);
+
+  useEffect(() => {
+    if (!events) return;
+    setLeaveRequests(events.map(toMockLeave).filter((l): l is LeaveRequest => l !== null));
+    const byEmployee = new Map<string, TeamMember>();
+    events.forEach((e) => byEmployee.set(e.employeeId, toTeamMember(e)));
+    setTeamMembers([...byEmployee.values()]);
+  }, [events]);
 
   useEffect(() => {
     if (!events) return;

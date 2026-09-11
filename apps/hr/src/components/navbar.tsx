@@ -49,6 +49,7 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+
   // Gapped/rounded until the user actually scrolls — on every page, not just the dashboard.
   const useExpandedNavbar = !scrolled;
   const { data: unreadCount } = useUnreadNotificationCount();
