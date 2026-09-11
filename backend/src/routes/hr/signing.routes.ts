@@ -22,12 +22,30 @@ router.delete(
 
 // Requests
 router.post("/requests", ...manage, validate(v.createRequestSchema), c.createRequest);
+// Arbitrary, HR-chosen signer list for one contract/document — sequential or parallel.
+router.post("/requests/sequence", ...manage, validate(v.createSequenceSchema), c.createSequence);
 router.post("/requests/:id/send", ...manage, validate(v.idSchema), c.sendRequest);
 router.post("/requests/:id/void", ...manage, validate(v.idSchema), c.voidRequest);
 router.get("/requests/:id/audit", ...manage, validate(v.idSchema), c.auditTrail);
 // Whole signer sequence for a reference (e.g. a contract). Ownership, not a bare permission:
 // HR/admin see any sequence; anyone else only one they're a signer on (enforced in the service).
 router.get("/requests", authenticate, validate(v.listByRefSchema), c.listByRef);
+
+// Designated co-signer pool — a persistent, org-wide allowlist HR maintains for the multi-signer
+// picker, rather than any employee being pickable per document.
+router.get("/signer-pool", ...manage, c.listSignerPool);
+router.post(
+  "/signer-pool/:employeeId",
+  ...manage,
+  validate(v.signerPoolEmployeeSchema),
+  c.addToSignerPool,
+);
+router.delete(
+  "/signer-pool/:employeeId",
+  ...manage,
+  validate(v.signerPoolEmployeeSchema),
+  c.removeFromSignerPool,
+);
 
 // Internal signer — any authenticated user sees + signs their own requests.
 router.get("/my", authenticate, c.mySignatures);

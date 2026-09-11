@@ -1,11 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
-// Presign is faked so redeem returns a deterministic Spaces-shaped URL with X-Amz-Expires.
-vi.mock("@aws-sdk/s3-request-presigner", () => ({
-  getSignedUrl: async (_client: unknown, cmd: any, opts: { expiresIn: number }) =>
-    `https://test-bucket.nyc3.digitaloceanspaces.com/${cmd?.input?.Key ?? "obj"}?X-Amz-Expires=${opts.expiresIn}&X-Amz-Signature=test`,
-}));
-
+// No mock needed here: Azure SAS URL generation (StorageSharedKeyCredential + generateSasUrl) is
+// a local HMAC signing operation, not a network call — it runs for real against the fake test
+// account set up in tests/setup.ts and produces a real (if uncallable) SAS query string.
 import supertest from "supertest";
 import { eq } from "drizzle-orm";
 import app from "../../src/app";
@@ -39,13 +36,18 @@ describe("payslip access tokens", () => {
     expect(rows[0].token_hash).not.toContain(raw);
   });
 
-  it("valid token → 302 to a Spaces URL with X-Amz-Expires=300", async () => {
+  it("valid token → 302 to an Azure Blob SAS URL expiring ~300s out", async () => {
     const payroll = await seedPayroll();
     const token = await payslipTokenService.mintPayslipToken(payroll.id);
     const res = await supertest(app).get(`/api/payslips/view/${token}`);
     expect(res.status).toBe(302);
-    expect(res.headers.location).toContain("digitaloceanspaces.com");
-    expect(res.headers.location).toContain("X-Amz-Expires=300");
+    const location = new URL(res.headers.location);
+    expect(location.hostname).toContain("blob.core.windows.net");
+    expect(location.searchParams.get("sp")).toBe("r"); // read-only permission
+    const expiresAt = new Date(location.searchParams.get("se")!).getTime();
+    const deltaSeconds = (expiresAt - Date.now()) / 1000;
+    expect(deltaSeconds).toBeGreaterThan(290);
+    expect(deltaSeconds).toBeLessThan(310);
   });
 
   it("redeeming bumps access_count and sets last_accessed_at", async () => {

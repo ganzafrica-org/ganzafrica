@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { Suspense, useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -125,7 +126,8 @@ const statusStyles: Record<string, string> = {
   DISPOSED: "bg-gray-100 text-gray-800 border-gray-200",
 };
 
-export default function AssetsPage() {
+function AssetsPageContent() {
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -166,6 +168,13 @@ export default function AssetsPage() {
   const handleReportIssue = (asset: Asset) => {
     flagAsset.mutate({ id: asset.id }, { onSuccess: () => toast.success("Asset flagged") });
   };
+
+  // Deep link from the home page's Assets Needing Attention card (or anywhere else):
+  // /asset?asset=<id> opens the sheet — same pattern as /employees?employee=<id>.
+  useEffect(() => {
+    const assetId = searchParams.get("asset");
+    if (assetId) setSelectedAssetId(assetId);
+  }, [searchParams]);
 
   useEffect(() => {
     const mainEl = document.querySelector("main.overflow-auto") as HTMLElement | null;
@@ -946,5 +955,13 @@ export default function AssetsPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function AssetsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AssetsPageContent />
+    </Suspense>
   );
 }

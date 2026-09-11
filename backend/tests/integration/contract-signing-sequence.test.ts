@@ -16,11 +16,13 @@ import {
 import * as signing from "../../src/services/signing.service";
 import { makeEmployeeUser, makeProcessTemplate, makeUser, ensureRole } from "../factories";
 
-vi.mock("../../src/services/email.service", () => ({
+vi.mock("../../src/services/email.service", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../src/services/email.service")>()),
   sendEmail: vi.fn(async () => ({ id: "x" })),
 }));
 vi.mock("../../src/services/storage.service", () => ({
   getObjectBuffer: vi.fn(async () => Buffer.from("%PDF-1.4 fake signed contract bytes")),
+  getPresignedDownload: vi.fn(async (key: string) => `https://signed.example/${key}`),
 }));
 
 async function taskNamed(instanceId: number, title: string) {
@@ -49,6 +51,32 @@ async function makeDraftContract(employeeId: string) {
     })
     .returning();
   return contract;
+}
+
+/** Mirrors the HR-uploaded agreement file attached via the contract form (contract-agreement.ts's
+ * saveContractWithAgreement): an hr_documents row linked by contract_id, with the contract's
+ * employment_agreement_url pointed at that document's id. */
+async function attachAgreementDocument(contractId: string, employeeId: string, filePath: string) {
+  const [doc] = await db
+    .insert(hr_documents)
+    .values({
+      document_name: "Signed agreement draft.pdf",
+      category: "Contract Templates",
+      version: "1",
+      description: "Employment agreement",
+      department: "Programs",
+      file_path: filePath,
+      file_size: "10.0 KB",
+      access: {},
+      contract_id: contractId,
+      created_by_employee_id: employeeId,
+    })
+    .returning();
+  await db
+    .update(hr_contracts)
+    .set({ employment_agreement_url: doc.id })
+    .where(eq(hr_contracts.id, contractId));
+  return doc;
 }
 
 async function seedEmploymentContractTemplate(createdBy: number, fileKey?: string) {
@@ -231,7 +259,9 @@ describe("onboarding contract-signing sequence", () => {
       .from(hr_contracts)
       .where(eq(hr_contracts.id, contract.id));
     expect(afterBoth.status).toBe("ACTIVE");
-    expect(afterBoth.employment_agreement_url).toBeTruthy();
+    // Fields-only template — there's no real document behind the signature, so the agreement
+    // pointer stays null rather than a dead reference nothing can resolve.
+    expect(afterBoth.employment_agreement_url).toBeNull();
 
     const done = await completeTask(hrUserId, task.id);
     expect(done.status).toBe("done");
@@ -274,6 +304,14 @@ describe("onboarding contract-signing sequence", () => {
     expect(docs[0].category).toBe("Contract Templates");
     expect(docs[0].file_path).toBe("uploads/document/employment-contract.pdf");
 
+    // The contract's agreement pointer now holds this document's id (not the raw storage key),
+    // so the Contract view's isAgreementDocumentId check resolves it correctly.
+    const [activated] = await db
+      .select()
+      .from(hr_contracts)
+      .where(eq(hr_contracts.id, contract.id));
+    expect(activated.employment_agreement_url).toBe(docs[0].id);
+
     // Idempotent: calling the recorder again for the same signed key must not duplicate the row.
     const { recordSignedContractDocument } = await import("../../src/services/hr/contract.service");
     await recordSignedContractDocument(contract.id, "uploads/document/employment-contract.pdf");
@@ -282,5 +320,30 @@ describe("onboarding contract-signing sequence", () => {
       .from(hr_documents)
       .where(eq(hr_documents.contract_id, contract.id));
     expect(docsAfterRetry).toHaveLength(1);
+  });
+
+  it("previews the contract's own uploaded agreement, not the template's generic file, once one is attached", async () => {
+    await seedEmploymentContractTemplate(hrUserId, "uploads/document/generic-template.pdf");
+    const subject = await makeEmployeeUser({ employmentType: "staff" });
+    await makeProcessTemplate({
+      createdBy: hrUserId,
+      employmentTypes: null,
+      tasks: [{ title: "Sign contract", kind: "contract_signing", is_blocking: true }],
+    });
+    const contract = await makeDraftContract(subject.employee.id);
+    await attachAgreementDocument(
+      contract.id,
+      subject.employee.id,
+      "uploads/document/this-employees-agreement.pdf",
+    );
+    const instance = await instantiateProcess("onboarding", subject.employee.id, {
+      actorUserId: hrUserId,
+    });
+    const task = await taskNamed(instance.id, "Sign contract");
+    await reassignTask(task.id, { link_ref: { contract_id: contract.id } }, hrUserId);
+
+    const [hrReq] = await signing.listByRef("contract", contract.id);
+    const { url } = await signing.getRequestDocumentUrl(hrReq.id, hrUserId);
+    expect(url).toBe("https://signed.example/uploads/document/this-employees-agreement.pdf");
   });
 });

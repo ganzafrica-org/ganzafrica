@@ -2,7 +2,7 @@
  * MOD-06 §4/§6.6 — policy and holiday settings, manual balance adjustment, and the self-service
  * read. Covers the service paths the HTTP suite reaches only indirectly.
  */
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { resetDb } from "../setup";
 import { db } from "../../src/db/client";
 import { hr_leaves } from "../../src/db/schema";
@@ -25,6 +25,16 @@ import {
   getLeaveSummary,
 } from "../../src/services/hr/leave-core.service";
 import { makeEmployeeUser, makeLeavePolicy, ensureRole } from "../factories";
+
+// listRelevantHolidays (and holidaySet, exercised elsewhere) now source from live Nager.Date via
+// holidays-api.service instead of a seeded DB table — mock that one boundary so these tests stay
+// fast, deterministic, and independent of the real external API.
+let holidaysByCountry: Record<string, { date: string; name: string }[]> = {};
+vi.mock("../../src/services/hr/holidays-api.service", () => ({
+  publicHolidaysForYear: (country: string) => Promise.resolve(holidaysByCountry[country] ?? []),
+  publicHolidaysInRange: (country: string) => Promise.resolve(holidaysByCountry[country] ?? []),
+  countryCode: (country: string) => (holidaysByCountry[country] ? "XX" : null),
+}));
 
 const YEAR = 2026;
 const d = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
@@ -84,7 +94,7 @@ describe("MOD-06 policy settings", () => {
   });
 });
 
-describe("MOD-06 holidays", () => {
+describe("MOD-06 holidays (admin CRUD table — still a valid data source, just unused by listRelevantHolidays now)", () => {
   beforeEach(async () => {
     await resetDb();
     await ensureRole("employee");
@@ -111,47 +121,60 @@ describe("MOD-06 holidays", () => {
     expect(renamed.name).toBe("Liberation Day (obs.)");
     expect(await listHolidays(2026)).toHaveLength(1);
   });
+});
 
-  it("a single-country org (no holiday ever tagged) sees every holiday — identical to today's behavior (regression)", async () => {
+describe("MOD-06 listRelevantHolidays — real holidays (Nager.Date) per represented country", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await ensureRole("employee");
+    holidaysByCountry = {};
+  });
+
+  it("a single-country org sees that country's live holidays", async () => {
     await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
-    await createHoliday({ date: "2026-01-01", name: "New Year" });
-    await createHoliday({ date: "2026-07-01", name: "Independence Day" });
+    holidaysByCountry.Rwanda = [
+      { date: "2026-01-01", name: "New Year" },
+      { date: "2026-07-01", name: "Independence Day" },
+    ];
 
     const relevant = await listRelevantHolidays(2026);
     expect(relevant.map((h) => h.name).sort()).toEqual(["Independence Day", "New Year"]);
   });
 
-  it("a two-country org sees the union: universal holidays plus each represented country's own", async () => {
+  it("a two-country org sees the union of each represented country's own holidays", async () => {
     await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
     await makeEmployeeUser({ employmentType: "staff", homeCountry: "Kenya" });
-    await createHoliday({ date: "2026-01-01", name: "New Year" }); // universal
-    await createHoliday({ date: "2026-07-01", name: "Rwanda Independence Day", country: "Rwanda" });
-    await createHoliday({ date: "2026-12-12", name: "Kenya Jamhuri Day", country: "Kenya" });
-    await createHoliday({ date: "2026-05-25", name: "Ghana Republic Day", country: "Ghana" }); // no employee there
+    holidaysByCountry.Rwanda = [{ date: "2026-07-01", name: "Rwanda Independence Day" }];
+    holidaysByCountry.Kenya = [{ date: "2026-12-12", name: "Kenya Jamhuri Day" }];
+    holidaysByCountry.Ghana = [{ date: "2026-05-25", name: "Ghana Republic Day" }]; // no employee there
 
     const relevant = await listRelevantHolidays(2026);
     expect(relevant.map((h) => h.name).sort()).toEqual([
       "Kenya Jamhuri Day",
-      "New Year",
       "Rwanda Independence Day",
     ]);
   });
 
-  it("no represented countries (no active employees) falls back to universal-only holidays", async () => {
-    await createHoliday({ date: "2026-01-01", name: "New Year" }); // universal
-    await createHoliday({ date: "2026-07-01", name: "Rwanda Independence Day", country: "Rwanda" });
+  it("no represented countries (no active employees) returns nothing", async () => {
+    holidaysByCountry.Rwanda = [{ date: "2026-01-01", name: "New Year" }];
 
-    const relevant = await listRelevantHolidays(2026);
-    expect(relevant.map((h) => h.name)).toEqual(["New Year"]);
+    expect(await listRelevantHolidays(2026)).toEqual([]);
   });
 
-  it("omitting the year returns holidays across every year, not just one", async () => {
+  it("a country with no ISO mapping contributes no holidays even if an employee is there", async () => {
+    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Atlantis" });
+    // Atlantis is never populated in holidaysByCountry, so countryCode() returns null for it.
+
+    expect(await listRelevantHolidays(2026)).toEqual([]);
+  });
+
+  it("defaults to the current year when none is given", async () => {
     await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
-    await createHoliday({ date: "2025-01-01", name: "New Year 2025" });
-    await createHoliday({ date: "2026-01-01", name: "New Year 2026" });
+    const thisYear = new Date().getUTCFullYear();
+    holidaysByCountry.Rwanda = [{ date: `${thisYear}-01-01`, name: "New Year" }];
 
     const relevant = await listRelevantHolidays();
-    expect(relevant.map((h) => h.name).sort()).toEqual(["New Year 2025", "New Year 2026"]);
+    expect(relevant.map((h) => h.name)).toEqual(["New Year"]);
   });
 });
 

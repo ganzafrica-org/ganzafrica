@@ -197,4 +197,51 @@ describe("AddEmployeeSheet — contract + signing entry point", () => {
     expect(await screen.findByText(/missing required contract field/i)).toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
+
+  it("blocks the profile step with a malformed personal email, before any request fires", async () => {
+    const postSpy = vi.fn();
+    server.use(http.post(`${API}/hr/employees`, () => (postSpy(), HttpResponse.json({}))));
+
+    renderWithClient(<AddEmployeeSheet open onOpenChange={vi.fn()} />);
+
+    const textboxes = screen.getAllByRole("textbox");
+    await userEvent.type(textboxes[0], "New");
+    await userEvent.type(textboxes[1], "Hire");
+    await userEvent.type(screen.getByPlaceholderText("john@gmail.com"), "not-an-email");
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+
+    expect(await screen.findByText(/enter a valid personal email/i)).toBeInTheDocument();
+    // Still on the profile step — the contract step's own fields never appear.
+    expect(screen.queryByPlaceholderText("e.g. Software Engineer")).not.toBeInTheDocument();
+    expect(postSpy).not.toHaveBeenCalled();
+  });
+
+  it("blocks the profile step when work email is filled in but malformed", async () => {
+    renderWithClient(<AddEmployeeSheet open onOpenChange={vi.fn()} />);
+
+    const textboxes = screen.getAllByRole("textbox");
+    await userEvent.type(textboxes[0], "New");
+    await userEvent.type(textboxes[1], "Hire");
+    await userEvent.type(screen.getByPlaceholderText("john@gmail.com"), "new.hire@example.com");
+    // Work Email has no placeholder — it's the next email-typed input after Personal Email.
+    const emailInputs = document.querySelectorAll('input[type="email"]');
+    await userEvent.type(emailInputs[1] as HTMLInputElement, "not-an-email");
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+
+    expect(await screen.findByText(/enter a valid work email/i)).toBeInTheDocument();
+  });
+
+  it("proceeds past the profile step once both emails are well-formed", async () => {
+    renderWithClient(<AddEmployeeSheet open onOpenChange={vi.fn()} />);
+
+    const textboxes = screen.getAllByRole("textbox");
+    await userEvent.type(textboxes[0], "New");
+    await userEvent.type(textboxes[1], "Hire");
+    await userEvent.type(screen.getByPlaceholderText("john@gmail.com"), "new.hire@example.com");
+    const emailInputs = document.querySelectorAll('input[type="email"]');
+    await userEvent.type(emailInputs[1] as HTMLInputElement, "work@example.com");
+    await userEvent.click(screen.getByRole("button", { name: /^next$/i }));
+
+    expect(await screen.findByPlaceholderText("e.g. Software Engineer")).toBeInTheDocument();
+  });
 });

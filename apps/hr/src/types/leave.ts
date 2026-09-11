@@ -51,9 +51,6 @@ export interface LeaveContextType {
   updateLeaveRequest: (request: LeaveRequest) => void;
   deleteLeaveRequest: (id: string) => void;
   updateLeaveStatus: (id: string, status: LeaveStatus) => void;
-  addPublicHoliday: (holiday: Omit<PublicHoliday, "id">) => void;
-  updatePublicHoliday: (holiday: PublicHoliday) => void;
-  deletePublicHoliday: (id: string) => void;
   getFilteredLeaves: (
     selectedMemberId?: string,
     selectedLeaveType?: LeaveType,

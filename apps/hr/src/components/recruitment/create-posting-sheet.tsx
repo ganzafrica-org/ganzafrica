@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,8 +57,13 @@ const STANDARD_FIELDS: FormDefinition["standard"] = [
 
 type Step = 1 | 2 | 3;
 
-export default function NewPostingPage() {
-  const router = useRouter();
+/**
+ * Create-a-posting wizard, hosted in a ReusableSheet from the Recruitment page (see
+ * recruitment/page.tsx) instead of the standalone /recruitment/new route it started as —
+ * same 3-step content (details -> form -> publish), just embedded rather than a page nav.
+ */
+export function CreatePostingSheet({ onDone }: { onDone: () => void }) {
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>(1);
   const [saving, setSaving] = useState(false);
   const [oppId, setOppId] = useState<number | null>(null);
@@ -116,7 +121,8 @@ export default function NewPostingPage() {
       await recruitmentService.publishForm(oppId);
       await recruitmentService.publishOpportunity(oppId);
       toast.success("Posting published");
-      router.push(`/recruitment/${oppId}`);
+      queryClient.invalidateQueries({ queryKey: ["recruitment", "opportunities"] });
+      onDone();
     } catch {
       toast.danger("Publish failed");
     } finally {
@@ -126,8 +132,7 @@ export default function NewPostingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <h1 className="text-2xl font-bold text-slate-900">New posting</h1>
+    <div className="space-y-6 p-6">
       <ol className="flex gap-4 text-sm">
         {(["Details", "Form", "Publish"] as const).map((label, i) => (
           <li

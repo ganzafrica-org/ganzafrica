@@ -29,8 +29,7 @@ const subNavConfig: Record<string, SubNavItem[]> = {
   "/settings": [
     { label: "Organization", href: "/settings/organization" },
     { label: "Policies", href: "/settings/policies" },
-    { label: "Roles", href: "/settings/roles" },
-    { label: "Time Off", href: "/settings/timeoff" },
+    { label: "Time Off", href: "/settings/leave" },
   ],
 };
 

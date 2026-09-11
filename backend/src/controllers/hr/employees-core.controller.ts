@@ -104,7 +104,7 @@ export const createEmployee = async (req: Request, res: Response) => {
   }
 };
 
-const ONBOARDING_CHECKLIST_PATH = "/employees/onboarding/me";
+const ONBOARDING_CHECKLIST_PATH = "/onboarding/me";
 
 /**
  * Mints a set-password link and sends it as one combined "welcome, set your password, and start
@@ -204,7 +204,7 @@ export const getMe = async (req: Request, res: Response) => {
 
 export const updateMyProfile = async (req: Request, res: Response) => {
   try {
-    // multer-s3 augments the file with `location` (not part of Express.Multer.File) — same
+    // the upload middleware augments the file with `location` (not part of Express.Multer.File) — same
     // shape assets.controller.ts's buildImageInputs reads from req.files.
     const file = req.file as (Express.Multer.File & { location?: string }) | undefined;
     const patch = file ? { ...req.body, picture: getFileUrl(file.location!) } : req.body;

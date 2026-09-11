@@ -59,9 +59,9 @@ export default function PoliciesPage() {
   );
 
   return (
-    <div className="flex flex-col justify-center items-center w-full bg-background min-h-screen">
-      <div className="px-6 py-6 flex flex-col w-full max-w-5xl">
-        <div className="mb-6 flex items-center justify-between">
+    <div className="flex flex-col w-full bg-background mt-6">
+      <div className="p-6 flex flex-col w-full rounded-md">
+        <div className="w-full mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Policies</h1>
             <p className="text-sm text-muted-foreground">

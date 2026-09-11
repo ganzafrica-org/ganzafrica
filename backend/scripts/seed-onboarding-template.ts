@@ -30,13 +30,6 @@ const DEFAULT_TASKS = [
     due_offset_days: 3,
   },
   {
-    title: "Upload national ID / passport",
-    default_assignee: "employee" as const,
-    kind: "document_upload",
-    is_blocking: true,
-    due_offset_days: 3,
-  },
-  {
     title: "Set up leave entitlements",
     default_assignee: "hr" as const,
     kind: "leave_setup",

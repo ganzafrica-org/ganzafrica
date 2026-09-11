@@ -49,8 +49,9 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().nullish(),
   RESEND_FROM_EMAIL: z.string().default("GanzAfrica <no-reply@ganzafrica.org>"),
   EMAIL_FROM: z.string().nullish(),
-  EMAIL_PASSWORD: z.string().nullish(),
   SMTP_HOST: z.string().nullish(),
+  SMTP_USER: z.string().nullish(),
+  SMTP_PASSWORD: z.string().nullish(),
   SMTP_PORT: z.preprocess((val) => {
     if (val === undefined || val === null || val === "") return undefined;
     const num = Number(val);
@@ -67,13 +68,14 @@ const envSchema = z.object({
   CORS_ORIGINS: z.string().transform((val) => val.split(",")),
   COOKIE_DOMAIN: z.string().nullish(), // e.g. ".ganzafrica.org" in prod; unset in dev (host-only)
 
-  // Digital Ocean Spaces
-  DO_SPACES_ENDPOINT: z.string().url(),
-  DO_SPACES_REGION: z.string(),
-  DO_SPACES_ACCESS_KEY: z.string(),
-  DO_SPACES_SECRET_KEY: z.string(),
-  DO_SPACES_BUCKET: z.string(),
-  DO_SPACES_CDN_URL: z.string().url().optional(),
+  // Azure Blob Storage (file storage backend)
+  AZURE_STORAGE_ACCOUNT: z.string(),
+  AZURE_STORAGE_ACCOUNT_KEY: z.string(),
+  AZURE_STORAGE_ENDPOINT: z.string().url(),
+  AZURE_STORAGE_CONNECTION_STRING: z.string(),
+  AZURE_STORAGE_CONTAINER_PRIVATE: z.string().default("uploads"),
+  AZURE_STORAGE_CONTAINER_PUBLIC: z.string().default("public"),
+  AZURE_STORAGE_CDN_URL: z.string().url().optional(),
 
   // Google Calendar (optional - only required if Google Calendar integration is used)
   GOOGLE_CALENDAR_CLIENT_ID: z.string().nullish(),

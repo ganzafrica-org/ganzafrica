@@ -19,7 +19,7 @@
 import fs from "fs";
 import path from "path";
 import { eq } from "drizzle-orm";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-blob";
 import PDFDocument from "pdfkit";
 import { db } from "../src/db/client";
 import { roles, user_roles, users } from "../src/db/schema";
@@ -36,15 +36,12 @@ const logger = new Logger("SeedSigningTemplate");
 
 const TEMPLATE_NAME = "Employment Contract";
 
-const s3Client = new S3Client({
-  endpoint: env.DO_SPACES_ENDPOINT,
-  region: env.DO_SPACES_REGION,
-  credentials: {
-    accessKeyId: env.DO_SPACES_ACCESS_KEY,
-    secretAccessKey: env.DO_SPACES_SECRET_KEY,
-  },
-  forcePathStyle: false,
-});
+const sharedKeyCredential = new StorageSharedKeyCredential(
+  env.AZURE_STORAGE_ACCOUNT,
+  env.AZURE_STORAGE_ACCOUNT_KEY,
+);
+const blobServiceClient = new BlobServiceClient(env.AZURE_STORAGE_ENDPOINT, sharedKeyCredential);
+const privateContainer = blobServiceClient.getContainerClient(env.AZURE_STORAGE_CONTAINER_PRIVATE);
 
 async function firstHrUserId(): Promise<number> {
   const [hr] = await db
@@ -82,17 +79,11 @@ function generatePlaceholderPdf(): Promise<Buffer> {
 async function uploadBaseDocument(localPath?: string): Promise<string> {
   const buffer = localPath ? fs.readFileSync(localPath) : await generatePlaceholderPdf();
   const originalName = localPath ? path.basename(localPath) : "employment-contract-placeholder.pdf";
-  const key = `uploads/document/${Date.now()}-${Math.round(Math.random() * 1e9)}-${originalName.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+  const key = `document/${Date.now()}-${Math.round(Math.random() * 1e9)}-${originalName.replace(/[^a-zA-Z0-9.]/g, "_")}`;
 
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: env.DO_SPACES_BUCKET,
-      Key: key,
-      Body: buffer,
-      ACL: "private",
-      ContentType: "application/pdf",
-    }),
-  );
+  await privateContainer.getBlockBlobClient(key).uploadData(buffer, {
+    blobHTTPHeaders: { blobContentType: "application/pdf" },
+  });
   return key;
 }
 

@@ -1,21 +1,41 @@
-import { Resend } from "resend";
+import nodemailer, { type Transporter } from "nodemailer";
 import { env, Logger } from "../config";
 import { AppError } from "../middlewares";
 
 const logger = new Logger("EmailService");
 
-const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
+const transporter: Transporter | null =
+  env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASSWORD
+    ? nodemailer.createTransport({
+        host: env.SMTP_HOST,
+        port: env.SMTP_PORT ?? 587,
+        secure: false, // port 587 uses STARTTLS, not implicit TLS
+        requireTLS: true,
+        auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD },
+      })
+    : null;
 
-const isEmailConfigured = () => !!resend;
+const isEmailConfigured = () => !!transporter;
+
+/**
+ * A single recipient can have two real inboxes — the personal address their login uses, and a
+ * work address on their employees row. Both should get time-sensitive notifications (a leave
+ * request, a document to sign) rather than only whichever one happens to be the login email.
+ * `to` accepts a comma-separated list, so this just builds that list, deduped.
+ */
+export function combineRecipients(personal: string, work?: string | null): string {
+  if (!work || work.trim().toLowerCase() === personal.trim().toLowerCase()) return personal;
+  return `${personal}, ${work}`;
+}
 
 // Generic function to send emails
 export async function sendEmail(to: string, subject: string, html: string, text?: string) {
-  if (!resend) {
-    // No RESEND_API_KEY (typical for local dev) — nothing gets delivered, so surface every link
+  if (!transporter) {
+    // No SMTP config (typical for local dev) — nothing gets delivered, so surface every link
     // the email would have contained, otherwise there's no way to click through it locally.
     const links = [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
     logger.warn(
-      `Resend not configured (missing RESEND_API_KEY). Skipping email to ${to} with subject: ${subject}` +
+      `SMTP not configured (missing SMTP_HOST/SMTP_USER/SMTP_PASSWORD). Skipping email to ${to} with subject: ${subject}` +
         (links.length ? `\nLink(s): ${links.join(", ")}` : ""),
     );
     return null;
@@ -25,21 +45,16 @@ export async function sendEmail(to: string, subject: string, html: string, text?
     // A text part is included whenever the caller has one — several clients (and inbox preview
     // snippets) render an html-only email as blank, since they read the text part for the
     // preview/fallback rather than parsing the html.
-    const { data, error } = await resend.emails.send({
-      from: env.RESEND_FROM_EMAIL,
+    const info = await transporter.sendMail({
+      from: env.EMAIL_FROM ?? "GanzAfrica <no-reply@ganzafrica.org>",
       to,
       subject,
       html,
       ...(text ? { text } : {}),
     });
 
-    if (error) {
-      logger.error("Resend error:", error);
-      throw new AppError(`Failed to send email: ${error.message}`, 500);
-    }
-
-    logger.info(`Email sent via Resend: ${data?.id}`);
-    return data;
+    logger.info(`Email sent via SMTP: ${info.messageId}`);
+    return info;
   } catch (error) {
     logger.error("Failed to send email", error);
     throw new AppError("Failed to send email", 500);
@@ -120,12 +135,17 @@ export async function sendWelcomeEmail(to: string, name: string) {
   return sendEmail(to, "Welcome to Ganzafrica", html);
 }
 
-// Kept for compatibility — no-op with Resend (connection is stateless)
 export async function verifyEmailConnection() {
-  if (!resend) {
-    logger.warn("Resend not configured. Email functionality will be disabled.");
+  if (!transporter) {
+    logger.warn("SMTP not configured. Email functionality will be disabled.");
     return false;
   }
-  logger.info("Resend email client initialized");
-  return true;
+  try {
+    await transporter.verify();
+    logger.info("SMTP connection verified");
+    return true;
+  } catch (error) {
+    logger.error("SMTP verification failed", error);
+    return false;
+  }
 }

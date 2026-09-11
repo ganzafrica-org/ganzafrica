@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 
 export default function OrganizationPage() {
   return (
-    <div className="flex flex-col justify-center items-center w-full">
-      <div className="w-[80%]">
+    <div className="flex flex-col justify-between items-center w-full py-6">
+      <div className="w-full">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Organization settings</h1>
           <p className="text-muted-foreground mt-1">

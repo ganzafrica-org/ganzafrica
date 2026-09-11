@@ -63,12 +63,20 @@ export function ContractSigningStatus({ refKind, refId, variant = "full" }: Prop
     );
   }
 
+  const signedCount = ordered.filter((s) => s.status === "signed").length;
+
   return (
     <div className="space-y-1.5">
-      {fullyExecuted && (
+      {fullyExecuted ? (
         <p className="flex items-center gap-1.5 text-xs font-medium text-emerald-700">
           <CheckCircle2 className="size-3.5" /> Fully executed
         </p>
+      ) : (
+        ordered.length > 1 && (
+          <p className="text-xs font-medium text-slate-500">
+            {signedCount} of {ordered.length} signed
+          </p>
+        )
       )}
       {ordered.map((signer) => (
         <SignerRow key={signer.id} signer={signer} />

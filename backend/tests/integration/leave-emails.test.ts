@@ -15,7 +15,8 @@ import {
 import { makeEmployeeUser, makeLeavePolicy, ensureRole } from "../factories";
 
 const sendEmailMock = vi.fn(async () => ({ id: "x" }));
-vi.mock("../../src/services/email.service", () => ({
+vi.mock("../../src/services/email.service", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../src/services/email.service")>()),
   sendEmail: (...args: unknown[]) => sendEmailMock(...args),
 }));
 
@@ -198,6 +199,49 @@ describe("MOD-06 leave-flow emails", () => {
     expect(leave.id).toBeTruthy();
     expect(sendEmailMock).toHaveBeenCalledTimes(1);
     expect(sendEmailMock.mock.calls[0][0]).toBe(manager.user.email);
+  });
+
+  it("submitting emails both the manager's personal and work address when both are set", async () => {
+    const director = await makeEmployeeUser({ role: "employee", employmentType: "staff" });
+    const manager = await makeEmployeeUser({
+      role: "employee",
+      employmentType: "staff",
+      managerId: director.employee.id,
+      workEmail: "manager.work@ganzafrica.org",
+    });
+    const report = await makeEmployeeUser({
+      role: "employee",
+      employmentType: "staff",
+      managerId: manager.employee.id,
+    });
+
+    await requestLeave(report.user.id, report.employee.id, {
+      type: "ANNUAL",
+      startDate: d("2026-03-02"),
+      endDate: d("2026-03-04"),
+      reason: "Family trip",
+    });
+
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+    const [to] = sendEmailMock.mock.calls[0];
+    expect(to).toBe(`${manager.user.email}, manager.work@ganzafrica.org`);
+  });
+
+  it("approving only emails the requester's personal address once when no work_email is set", async () => {
+    const { manager, report } = await seedOrg();
+    const leave = await requestLeave(report.user.id, report.employee.id, {
+      type: "ANNUAL",
+      startDate: d("2026-03-02"),
+      endDate: d("2026-03-04"),
+      reason: "Family trip",
+    });
+    sendEmailMock.mockClear();
+
+    await decideLeave(manager.user.id, leave.id, "APPROVED");
+
+    const [to] = sendEmailMock.mock.calls[0];
+    expect(to).toBe(report.user.email);
+    expect(to).not.toContain(",");
   });
 
   it("a notification failure on decision does not stop the decision email from sending", async () => {

@@ -19,11 +19,37 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useContracts, useMyContracts, useDeleteContract } from "@/hooks/useContracts";
 import { useMyLeave } from "@/hooks/useLeaveBalances";
 import { useProcesses, useMyProcess, useProcess } from "@/hooks/useProcesses";
+import { useSetting } from "@/hooks/useSettings";
+import {
+  useSignatureSequence,
+  useSigningTemplates,
+  useSendSignatureSequence,
+  useSignerPool,
+} from "@/hooks/useSigning";
 import { ProcessStatus } from "@/components/processes/process-status";
 import { ContractSigningStatus } from "@/components/processes/contract-signing-status";
+import {
+  MultiEmployeePicker,
+  type PickedEmployee,
+} from "@/components/sections/employee/multi-employee-picker";
 import { remainingDays } from "@/services/leave-balances.service";
 import { getInitials, getStatusBadge, countryToFlag } from "@/lib/helpers/employee-util";
 import { EmployeeHrEditSheet } from "@/components/sections/employee/employee-hr-edit-sheet";
@@ -317,9 +343,7 @@ export const Overview = ({
             </div>
             <div className="flex gap-2 px-4 py-3">
               <Link
-                href={
-                  isSelf ? "/employees/onboarding/me" : `/employees/onboarding/${onboarding.id}`
-                }
+                href={isSelf ? "/onboarding/me" : `/employees/onboarding/${onboarding.id}`}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-[color:var(--color-border-tertiary)] bg-[color:var(--color-background-secondary)] px-2 py-2 text-[12px] text-[color:var(--color-text-primary)]"
               >
                 View onboarding checklist
@@ -537,6 +561,168 @@ export const Leaves = ({ employee, isSelf }: TabProps) => {
   );
 };
 
+/**
+ * Sends a DRAFT contract for signature from the Contract tab (independent of the onboarding
+ * auto-routed co-sign flow). Only rendered for HR when the contract has no signature sequence
+ * yet. When "require_multiple_signers" is off, this is a single-recipient send to the contract's
+ * own employee — the same default a signature request would need at minimum — with no picker or
+ * mode choice shown, so toggling the setting off never regresses the simple case.
+ */
+function SendForSignatureButton({
+  contract,
+  employee,
+}: {
+  contract: Contract;
+  employee: Employee;
+}) {
+  const [open, setOpen] = useState(false);
+  const { data: requireMultipleSigners } = useSetting<boolean>("require_multiple_signers");
+  const { data: templates } = useSigningTemplates();
+  const { data: signerPool } = useSignerPool();
+  const poolIds = new Set((signerPool ?? []).map((p) => p.employeeId));
+  const [templateId, setTemplateId] = useState<number | null>(null);
+  const [mode, setMode] = useState<"sequential" | "parallel">("sequential");
+  const employeeName = `${employee.first_name} ${employee.last_name}`.trim();
+  const [signers, setSigners] = useState<PickedEmployee[]>([
+    { employeeId: employee.id, userId: employee.user_id, name: employeeName },
+  ]);
+  const sendSequence = useSendSignatureSequence();
+
+  const activeTemplateId = templateId ?? templates?.[0]?.id ?? null;
+
+  const handleSend = () => {
+    if (!activeTemplateId || signers.length === 0) return;
+    sendSequence.mutate(
+      {
+        template_id: activeTemplateId,
+        subject: `${contract.jobTitle} — ${employeeName}`,
+        ref_kind: "contract",
+        ref_id: contract.id,
+        signerUserIds: signers.map((s) => s.userId),
+        mode: requireMultipleSigners ? mode : "sequential",
+      },
+      { onSuccess: () => setOpen(false) },
+    );
+  };
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
+      >
+        <FileSignature className="h-3.5 w-3.5 mr-1.5" />
+        Send for signature
+      </Button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Send &ldquo;{contract.jobTitle}&rdquo; for signature</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {templates && templates.length > 1 && (
+              <div className="space-y-1.5">
+                <Label>Template</Label>
+                <Select
+                  value={String(activeTemplateId ?? "")}
+                  onValueChange={(v) => setTemplateId(Number(v))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((t) => (
+                      <SelectItem key={t.id} value={String(t.id)}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {requireMultipleSigners ? (
+              <>
+                <div className="space-y-1.5">
+                  <Label>Signers</Label>
+                  <MultiEmployeePicker
+                    selected={signers}
+                    onChange={setSigners}
+                    allowedEmployeeIds={poolIds}
+                  />
+                  {poolIds.size === 0 && (
+                    <p className="text-xs text-amber-600">
+                      No designated co-signers yet — add some in Document signing settings.
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Sign-off order</Label>
+                  <Select value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sequential">Sequential — in the order listed</SelectItem>
+                      <SelectItem value="parallel">Parallel — any order</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Will be sent to <span className="font-medium text-slate-700">{employeeName}</span>{" "}
+                to sign. Enable &ldquo;Require multiple signers&rdquo; in Document signing settings
+                to choose additional signers.
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSend}
+              disabled={!activeTemplateId || signers.length === 0 || sendSequence.isPending}
+            >
+              {sendSequence.isPending ? "Sending…" : "Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/** Compact signing status plus, for HR, a "Send for signature" trigger — shown only while the
+ *  contract has no signature sequence yet (a sent/completed one is progress, not a resend). */
+function DraftContractSigningActions({
+  contract,
+  employee,
+  isHr,
+}: {
+  contract: Contract;
+  employee: Employee;
+  isHr: boolean;
+}) {
+  const { data: signers } = useSignatureSequence("contract", contract.id);
+  return (
+    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+      <ContractSigningStatus refKind="contract" refId={contract.id} variant="compact" />
+      {isHr && !signers?.length && (
+        <SendForSignatureButton contract={contract} employee={employee} />
+      )}
+    </div>
+  );
+}
+
 export const Contracts = ({ employee, isHr, isSelf }: TabProps) => {
   const employeeId = employee.id;
   // contracts:read/manage are HR-only (seed-rbac.ts) — a self-viewer reads their own contracts
@@ -596,7 +782,7 @@ export const Contracts = ({ employee, isHr, isSelf }: TabProps) => {
             </div>
             <div className="flex items-center gap-3">
               {c.status === "DRAFT" && (
-                <ContractSigningStatus refKind="contract" refId={c.id} variant="compact" />
+                <DraftContractSigningActions contract={c} employee={employee} isHr={isHr} />
               )}
               <Badge variant={c.status === "ACTIVE" ? "default" : "outline"} className="capitalize">
                 {c.status.toLowerCase()}

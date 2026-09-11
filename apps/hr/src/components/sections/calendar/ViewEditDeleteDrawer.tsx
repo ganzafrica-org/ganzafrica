@@ -29,13 +29,7 @@ interface ViewEditDeleteDrawerProps {
 
 export function ViewEditDeleteDrawer({ isOpen, onClose, item, type }: ViewEditDeleteDrawerProps) {
   const [mode, setMode] = useState<DrawerMode>("VIEW");
-  const {
-    updateLeaveRequest,
-    deleteLeaveRequest,
-    updatePublicHoliday,
-    deletePublicHoliday,
-    getTeamMemberById,
-  } = useLeaveContext();
+  const { updateLeaveRequest, deleteLeaveRequest, getTeamMemberById } = useLeaveContext();
   const [formData, setFormData] = useState<any>(null);
 
   useEffect(() => {
@@ -53,20 +47,13 @@ export function ViewEditDeleteDrawer({ isOpen, onClose, item, type }: ViewEditDe
   const employee = !isHoliday ? getTeamMemberById(leaveItem.employeeId) : null;
 
   const handleSave = () => {
-    if (isHoliday) {
-      updatePublicHoliday(formData as PublicHoliday);
-    } else {
-      updateLeaveRequest(formData as LeaveRequest);
-    }
+    // Holidays are never editable (see the VIEW footer below) — no isHoliday branch needed here.
+    updateLeaveRequest(formData as LeaveRequest);
     setMode("VIEW");
   };
 
   const handleDelete = () => {
-    if (isHoliday) {
-      deletePublicHoliday(item.id);
-    } else {
-      deleteLeaveRequest(item.id);
-    }
+    deleteLeaveRequest(item.id);
     onClose();
   };
 
@@ -341,7 +328,7 @@ export function ViewEditDeleteDrawer({ isOpen, onClose, item, type }: ViewEditDe
 
             {/* Footer Buttons */}
             <div className="p-6 border-t bg-gray-50 shrink-0">
-              {mode === "VIEW" && (
+              {mode === "VIEW" && !isHoliday && (
                 <div className="flex gap-3">
                   <Button variant="outline" className="flex-1" onClick={() => setMode("EDIT")}>
                     Edit
@@ -354,6 +341,11 @@ export function ViewEditDeleteDrawer({ isOpen, onClose, item, type }: ViewEditDe
                     Delete
                   </Button>
                 </div>
+              )}
+              {mode === "VIEW" && isHoliday && (
+                <p className="text-center text-xs text-muted-foreground">
+                  Public holidays come from an external calendar and can&apos;t be edited here.
+                </p>
               )}
               {mode === "EDIT" && (
                 <div className="flex gap-3">

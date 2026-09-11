@@ -83,6 +83,34 @@ describe("ContractSigningStatus", () => {
     expect(await screen.findByText(/waiting on ada lovelace/i)).toBeInTheDocument();
   });
 
+  it("full variant shows an N of M signed summary for a multi-signer sequence in progress", async () => {
+    mockSequence([
+      hrSigner("signed"),
+      employeeSigner("sent"),
+      {
+        id: 3,
+        sequence_no: 3,
+        signer_user_id: 11,
+        signer_name: "Third Signer",
+        status: "draft",
+        completed_at: null,
+      },
+    ]);
+    renderWithClient(
+      <ContractSigningStatus refKind="contract" refId={CONTRACT_ID} variant="full" />,
+    );
+    expect(await screen.findByText("1 of 3 signed")).toBeInTheDocument();
+  });
+
+  it("does not show an N of M line for a lone-signer request", async () => {
+    mockSequence([hrSigner("sent")]);
+    renderWithClient(
+      <ContractSigningStatus refKind="contract" refId={CONTRACT_ID} variant="full" />,
+    );
+    await screen.findByText("HR Rep");
+    expect(screen.queryByText(/of 1 signed/i)).not.toBeInTheDocument();
+  });
+
   it("both signed: fully executed in both variants", async () => {
     mockSequence([hrSigner("signed"), employeeSigner("signed")]);
     const { unmount } = renderWithClient(

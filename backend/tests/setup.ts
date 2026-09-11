@@ -18,11 +18,15 @@ const TEST_ENV: Record<string, string> = {
   JWT_SECRET: "test_jwt_secret_at_least_32_characters_long_xx",
   JWT_REFRESH_SECRET: "test_jwt_refresh_secret_at_least_32_chars_xx",
   CORS_ORIGINS: "http://localhost:3000,http://localhost:3001",
-  DO_SPACES_ENDPOINT: "https://test.digitaloceanspaces.com",
-  DO_SPACES_REGION: "nyc3",
-  DO_SPACES_ACCESS_KEY: "test-key",
-  DO_SPACES_SECRET_KEY: "test-secret",
-  DO_SPACES_BUCKET: "test-bucket",
+  AZURE_STORAGE_ACCOUNT: "teststorageaccount",
+  AZURE_STORAGE_ACCOUNT_KEY: Buffer.from("test-account-key-000000000000000").toString("base64"),
+  AZURE_STORAGE_ENDPOINT: "https://teststorageaccount.blob.core.windows.net",
+  AZURE_STORAGE_CONNECTION_STRING:
+    "DefaultEndpointsProtocol=https;AccountName=teststorageaccount;AccountKey=" +
+    Buffer.from("test-account-key-000000000000000").toString("base64") +
+    ";EndpointSuffix=core.windows.net",
+  AZURE_STORAGE_CONTAINER_PRIVATE: "uploads",
+  AZURE_STORAGE_CONTAINER_PUBLIC: "public",
 };
 for (const [k, v] of Object.entries(TEST_ENV)) {
   if (!process.env[k]) process.env[k] = v;

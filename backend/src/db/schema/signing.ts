@@ -8,9 +8,12 @@ import {
   char,
   timestamp,
   index,
+  uuid,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
 import { users } from "./users";
+import { employees } from "./hr/employees";
 
 /**
  * Document signing subsystem (DOC-signing) — a DocuSign-like flow for BOTH internal signers
@@ -112,6 +115,25 @@ export const signature_events = pgTable(
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({ reqIdx: index("signature_events_request_idx").on(t.request_id) }),
+);
+
+/**
+ * Designated co-signer pool: employees HR has pre-approved as eligible to be picked as a required
+ * signer on the "Require multiple signers" flow — a persistent, org-wide allowlist managed on the
+ * signing settings page, not a one-off pick per document. The per-document multi-signer picker
+ * offers only pool members, not the whole directory.
+ */
+export const hr_signer_pool = pgTable(
+  "hr_signer_pool",
+  {
+    id: serial("id").primaryKey(),
+    employee_id: uuid("employee_id")
+      .notNull()
+      .references(() => employees.id, { onDelete: "cascade" }),
+    added_by: integer("added_by").references(() => users.id, { onDelete: "set null" }),
+    ...timestampFields,
+  },
+  (t) => ({ employeeUniq: uniqueIndex("hr_signer_pool_employee_uniq").on(t.employee_id) }),
 );
 
 export const SIGNER_TYPES = ["internal", "external"] as const;

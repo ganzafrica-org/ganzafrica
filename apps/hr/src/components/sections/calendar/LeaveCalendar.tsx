@@ -11,7 +11,7 @@ import { LeaveRequests } from "./LeaveRequests";
 import { PublicHolidays } from "./PublicHolidays";
 import { LeaveRequestModal } from "./LeaveRequestModal";
 import { ViewEditDeleteDrawer } from "./ViewEditDeleteDrawer";
-import { ChevronDown, Flag, Plus, Umbrella } from "lucide-react";
+import { Flag, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -78,47 +78,13 @@ export function LeaveEventChip({
   );
 }
 
-// Data constants
-const balances = [
-  {
-    id: 1,
-    name: "Annual Leave",
-    available: 8,
-  },
-];
+interface LeaveCalendarProps {
+  /** Switches the parent page to the "Leave Requests" tab — the Time Off Requests sidebar list
+   *  shows only the first 3, and this is how the rest are reached. */
+  onViewAllRequests?: () => void;
+}
 
-const requests = [
-  {
-    id: 1,
-    date: "Mar 2nd 2026",
-    type: "Annual Leave",
-    duration: "1 day",
-    status: "Used",
-  },
-  {
-    id: 2,
-    date: "Dec 22nd - 31st 2025",
-    type: "Annual Leave",
-    duration: "6 days",
-    status: "Used",
-  },
-  {
-    id: 2,
-    date: "Dec 22nd - 31st 2025",
-    type: "Sick Leave",
-    duration: "6 days",
-    status: "Used",
-  },
-  {
-    id: 2,
-    date: "Dec 22nd - 31st 2025",
-    type: "Maternity Leave",
-    duration: "6 days",
-    status: "Not used",
-  },
-];
-
-export function LeaveCalendar() {
+export function LeaveCalendar({ onViewAllRequests }: LeaveCalendarProps) {
   const { leaveRequests, publicHolidays, getTeamMemberById } = useLeaveContext();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -187,7 +153,7 @@ export function LeaveCalendar() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex justify-center items-center gap-1.5 w-full h-8 px-2 rounded-lg bg-brand-accent text-default font-bold overflow-hidden">
+              <div className="flex justify-center items-center gap-1.5 w-full h-8 px-2 rounded-lg bg-indigo-500 text-white font-bold overflow-hidden">
                 <Flag className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{holiday.name}</span>
               </div>
@@ -224,7 +190,11 @@ export function LeaveCalendar() {
               <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                 Time Off Requests
               </h2>
-              <button className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+              <button
+                type="button"
+                onClick={onViewAllRequests}
+                className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+              >
                 View All
               </button>
             </div>
@@ -239,27 +209,6 @@ export function LeaveCalendar() {
             </div>
             <PublicHolidays />
           </section>
-
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-            Annual Leaves
-          </h2>
-          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-            {balances.map((balance) => (
-              <div key={balance.id}>
-                <p className="text-sm font-medium text-gray-700">{balance.name}</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {balance.available} days available
-                </p>
-              </div>
-            ))}
-            <button className="text-sm font-medium text-brand-accent hover:text-brand-dark flex items-center gap-1">
-              View details
-              <ChevronDown size={14} />
-            </button>
-          </div>
-          <button className="w-full py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors">
-            View all
-          </button>
         </div>
       </div>
 

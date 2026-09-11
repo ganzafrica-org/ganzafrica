@@ -25,3 +25,4 @@ export * from "./recruitment/offers";
 export * from "./recruitment/review";
 export * from "./recruitment/ranking";
 export * from "./signing";
+export * from "./settings";

@@ -35,6 +35,7 @@ function mockCommon() {
   server.use(
     http.get(`${API}/hr/me/assets`, () => HttpResponse.json({ success: true, data: [] })),
     http.get(`${API}/hr/me/leave`, () => HttpResponse.json({ balances: [], requests: [] })),
+    http.get(`${API}/hr/leave/pending-approvals`, () => HttpResponse.json({ leaves: [] })),
     http.get(`${API}/hr/me/process`, () =>
       HttpResponse.json({ instance: null, tasks: [], progress: null, can_manage: false }),
     ),
@@ -217,5 +218,38 @@ describe("HR landing page — real backend data", () => {
     renderWithClient(<Dashboard />);
 
     expect(await screen.findByText(/everyone's in today/i)).toBeInTheDocument();
+  });
+
+  it("Leave Requests card lists every pending request org-wide for HR/admin", async () => {
+    mockCommon();
+    server.use(
+      http.get(`${API}/hr/leave/requests`, () => HttpResponse.json({ leaves: [] })),
+      http.get(`${API}/hr/leave/pending-approvals`, () =>
+        HttpResponse.json({
+          leaves: [
+            {
+              id: "p1",
+              employee_id: "emp-9",
+              employeeName: "Sam Analyst",
+              type: "SICK",
+              start_date: "2026-05-01",
+              end_date: "2026-05-02",
+              reason: "",
+              status: "PENDING",
+              days: "2",
+              approver_note: null,
+              reviewed_at: null,
+              created_at: "2026-04-30T00:00:00Z",
+            },
+          ],
+        }),
+      ),
+    );
+
+    renderWithClient(<Dashboard />);
+
+    expect(await screen.findByText("Leave Requests")).toBeInTheDocument();
+    expect(await screen.findByText("Sam Analyst")).toBeInTheDocument();
+    expect(screen.getByText("Sick")).toBeInTheDocument();
   });
 });

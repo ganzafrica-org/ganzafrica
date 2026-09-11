@@ -333,10 +333,12 @@ export async function deletePayroll(id: number) {
       throw new AppError("Payroll not found", 404);
     }
 
-    // Also delete the PDF from Spaces if it exists
+    // Also delete the PDF from Azure Blob Storage if it exists
     if (payroll.payslip_file_key) {
       await deletePayslipFromSpaces(payroll.payslip_file_key).catch((err) => {
-        logger.warn(`Could not delete payslip file from Spaces for payroll ${id}: ${err.message}`);
+        logger.warn(
+          `Could not delete payslip file from Azure Blob Storage for payroll ${id}: ${err.message}`,
+        );
       });
     }
 

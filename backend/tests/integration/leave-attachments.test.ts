@@ -7,55 +7,17 @@
  * exercised for real rather than by calling service functions directly.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { fakeAzureStorageBlobModule, type FakeUploadInfo } from "../helpers/mock-azure-storage";
 
 const { uploadedObjects } = vi.hoisted(() => ({
-  uploadedObjects: [] as Array<{ Key?: string }>,
+  uploadedObjects: [] as FakeUploadInfo[],
 }));
 
-// Same fake multer-s3 storage engine as create-document-acl.test.ts — buffers in memory instead
-// of hitting real S3/DO Spaces, while still exercising the real route/middleware/controller/service.
-vi.mock("multer-s3", () => {
-  const fakeStorage = () => ({
-    _handleFile(
-      _req: unknown,
-      file: { stream: NodeJS.ReadableStream; originalname: string; mimetype: string },
-      cb: (err: unknown, info?: Record<string, unknown>) => void,
-    ) {
-      const chunks: Buffer[] = [];
-      file.stream.on("data", (chunk: Buffer) => chunks.push(chunk));
-      file.stream.on("error", cb);
-      file.stream.on("end", () => {
-        const buffer = Buffer.concat(chunks);
-        const safeName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
-        const key = `uploads/test/${Date.now()}-${safeName}`;
-        uploadedObjects.push({ Key: key });
-        cb(null, {
-          bucket: "test-bucket",
-          key,
-          acl: "private",
-          contentType: file.mimetype,
-          size: buffer.length,
-          location: `https://test.spaces/${key}`,
-          etag: '"test-etag"',
-        });
-      });
-    },
-    _removeFile(_req: unknown, _file: unknown, cb: (err: unknown) => void) {
-      cb(null);
-    },
-  });
-  fakeStorage.AUTO_CONTENT_TYPE = (
-    _req: unknown,
-    file: { mimetype?: string },
-    cb: (err: null, type: string) => void,
-  ) => cb(null, file.mimetype ?? "application/octet-stream");
-  fakeStorage.DEFAULT_CONTENT_TYPE = (
-    _req: unknown,
-    _file: unknown,
-    cb: (err: null, type: string) => void,
-  ) => cb(null, "application/octet-stream");
-  return { default: fakeStorage };
-});
+// Same fake Azure Blob module as create-document-acl.test.ts — buffers in memory instead of
+// hitting real Azure Blob Storage, while still exercising the real route/middleware/controller/service.
+vi.mock("@azure/storage-blob", () =>
+  fakeAzureStorageBlobModule((info) => uploadedObjects.push(info)),
+);
 
 vi.mock("../../src/services/storage.service", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/services/storage.service")>();
@@ -66,7 +28,8 @@ vi.mock("../../src/services/storage.service", async (importOriginal) => {
   };
 });
 
-vi.mock("../../src/services/email.service", () => ({
+vi.mock("../../src/services/email.service", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../src/services/email.service")>()),
   sendEmail: vi.fn(async () => ({ id: "x" })),
 }));
 

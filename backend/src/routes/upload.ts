@@ -9,12 +9,14 @@ const router: Router = Router();
 
 /**
  * Helper function to get the public URL for uploaded files
- * Uses CDN URL if available, otherwise falls back to Spaces direct URL
+ * Uses CDN URL if available, otherwise falls back to the direct blob URL
  */
 function getFileUrl(location: string): string {
-  if (env.DO_SPACES_CDN_URL) {
-    const spacesBaseUrl = `${env.DO_SPACES_ENDPOINT}/${env.DO_SPACES_BUCKET}`;
-    return location.replace(spacesBaseUrl, env.DO_SPACES_CDN_URL.replace(/\/$/, ""));
+  if (env.AZURE_STORAGE_CDN_URL) {
+    return location.replace(
+      env.AZURE_STORAGE_ENDPOINT.replace(/\/$/, ""),
+      env.AZURE_STORAGE_CDN_URL.replace(/\/$/, ""),
+    );
   }
   return location;
 }
@@ -60,8 +62,8 @@ router.post("/file", upload.single("file"), (req: Request, res: Response) => {
       });
     }
 
-    // Get file details - multer-s3 provides different properties
-    const file = req.file as any; // multer-s3 extends the standard multer file object
+    // Get file details - the upload middleware provides different properties
+    const file = req.file as any; // the upload middleware extends the standard multer file object
     const { key, originalname, size, mimetype, location } = file;
 
     // Get subdirectory based on file type
@@ -70,7 +72,7 @@ router.post("/file", upload.single("file"), (req: Request, res: Response) => {
     // Extract filename from the key (removes the uploads/subdir/ prefix)
     const filename = key.split("/").pop();
 
-    // Get the public URL (uses CDN if configured, otherwise direct Spaces URL)
+    // Get the public URL (uses CDN if configured, otherwise the direct blob URL)
     const fileUrl = getFileUrl(location);
 
     // Return success response
@@ -81,7 +83,7 @@ router.post("/file", upload.single("file"), (req: Request, res: Response) => {
         name: originalname,
         filename,
         url: fileUrl,
-        path: key, // S3 key acts as the path
+        path: key, // blob key acts as the path
         size,
         type: mimetype,
         category: subdir,
@@ -132,7 +134,7 @@ router.post("/files", upload.array("files", 10), (req: Request, res: Response) =
       });
     }
 
-    // Process uploaded files - multer-s3 provides different properties
+    // Process uploaded files - the upload middleware provides different properties
     const files = (req.files as any[]).map((file) => {
       const { key, originalname, size, mimetype, location } = file;
 
@@ -142,14 +144,14 @@ router.post("/files", upload.array("files", 10), (req: Request, res: Response) =
       // Extract filename from the key
       const filename = key.split("/").pop();
 
-      // Get the public URL (uses CDN if configured, otherwise direct Spaces URL)
+      // Get the public URL (uses CDN if configured, otherwise the direct blob URL)
       const fileUrl = getFileUrl(location);
 
       return {
         name: originalname,
         filename,
         url: fileUrl,
-        path: key, // S3 key acts as the path
+        path: key, // blob key acts as the path
         size,
         type: mimetype,
         category: subdir,

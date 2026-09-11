@@ -20,7 +20,7 @@ export function MyOnboardingCard() {
           Onboarding Progress
         </CardTitle>
         <Link
-          href="/employees/onboarding/me"
+          href="/onboarding/me"
           className="text-xs font-medium text-brand-accent hover:underline self-center"
         >
           Continue

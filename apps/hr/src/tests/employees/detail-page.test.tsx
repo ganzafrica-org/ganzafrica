@@ -183,7 +183,7 @@ describe("Employee sheet — onboarding embed (MOD-01 §5, 404/empty-tolerant)",
     );
   });
 
-  it("shows an onboarding progress card linking to /employees/onboarding/me when a self-viewer is mid-onboarding", async () => {
+  it("shows an onboarding progress card linking to /onboarding/me when a self-viewer is mid-onboarding", async () => {
     authState.roles = ["employee"];
     mockCommon(EMPLOYEE_ID, {
       myProcess: {
@@ -208,7 +208,7 @@ describe("Employee sheet — onboarding embed (MOD-01 §5, 404/empty-tolerant)",
     expect(await screen.findByText(/onboarding in progress/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /view onboarding checklist/i })).toHaveAttribute(
       "href",
-      "/employees/onboarding/me",
+      "/onboarding/me",
     );
   });
 });

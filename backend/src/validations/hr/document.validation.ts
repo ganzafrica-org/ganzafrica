@@ -81,27 +81,26 @@ export const setRetentionSchema = z.object({
   }),
 });
 
-// Create Document Body Schema — multipart/form-data (file arrives separately as req.file).
+// Create Document Body Schema — multipart/form-data (file arrives separately as req.file;
+// sourceDocumentId is the "reuse an existing/template document" alternative to a file — the
+// controller enforces that exactly one of the two is present).
 export const createDocumentSchema = z.object({
-  body: z
-    .object({
-      document_name: z.string().min(1),
-      category: z.enum(DOCUMENT_CATEGORIES),
-      description: z.string().min(1),
-      department: z.string().min(1),
-      status: z.enum(["PUBLISHED", "DRAFT"]).optional(),
-      access: accessField.optional(),
-      contractId: z.string().uuid().optional(),
-    })
-    .superRefine((body, ctx) => {
-      if (body.category === "Contract Templates" && !body.contractId) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "contractId is required when category is 'Contract Templates'.",
-          path: ["contractId"],
-        });
-      }
-    }),
+  body: z.object({
+    document_name: z.string().min(1),
+    category: z.enum(DOCUMENT_CATEGORIES),
+    description: z.string().min(1),
+    department: z.string().min(1),
+    status: z.enum(["PUBLISHED", "DRAFT"]).optional(),
+    access: accessField.optional(),
+    contractId: z.string().uuid().optional(),
+    sourceDocumentId: z.string().uuid().optional(),
+  }),
+});
+
+export const listDocumentTemplatesSchema = z.object({
+  query: z.object({
+    category: z.enum(DOCUMENT_CATEGORIES),
+  }),
 });
 
 // Update Document Body Schema — multipart/form-data; a new file is optional (req.file).

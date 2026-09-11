@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -99,7 +100,7 @@ export function TaskRow({ task, canManage, isMine, employeeId }: Props) {
     employeeId && (showContractLinking || needsLinkedContract) ? employeeId : "",
   );
   const linkableContracts = employeeContracts?.filter((c) => c.status === "DRAFT") ?? [];
-  // Self-viewing (no employeeId — see app/employees/onboarding/me/page.tsx) needs their own
+  // Self-viewing (no employeeId — see app/onboarding/me/page.tsx) needs their own
   // contract list instead of the HR-only /hr/employees/:id/contracts one above.
   const { data: myContracts } = useMyContracts(!employeeId && needsLinkedContract);
   const linkedContract = needsLinkedContract
@@ -268,7 +269,18 @@ export function TaskRow({ task, canManage, isMine, employeeId }: Props) {
             </p>
           )}
 
-          {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+          {error && (
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <p className="text-sm text-red-600">{error}</p>
+              {task.kind === "asset_assignment" && (
+                <Button asChild variant="outline" size="sm" className="h-6 px-2 text-xs">
+                  <Link href="/asset">
+                    <Laptop className="mr-1 size-3" /> Go to Assets
+                  </Link>
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

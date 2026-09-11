@@ -542,8 +542,8 @@ export const uploadProjectFile = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: "No file uploaded" });
     }
 
-    // Get file details - multer-s3 provides different properties
-    const file = req.file as any; // multer-s3 extends the standard multer file object
+    // Get file details - the upload middleware provides different properties
+    const file = req.file as any; // the upload middleware extends the standard multer file object
     const { key, originalname, size, mimetype, location } = file;
 
     // Get subdirectory based on file type
@@ -552,7 +552,7 @@ export const uploadProjectFile = async (req: Request, res: Response) => {
     // Extract filename from the key (removes the uploads/subdir/ prefix)
     const filename = key.split("/").pop();
 
-    // Get the public URL (uses CDN if configured, otherwise direct Spaces URL)
+    // Get the public URL (uses CDN if configured, otherwise the direct blob URL)
     const fileUrl = getFileUrl(location);
 
     // Create file record
@@ -566,8 +566,8 @@ export const uploadProjectFile = async (req: Request, res: Response) => {
         original_filename: originalname,
         file_type: mimetype.split("/")[1] || "unknown",
         file_size: Number(size),
-        file_path: key, // S3 key acts as the path
-        file_url: fileUrl, // Use the S3 URL
+        file_path: key, // blob key acts as the path
+        file_url: fileUrl, // Use the blob URL
         mime_type: mimetype,
         uploaded_by: Number(userId),
         category_id: categoryId ? Number(categoryId) : undefined,
@@ -697,7 +697,7 @@ export const downloadFile = async (req: Request, res: Response) => {
 
     const filePath = file[0].file_path;
 
-    // For S3 files, we don't need to check if file exists on disk
+    // For blob-stored files, we don't need to check if file exists on disk
     // The file URL should be used directly
     res.redirect(file[0].file_url || filePath);
   } catch (error) {

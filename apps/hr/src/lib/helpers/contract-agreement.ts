@@ -1,5 +1,7 @@
 import { contractsService } from "@/services/contracts.service";
 import { documentsService } from "@/services/documents.service";
+import { documentCategoryTemplatesService } from "@/services/document-category-templates.service";
+import { renderBrandedDocumentHtml } from "@/lib/helpers/document-branding";
 import {
   toCreateContractRequest,
   type ContractFormState,
@@ -13,50 +15,94 @@ export function isAgreementDocumentId(value: string | null | undefined): value i
   return !!value && UUID_RE.test(value);
 }
 
-async function uploadAgreement(
+/** Creates the contract-scoped hr_documents row (MOD-05's own mechanism for contract-scoped
+ *  access — see canReadDocument's contractEmployeeId bypass) either from an uploaded file or by
+ *  generating one from a saved (branding) Category Template + the agreement content the user
+ *  wrote — never both, mirroring the backend's own mutual-exclusivity check in
+ *  document.service.ts's createDocument. */
+async function attachAgreement(
   contractId: string,
   jobTitle: string,
   department: string | null,
-  file: File,
+  source: { file: File } | { templateId: string; content: string },
 ) {
+  const base = {
+    category: "Contract Templates" as const,
+    department: department ?? "General",
+    access: {},
+    contractId,
+  };
+
+  if ("file" in source) {
+    return documentsService.createDocument(
+      {
+        ...base,
+        document_name: source.file.name,
+        description: `Signed employment agreement — ${jobTitle}`,
+      },
+      source.file,
+    );
+  }
+
+  const template = await documentCategoryTemplatesService.getById(source.templateId);
+  const documentName = `Employment agreement — ${jobTitle}`;
+  const html = renderBrandedDocumentHtml(template, documentName, source.content);
+  const generatedFile = new File([html], `${documentName}.html`, { type: "text/html" });
+
   return documentsService.createDocument(
     {
-      document_name: file.name,
-      category: "Contract Templates",
-      description: `Signed employment agreement — ${jobTitle}`,
-      department: department ?? "General",
-      access: {},
-      contractId,
+      ...base,
+      document_name: documentName,
+      description: `Employment agreement — ${jobTitle} (generated from ${template.name})`,
     },
-    file,
+    generatedFile,
   );
 }
 
 /**
- * Create or update a contract, uploading a newly-picked agreement file (if any) as an
- * hr_documents row linked via contract_id (MOD-05's own mechanism for contract-scoped access —
- * see canReadDocument's contractEmployeeId bypass). A document can only reference a contract that
- * already exists, so on create this always creates first (forcing DRAFT if the file isn't
- * uploaded yet and ACTIVE was requested), uploads, then patches the reference + desired status.
+ * Create or update a contract, attaching a newly-picked agreement (uploaded file or a saved
+ * template) if any. A document can only reference a contract that already exists, so on create
+ * this always creates first (forcing DRAFT if the agreement isn't attached yet and ACTIVE was
+ * requested), attaches, then patches the reference + desired status.
  */
 export async function saveContractWithAgreement(params: {
   employeeId: string;
   existingContract?: Contract | null;
   form: ContractFormState;
   agreementFile: File | null;
+  /** Non-null (possibly "") while "use a saved template" is selected; the id of the chosen
+   *  Category Template once one is picked. Combined with agreementTemplateContent to generate
+   *  the agreement document at save time. Mutually exclusive with agreementFile. */
+  agreementTemplateId: string | null;
+  /** The agreement body written alongside agreementTemplateId — see ContractFormFields'
+   *  buildAgreementContentFromContract for how it's pre-filled. */
+  agreementTemplateContent: string;
 }): Promise<Contract> {
-  const { employeeId, existingContract, form, agreementFile } = params;
+  const {
+    employeeId,
+    existingContract,
+    form,
+    agreementFile,
+    agreementTemplateId,
+    agreementTemplateContent,
+  } = params;
   const payload = toCreateContractRequest(form);
   const desiredStatus = payload.status ?? "DRAFT";
 
+  const source: { file: File } | { templateId: string; content: string } | null = agreementFile
+    ? { file: agreementFile }
+    : agreementTemplateId
+      ? { templateId: agreementTemplateId, content: agreementTemplateContent }
+      : null;
+
   if (existingContract) {
     let employmentAgreementUrl = payload.employmentAgreementUrl;
-    if (agreementFile) {
-      const doc = await uploadAgreement(
+    if (source) {
+      const doc = await attachAgreement(
         existingContract.id,
         payload.jobTitle,
         payload.department,
-        agreementFile,
+        source,
       );
       employmentAgreementUrl = doc.id;
     }
@@ -66,21 +112,16 @@ export async function saveContractWithAgreement(params: {
     });
   }
 
-  const needsAgreementBeforeActive = !!agreementFile && desiredStatus === "ACTIVE";
+  const needsAgreementBeforeActive = !!source && desiredStatus === "ACTIVE";
   const created = await contractsService.createContract(employeeId, {
     ...payload,
     employmentAgreementUrl: null,
     status: needsAgreementBeforeActive ? "DRAFT" : desiredStatus,
   });
 
-  if (!agreementFile) return created;
+  if (!source) return created;
 
-  const doc = await uploadAgreement(
-    created.id,
-    payload.jobTitle,
-    payload.department,
-    agreementFile,
-  );
+  const doc = await attachAgreement(created.id, payload.jobTitle, payload.department, source);
 
   return contractsService.updateContract(employeeId, created.id, {
     employmentAgreementUrl: doc.id,

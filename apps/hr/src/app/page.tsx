@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { LeaveSummaryCard } from "@/components/sections/home-cards/LeaveSummaryCard";
 import { LeaveHistoryCard } from "@/components/sections/home-cards/LeaveHistoryCard";
+import { LeaveRequestsCard } from "@/components/sections/home-cards/LeaveRequestsCard";
+import { AssetsWithIssueCard } from "@/components/sections/home-cards/AssetsWithIssueCard";
 import { ScheduleCard } from "@/components/sections/home-cards/ScheduleCard";
 import { EmploymentStatusCard } from "@/components/sections/home-cards/EmploymentStatusCard";
 import { ApplicantsCard } from "@/components/sections/home-cards/ApplicantsCard";
@@ -116,16 +118,22 @@ export default function Dashboard() {
       />
       {isHrManager ? (
         <div className="flex flex-col xl:flex-row gap-6">
-          <div className="grid gap-6 md:grid-cols-2 flex-1">
+          {/* Masonry-style columns, not a strict grid: these cards vary a lot in natural height
+              (e.g. "Ongoing onboarding" vs. "Employee Status"), and CSS Grid's row-stretching
+              would otherwise force the shorter card in each row up to match its taller neighbor,
+              leaving blank space inside it. Columns pack each card at its own height instead. */}
+          <div className="flex-1 columns-1 md:columns-2 gap-6 [&>*]:mb-6 [&>*]:break-inside-avoid">
+            <LeaveRequestsCard scope="org" />
+            <AssetsWithIssueCard />
             <LeaveSummaryCard />
-            <LeaveHistoryCard />
+            {/*<LeaveHistoryCard />*/}
             <EmploymentStatusCard />
             <OngoingOnboardingCard />
             <ApplicantsCard />
-            <SystemAlertsCard />
           </div>
-          <div className="w-full xl:w-[40%]">
+          <div className="flex flex-col w-full xl:w-[40%] gap-6">
             <ScheduleCard />
+            <SystemAlertsCard />
           </div>
         </div>
       ) : (
@@ -137,7 +145,8 @@ export default function Dashboard() {
               </h2>
               <BalanceCards balances={myLeave?.balances ?? []} />
             </section>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="columns-1 md:columns-2 gap-6 [&>*]:mb-6 [&>*]:break-inside-avoid">
+              <LeaveRequestsCard scope="approvals" />
               <MyAssetsCard />
               {showOnboardingCard && <MyOnboardingCard />}
             </div>

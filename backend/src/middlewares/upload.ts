@@ -1,18 +1,35 @@
 import multer from "multer";
-import multerS3 from "multer-s3";
-import { S3Client } from "@aws-sdk/client-s3";
+import type { Request } from "express";
+import { PassThrough } from "stream";
+import {
+  BlobServiceClient,
+  StorageSharedKeyCredential,
+  type ContainerClient,
+} from "@azure/storage-blob";
 import env from "../config/env";
 
-// Create S3 client for Digital Ocean Spaces
-const s3Client = new S3Client({
-  endpoint: env.DO_SPACES_ENDPOINT,
-  region: env.DO_SPACES_REGION,
-  credentials: {
-    accessKeyId: env.DO_SPACES_ACCESS_KEY,
-    secretAccessKey: env.DO_SPACES_SECRET_KEY,
-  },
-  forcePathStyle: false, // Digital Ocean Spaces uses virtual-hosted-style URLs
-});
+// Azure equivalent of what @types/multer-s3 used to add — the storage engine below augments
+// each uploaded file with these, same shape every controller already reads (see the
+// "multer-s3 augments..." comments throughout).
+declare global {
+  namespace Express {
+    namespace Multer {
+      interface File {
+        key?: string;
+        location?: string;
+        bucket?: string;
+      }
+    }
+  }
+}
+
+const sharedKeyCredential = new StorageSharedKeyCredential(
+  env.AZURE_STORAGE_ACCOUNT,
+  env.AZURE_STORAGE_ACCOUNT_KEY,
+);
+const blobServiceClient = new BlobServiceClient(env.AZURE_STORAGE_ENDPOINT, sharedKeyCredential);
+const publicContainer = blobServiceClient.getContainerClient(env.AZURE_STORAGE_CONTAINER_PUBLIC);
+const privateContainer = blobServiceClient.getContainerClient(env.AZURE_STORAGE_CONTAINER_PRIVATE);
 
 // Define allowed file types
 const allowedImageTypes = [
@@ -94,38 +111,14 @@ export function getFileSubdirectory(mimetype: string): string {
 }
 
 export function getFileUrl(location: string): string {
-  if (env.DO_SPACES_CDN_URL) {
+  if (env.AZURE_STORAGE_CDN_URL) {
     return location.replace(
-      env.DO_SPACES_ENDPOINT.replace(/\/$/, ""),
-      env.DO_SPACES_CDN_URL.replace(/\/$/, ""),
+      env.AZURE_STORAGE_ENDPOINT.replace(/\/$/, ""),
+      env.AZURE_STORAGE_CDN_URL.replace(/\/$/, ""),
     );
   }
   return location;
 }
-
-const spacesStorage = multerS3({
-  s3: s3Client,
-  bucket: env.DO_SPACES_BUCKET,
-  acl: "public-read", // Make files publicly accessible
-  key: function (req, file, cb) {
-    // Determine the appropriate directory based on file type
-    const subdir = getFileSubdirectory(file.mimetype);
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
-    const filename = uniqueSuffix + "-" + originalName;
-
-    // Create key with subdirectory
-    const key = `uploads/${subdir}/${filename}`;
-    cb(null, key);
-  },
-  contentType: multerS3.AUTO_CONTENT_TYPE,
-  metadata: function (req, file, cb) {
-    cb(null, {
-      originalName: file.originalname,
-      uploadedAt: new Date().toISOString(),
-    });
-  },
-});
 
 interface MulterFile {
   mimetype: string;
@@ -135,14 +128,6 @@ interface MulterFile {
 interface MulterRequest extends Express.Request {}
 
 const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterCallback): void => {
-  // NOTE: If production shows "Only images, videos, PDF, DOC, and DOCX" the deployed
-  // backend is outdated. Run: cd backend && npm run build && restart the server.
-  console.log("File upload attempt:", {
-    originalname: file.originalname,
-    mimetype: file.mimetype,
-    allowedTypes: allowedFileTypes.length,
-  });
-
   // Allow if mimetype is in allowed list (handle undefined/empty from some proxies)
   const mimetype = file.mimetype || "";
   if (mimetype && allowedFileTypes.includes(mimetype)) {
@@ -187,7 +172,6 @@ const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterC
     ];
 
     if (extension && allowedExtensions.includes(extension)) {
-      console.log("Allowed file with generic mimetype based on extension:", extension);
       cb(null, true);
       return;
     }
@@ -232,12 +216,10 @@ const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterC
   ];
 
   if (extension && commonExtensions.includes(extension)) {
-    console.log("Allowed file based on extension:", extension, "despite mimetype:", mimetype);
     cb(null, true);
     return;
   }
 
-  console.log("Rejected file type:", mimetype, "for file:", file.originalname);
   cb(
     new Error(
       "Invalid file type. Allowed: images, videos, PDF, DOC, DOCX, XLS, XLSX, and other common formats.",
@@ -245,38 +227,72 @@ const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterC
   );
 };
 
+/**
+ * multer storage engine backed by an Azure Blob container — the Azure equivalent of the old
+ * multer-s3 storage engine. Augments the uploaded file with `key` (the blob name) and `location`
+ * (the blob's URL), the same two properties every call site already reads (see the "multer-s3
+ * augments..." comments throughout the controllers — that augmentation shape is unchanged, only
+ * the backend producing it is).
+ */
+class AzureBlobStorage implements multer.StorageEngine {
+  constructor(private container: ContainerClient) {}
+
+  _handleFile(
+    _req: Request,
+    file: Express.Multer.File,
+    cb: (error?: any, info?: Partial<Express.Multer.File>) => void,
+  ) {
+    const subdir = getFileSubdirectory(file.mimetype);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
+    const blobName = `${subdir}/${uniqueSuffix}-${originalName}`;
+
+    let size = 0;
+    const counter = new PassThrough();
+    counter.on("data", (chunk: Buffer) => {
+      size += chunk.length;
+    });
+    file.stream.pipe(counter);
+
+    const blockBlobClient = this.container.getBlockBlobClient(blobName);
+    blockBlobClient
+      .uploadStream(counter, 4 * 1024 * 1024, 5, {
+        blobHTTPHeaders: { blobContentType: file.mimetype },
+      })
+      .then(() =>
+        cb(null, {
+          key: blobName,
+          location: `${this.container.url}/${blobName}`,
+          size,
+          bucket: this.container.containerName,
+        }),
+      )
+      .catch(cb);
+  }
+
+  _removeFile(_req: Request, file: Express.Multer.File, cb: (error: Error | null) => void) {
+    const key = file.key;
+    if (!key) return cb(null);
+    this.container
+      .getBlockBlobClient(key)
+      .deleteIfExists()
+      .then(() => cb(null))
+      .catch(cb);
+  }
+}
+
 const upload = multer({
-  storage: spacesStorage,
+  storage: new AzureBlobStorage(publicContainer),
   fileFilter: fileFilter,
   limits: {
     fileSize: 100 * 1024 * 1024, // 100MB limit
   },
 });
 
-// Private upload variant for documents and other sensitive files (ACL: private)
-const privateSpacesStorage = multerS3({
-  s3: s3Client,
-  bucket: env.DO_SPACES_BUCKET,
-  acl: "private", // Private access - no public read
-  key: function (req, file, cb) {
-    const subdir = getFileSubdirectory(file.mimetype);
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
-    const filename = uniqueSuffix + "-" + originalName;
-    const key = `uploads/${subdir}/${filename}`;
-    cb(null, key);
-  },
-  contentType: multerS3.AUTO_CONTENT_TYPE,
-  metadata: function (req, file, cb) {
-    cb(null, {
-      originalName: file.originalname,
-      uploadedAt: new Date().toISOString(),
-    });
-  },
-});
-
+// Private upload variant for documents and other sensitive files (served via short-lived SAS
+// links — see storage.service.ts's getPresignedDownload — never a direct/public blob URL).
 export const privateUpload = multer({
-  storage: privateSpacesStorage,
+  storage: new AzureBlobStorage(privateContainer),
   fileFilter: fileFilter,
   limits: {
     fileSize: 100 * 1024 * 1024, // 100MB limit

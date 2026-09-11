@@ -4,7 +4,8 @@
  * personal_email OR their linked user's login email, so it works whichever one you pass.
  *
  * Deletes, in FK-safe order: password reset/verification/2FA tokens, sessions, signature
- * requests+events and documents tied to their contracts, then the employee row (which cascades to
+ * requests+events and documents tied to their contracts, any assets they're holding are returned
+ * to AVAILABLE and their assignment history removed, then the employee row (which cascades to
  * hr_contracts, process_instances, process_tasks, hr_leaves, etc. per the schema's ON DELETE
  * CASCADE), then the linked user account (user_roles cascades).
  *
@@ -94,6 +95,31 @@ async function main() {
          )`,
         [employeeId],
       );
+
+      // Not this employee's own — an org document they merely authored (e.g. a published
+      // policy). hr_documents.created_by_employee_id has no cascade either, so drop the
+      // attribution rather than the document itself.
+      await client.query(
+        `UPDATE hr_documents SET created_by_employee_id = NULL WHERE created_by_employee_id = $1`,
+        [employeeId],
+      );
+
+      // Any asset currently held by this employee must return to AVAILABLE first — hr_assets.
+      // assigned_to_employee_id is ON DELETE SET NULL, but nothing resets `status`, so without
+      // this the asset would be left stuck ASSIGNED with no assignee, unable to be assigned to
+      // anyone else ever again (assertAssetStatusTransition only allows AVAILABLE -> ASSIGNED).
+      await client.query(
+        `UPDATE hr_assets
+         SET status = 'AVAILABLE', assigned_to_employee_id = NULL, assigned_at = NULL,
+             returned_at = NULL, updated_at = now()
+         WHERE assigned_to_employee_id = $1 AND status = 'ASSIGNED'`,
+        [employeeId],
+      );
+
+      // hr_asset_assignments.employee_id has no cascade either (deliberately — it's an
+      // append-only audit trail), so it must go first too or the employee DELETE below fails
+      // with a FK violation the moment this employee has ever held an asset.
+      await client.query(`DELETE FROM hr_asset_assignments WHERE employee_id = $1`, [employeeId]);
 
       // Cascades to hr_contracts, process_instances, process_tasks, hr_leaves, hr_leave_balances,
       // hr_policy_acknowledgements, org_backfill_unresolved, hr_helpdesk_tickets (submitted_by).

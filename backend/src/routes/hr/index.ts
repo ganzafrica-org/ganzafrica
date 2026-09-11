@@ -11,6 +11,7 @@ import helpdeskRoutes from "./helpdesk.routes";
 import policyRoutes from "./policy.routes";
 import recruitmentRoutes from "./recruitment.routes";
 import signingRoutes from "./signing.routes";
+import settingsRoutes from "./settings.routes";
 import leaveCoreRoutes from "./leave-core.routes";
 import processesRoutes from "./processes.routes";
 import orgRoutes from "./org.routes";
@@ -62,6 +63,7 @@ router.use("/document-category-templates", documentCategoryTemplateRoutes);
 router.use("/helpdesk", helpdeskRoutes);
 router.use("/policies", policyRoutes);
 router.use("/signing", signingRoutes);
+router.use("/settings", settingsRoutes);
 // Never mounted before this fix — the fully-built controller/service/routes were unreachable
 // (404), and the id-resolution bug above would have 400'd every call anyway once mounted.
 router.use("/notifications", notificationRoutes);

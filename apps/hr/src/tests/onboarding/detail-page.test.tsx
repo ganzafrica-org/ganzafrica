@@ -138,4 +138,41 @@ describe("Onboarding detail page", () => {
     await screen.findByText("Add to payroll");
     expect(screen.queryByRole("button", { name: /cancel process/i })).not.toBeInTheDocument();
   });
+
+  it("shows a stats header describing this employee's onboarding progress", async () => {
+    server.use(
+      http.get(`${API}/hr/processes/10`, () =>
+        HttpResponse.json({
+          instance,
+          tasks: [
+            task({ id: 1, status: "done" }),
+            task({
+              id: 2,
+              title: "Overdue step",
+              status: "pending",
+              due_date: "2020-01-01",
+              visibility: "all",
+            }),
+          ],
+          progress: { done: 1, total: 2, percent: 50 },
+          can_manage: true,
+        }),
+      ),
+      http.get(`${API}/hr/employees/${instance.employee_id}/contracts`, () =>
+        HttpResponse.json([]),
+      ),
+      http.get(`${API}/hr/signing/requests`, () => HttpResponse.json({ requests: [] })),
+    );
+
+    renderWithClient(<OnboardingDetailPage />);
+
+    expect(await screen.findByText("Completed Steps")).toBeInTheDocument();
+    expect(screen.getByText("Remaining Steps")).toBeInTheDocument();
+    expect(screen.getByText("Overdue Tasks")).toBeInTheDocument();
+    expect(screen.getByText("Overall Progress")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /50% complete/i })).toBeInTheDocument();
+    // One overdue pending task ("Overdue step", due in the past) among the two seeded.
+    const overdueCard = screen.getByText("Overdue Tasks").closest("div.bg-transparent");
+    expect(overdueCard?.querySelector(".text-4xl")?.textContent).toBe("1");
+  });
 });

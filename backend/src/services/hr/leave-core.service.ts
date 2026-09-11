@@ -6,7 +6,7 @@
  * shape. New routes call this; the old CRUD keeps working until FND-07's contract phase drops
  * `hr_leaves.user_id`.
  */
-import { and, asc, desc, eq, gte, inArray, lte, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, gte, inArray, lte, ne, or, sql } from "drizzle-orm";
 import { db, withDbTransaction } from "@/db/client";
 import {
   employees,
@@ -23,11 +23,12 @@ import {
 } from "@/db/schema";
 import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
-import { sendEmail } from "../email.service";
+import { sendEmail, combineRecipients } from "../email.service";
 import { leaveSubmittedEmail, leaveDecidedEmail } from "./leave-emails";
 import { countWorkingDays, toIsoDate, windowBounds, type SummaryWindow } from "./leave-days";
 import { getManagerUserId, isManagerOf } from "./employee-context";
 import { createDocument } from "./document.service";
+import { publicHolidaysInRange, publicHolidaysForYear } from "./holidays-api.service";
 
 /** Types whose usage draws down a balance. UNPAID/OTHER are tracked but never blocked. */
 const BALANCE_TRACKED = new Set(["ANNUAL", "SICK", "MATERNITY", "PATERNITY"]);
@@ -42,19 +43,35 @@ export interface LeaveRequestInput {
   reason?: string;
 }
 
-async function holidaySet(from: Date, to: Date): Promise<Set<string>> {
-  const rows = await db
-    .select({ date: hr_org_holidays.date })
-    .from(hr_org_holidays)
-    .where(
-      and(gte(hr_org_holidays.date, toIsoDate(from)), lte(hr_org_holidays.date, toIsoDate(to))),
-    );
-  return new Set(rows.map((r) => r.date));
+/**
+ * The given employee's own country's real public holidays (Nager.Date) — never every country's,
+ * which would shorten everyone's leave by everyone else's holidays too. No employee context, or
+ * a country with no ISO mapping, means no holidays subtracted (weekends only) rather than a
+ * fabricated "universal" set.
+ */
+async function holidaySet(from: Date, to: Date, employeeId?: string): Promise<Set<string>> {
+  if (!employeeId) return new Set();
+
+  const [row] = await db
+    .select({ country: employees.home_country })
+    .from(employees)
+    .where(eq(employees.id, employeeId))
+    .limit(1);
+  if (!row?.country) return new Set();
+
+  const holidays = await publicHolidaysInRange(row.country, from, to);
+  return new Set(holidays.map((h) => h.date));
 }
 
-/** Working days for a range, excluding weekends and configured org holidays. */
-export async function computeWorkingDays(start: Date, end: Date): Promise<number> {
-  return countWorkingDays(start, end, await holidaySet(start, end));
+/** Working days for a range, excluding weekends and configured org holidays. `employeeId`
+ *  scopes country-specific holidays to that employee's own country — omit it only when no
+ *  employee context exists yet (universal holidays still apply). */
+export async function computeWorkingDays(
+  start: Date,
+  end: Date,
+  employeeId?: string,
+): Promise<number> {
+  return countWorkingDays(start, end, await holidaySet(start, end, employeeId));
 }
 
 async function requireEmployee(employeeId: string) {
@@ -80,6 +97,13 @@ async function userHasRole(userId: number, names: string[]): Promise<boolean> {
 const isHrOrAdmin = (userId: number) => userHasRole(userId, ["hr", "admin"]);
 
 /**
+ * Maternity/Paternity are opt-in per employee, not a default every employee gets just for
+ * existing — see "Leave-type grants" below. Excluded here from ensureBalances' blanket
+ * materialization; a balance row for these two types is only ever created by grantLeaveType.
+ */
+const GRANT_ONLY_TYPES = new Set<LeaveTypeName>(["MATERNITY", "PATERNITY"]);
+
+/**
  * Create this year's balance rows from the org policy for the employee's employment type.
  * Idempotent — existing rows (and their used_days) are left untouched, so it is safe to call on
  * every request and from LCM-01's `leave_setup` onboarding task.
@@ -100,10 +124,13 @@ export async function ensureBalances(employeeId: string, year: number): Promise<
     );
   }
 
+  const autoGranted = policies.filter((p) => !GRANT_ONLY_TYPES.has(p.type as LeaveTypeName));
+  if (!autoGranted.length) return;
+
   await db
     .insert(hr_leave_balances)
     .values(
-      policies.map((p) => ({
+      autoGranted.map((p) => ({
         employee_id: employeeId,
         year,
         type: p.type,
@@ -137,6 +164,140 @@ export async function remainingDays(
   const row = await balanceRow(employeeId, year, type);
   if (!row) return 0;
   return Number(row.entitled_days) + Number(row.carried_over_days) - Number(row.used_days);
+}
+
+// --- Leave-type grants: Maternity/Paternity opt-in (per employee, not a default) ---
+
+type GrantOnlyType = "MATERNITY" | "PATERNITY";
+const GRANT_ONLY_STATUTORY_DAYS: Record<GrantOnlyType, string> = {
+  MATERNITY: "84",
+  PATERNITY: "4",
+};
+
+/** Whether Maternity/Paternity are configurable at all — derived from whether a policy row
+ *  exists for them, not a separately stored flag, so there's no second piece of state to
+ *  go stale relative to the policies table it's really describing. */
+export async function isGenderLeaveEnabled(): Promise<boolean> {
+  const [row] = await db
+    .select({ id: hr_leave_policies.id })
+    .from(hr_leave_policies)
+    .where(inArray(hr_leave_policies.type, ["MATERNITY", "PATERNITY"]))
+    .limit(1);
+  return !!row;
+}
+
+/**
+ * Toggle: on creates Maternity/Paternity policy rows (Rwanda-statutory defaults) for every
+ * employment type that has other policies configured, making the types configurable/assignable —
+ * NOT a grant to anyone. Off removes those policy rows; existing per-employee grants
+ * (hr_leave_balances rows, and any leave already taken against them) are left alone, since
+ * deleting real usage history isn't what "disable future configuration" means.
+ */
+export async function setGenderLeaveEnabled(enabled: boolean): Promise<void> {
+  if (!enabled) {
+    await db
+      .delete(hr_leave_policies)
+      .where(inArray(hr_leave_policies.type, ["MATERNITY", "PATERNITY"]));
+    return;
+  }
+
+  const employmentTypes = await db
+    .selectDistinct({ employment_type: hr_leave_policies.employment_type })
+    .from(hr_leave_policies);
+  const rows = employmentTypes.flatMap(({ employment_type }) =>
+    (["MATERNITY", "PATERNITY"] as const).map((type) => ({
+      employment_type,
+      type,
+      annual_days: GRANT_ONLY_STATUTORY_DAYS[type],
+      max_carry_over: "0",
+    })),
+  );
+  if (rows.length) {
+    await db.insert(hr_leave_policies).values(rows).onConflictDoNothing();
+  }
+}
+
+/** Grant Maternity/Paternity to one employee for `year` — the only thing that actually makes
+ *  them able to request it, once the type itself is enabled (see setGenderLeaveEnabled). */
+export async function grantLeaveType(
+  employeeId: string,
+  type: GrantOnlyType,
+  year: number,
+): Promise<void> {
+  const employee = await requireEmployee(employeeId);
+  const [policy] = await db
+    .select()
+    .from(hr_leave_policies)
+    .where(
+      and(
+        eq(hr_leave_policies.employment_type, employee.employment_type),
+        eq(hr_leave_policies.type, type),
+      ),
+    )
+    .limit(1);
+  if (!policy) {
+    throw new AppError(
+      `${type === "MATERNITY" ? "Maternity" : "Paternity"} leave isn't enabled yet — turn it on in Leave settings first.`,
+      422,
+      "LEAVE_TYPE_NOT_ENABLED",
+    );
+  }
+
+  // Grants always use the policy's own configured days — never a caller-supplied amount — but
+  // guard the statutory ceiling explicitly anyway, in case that policy row is ever hand-edited
+  // (e.g. directly in the DB) to something above Rwanda's statutory maximum.
+  const maxDays = Number(GRANT_ONLY_STATUTORY_DAYS[type]);
+  if (Number(policy.annual_days) > maxDays) {
+    throw new AppError(
+      `${type === "MATERNITY" ? "Maternity" : "Paternity"} leave's configured entitlement (${policy.annual_days} days) exceeds the statutory maximum of ${maxDays} days.`,
+      422,
+      "LEAVE_TYPE_EXCEEDS_STATUTORY_MAX",
+    );
+  }
+
+  await db
+    .insert(hr_leave_balances)
+    .values({ employee_id: employeeId, year, type, entitled_days: policy.annual_days })
+    .onConflictDoNothing();
+}
+
+/**
+ * Revoke: if nothing's been used yet, the grant simply never existed for future purposes —
+ * delete the row. If some days are already used, that's a real record of leave taken; zero the
+ * entitlement (blocks any further request) but keep the row so used_days stays on the books.
+ */
+export async function revokeLeaveType(
+  employeeId: string,
+  type: GrantOnlyType,
+  year: number,
+): Promise<void> {
+  const row = await balanceRow(employeeId, year, type);
+  if (!row) return;
+
+  if (Number(row.used_days) > 0) {
+    await db
+      .update(hr_leave_balances)
+      .set({ entitled_days: "0", carried_over_days: "0" })
+      .where(eq(hr_leave_balances.id, row.id));
+  } else {
+    await db.delete(hr_leave_balances).where(eq(hr_leave_balances.id, row.id));
+  }
+}
+
+/** Everyone currently granted `type` for `year` — backs the settings-page management list. */
+export async function listGrantedEmployees(type: GrantOnlyType, year: number) {
+  return db
+    .select({
+      employeeId: hr_leave_balances.employee_id,
+      firstName: employees.first_name,
+      lastName: employees.last_name,
+      entitledDays: hr_leave_balances.entitled_days,
+      usedDays: hr_leave_balances.used_days,
+    })
+    .from(hr_leave_balances)
+    .innerJoin(employees, eq(employees.id, hr_leave_balances.employee_id))
+    .where(and(eq(hr_leave_balances.type, type), eq(hr_leave_balances.year, year)))
+    .orderBy(asc(employees.first_name));
 }
 
 async function assertNoOverlap(employeeId: string, start: Date, end: Date, excludeId?: string) {
@@ -179,7 +340,7 @@ export async function requestLeave(
     throw new AppError("End date must not precede start date", 422, "LEAVE_RANGE_INVALID");
   }
 
-  const days = await computeWorkingDays(input.startDate, input.endDate);
+  const days = await computeWorkingDays(input.startDate, input.endDate, employeeId);
   if (days === 0) {
     throw new AppError(
       "Request covers no working days (weekends and holidays are excluded)",
@@ -193,6 +354,15 @@ export async function requestLeave(
   const year = input.startDate.getUTCFullYear();
   if (BALANCE_TRACKED.has(input.type)) {
     await ensureBalances(employeeId, year);
+
+    if (GRANT_ONLY_TYPES.has(input.type) && !(await balanceRow(employeeId, year, input.type))) {
+      throw new AppError(
+        `${input.type === "MATERNITY" ? "Maternity" : "Paternity"} leave hasn't been granted to you — ask HR to enable it for your account.`,
+        422,
+        "LEAVE_TYPE_NOT_GRANTED",
+      );
+    }
+
     const remaining = await remainingDays(employeeId, year, input.type);
     if (days > remaining) {
       throw new AppError(
@@ -269,13 +439,14 @@ export async function sendLeaveEmailOnce(
   }
 
   const [info] = await db
-    .select({ email: users.email })
+    .select({ email: users.email, workEmail: employees.work_email })
     .from(users)
+    .leftJoin(employees, eq(employees.user_id, users.id))
     .where(eq(users.id, recipientUserId));
   if (!info) return;
   const { subject, html, text } = render();
   try {
-    await sendEmail(info.email, subject, html, text);
+    await sendEmail(combineRecipients(info.email, info.workEmail), subject, html, text);
   } catch {
     // A send failure must not fail the leave action that triggered it.
   }
@@ -559,12 +730,16 @@ async function reportIdsUnder(employeeId: string): Promise<string[]> {
 
 /** Pending requests this user may decide: their reports', or everything for HR. */
 export async function listPendingApprovals(actorUserId: number) {
-  if (await isHrOrAdmin(actorUserId)) {
-    return db
-      .select()
+  // Same flat hr_leaves shape existing callers (e.g. the approvals sheet) already destructure,
+  // plus employeeName — a home-page "who's waiting on me" widget needs a name, not just an id.
+  const select = () =>
+    db
+      .select({ ...getTableColumns(hr_leaves), employeeName: employeeFullName })
       .from(hr_leaves)
-      .where(eq(hr_leaves.status, "PENDING"))
-      .orderBy(asc(hr_leaves.start_date));
+      .leftJoin(employees, eq(employees.id, hr_leaves.employee_id));
+
+  if (await isHrOrAdmin(actorUserId)) {
+    return select().where(eq(hr_leaves.status, "PENDING")).orderBy(asc(hr_leaves.start_date));
   }
 
   const actor = await employeeForUser(actorUserId);
@@ -573,9 +748,7 @@ export async function listPendingApprovals(actorUserId: number) {
   const reports = await reportIdsUnder(actor.id);
   if (!reports.length) return [];
 
-  return db
-    .select()
-    .from(hr_leaves)
+  return select()
     .where(and(eq(hr_leaves.status, "PENDING"), inArray(hr_leaves.employee_id, reports)))
     .orderBy(asc(hr_leaves.start_date));
 }
@@ -845,36 +1018,21 @@ export function listHolidays(year?: number) {
 }
 
 /**
- * Punch-list #7 — the union of holidays relevant to the org: every universal (country = "")
- * holiday, plus every country-scoped one whose country matches an active employee's
- * home_country. A single-country org (or one that has never tagged a holiday with a country)
- * sees every holiday, identical to today's behavior, since untagged holidays default to "".
+ * Real public holidays (Nager.Date), unioned across every country an active employee is actually
+ * in — not a seeded/admin-managed table anymore. A country with no ISO mapping contributes none.
  */
 export async function listRelevantHolidays(year?: number) {
+  const y = year ?? new Date().getUTCFullYear();
   const countries = await db
     .selectDistinct({ country: employees.home_country })
     .from(employees)
     .where(eq(employees.is_active, true));
   const represented = countries.map((c) => c.country).filter((c): c is string => !!c);
 
-  const scopeMatch = represented.length
-    ? or(eq(hr_org_holidays.country, ""), inArray(hr_org_holidays.country, represented))
-    : eq(hr_org_holidays.country, "");
-
-  const conditions =
-    year == null
-      ? [scopeMatch]
-      : [
-          scopeMatch,
-          gte(hr_org_holidays.date, `${year}-01-01`),
-          lte(hr_org_holidays.date, `${year}-12-31`),
-        ];
-
-  return db
-    .select()
-    .from(hr_org_holidays)
-    .where(and(...conditions))
-    .orderBy(asc(hr_org_holidays.date));
+  const perCountry = await Promise.all(
+    represented.map((country) => publicHolidaysForYear(country, y)),
+  );
+  return perCountry.flat().sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export async function createHoliday(input: { date: string; name: string; country?: string }) {

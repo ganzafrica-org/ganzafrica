@@ -44,6 +44,17 @@ export const createRequestSchema = z.object({
   }),
 });
 
+export const createSequenceSchema = z.object({
+  body: z.object({
+    template_id: z.number().int(),
+    subject: z.string().min(1),
+    ref_kind: z.string().min(1),
+    ref_id: z.string().min(1),
+    signerUserIds: z.array(z.number().int()).min(1),
+    mode: z.enum(["sequential", "parallel"]),
+  }),
+});
+
 export const listByRefSchema = z.object({
   query: z.object({
     ref_kind: z.string().min(1),
@@ -59,4 +70,8 @@ export const signSchema = z.object({
 export const signTokenSchema = z.object({
   params: z.object({ token: z.string().min(10) }),
   body: z.object({ field_values: z.record(z.string(), z.unknown()).optional() }),
+});
+
+export const signerPoolEmployeeSchema = z.object({
+  params: z.object({ employeeId: z.string().uuid() }),
 });

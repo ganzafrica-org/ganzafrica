@@ -11,6 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useDocumentCategoryTemplates } from "@/hooks/useDocumentCategoryTemplates";
+import { QuillEditor } from "@/components/sections/documents/quill-editor";
+import { escapeHtml } from "@/lib/helpers/document-branding";
+import { cn } from "@/lib/utils";
 import type { CreateContractRequest, HrDocument } from "@/types/api";
 
 export type ContractFormState = Partial<CreateContractRequest>;
@@ -29,12 +33,72 @@ interface ContractFormFieldsProps {
   value: ContractFormState;
   onChange: (patch: ContractFormState) => void;
   /** Newly-picked agreement file, not yet uploaded (upload happens on save — see
-   *  lib/helpers/contract-agreement.ts). Kept out of `value` because it isn't JSON-serializable. */
+   *  lib/helpers/contract-agreement.ts). Kept out of `value` because it isn't JSON-serializable.
+   *  Mutually exclusive with `agreementTemplateId` — picking one clears the other. */
   agreementFile: File | null;
   onAgreementFileChange: (file: File | null) => void;
+  /** Id of a saved (branding) Category Template to generate the agreement from, instead of
+   *  uploading a file. Mutually exclusive with `agreementFile`. */
+  agreementTemplateId: string | null;
+  onAgreementTemplateIdChange: (id: string | null) => void;
+  /** Rich-text body used together with the picked Category Template's branding to generate the
+   *  actual agreement document at save time. Pre-filled from the contract's own fields the moment
+   *  a template is selected (see buildAgreementContentFromContract), then freely editable. */
+  agreementTemplateContent: string;
+  onAgreementTemplateContentChange: (html: string) => void;
+  /** Employee's full name — used only to pre-fill the generated agreement's "Employee" line. */
+  employeeName?: string;
   /** The document currently on file when editing an existing contract, if any. */
   existingAgreementDocument?: HrDocument | null;
   onViewExistingAgreement?: () => void;
+}
+
+function contentRow(label: string, value: string | null | undefined): string {
+  if (!value) return "";
+  return `<p><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</p>`;
+}
+
+/** Pre-fills the generated agreement's body from what's already been typed into the contract
+ *  form — HR shouldn't have to retype the job title, dates, and pay they just entered above.
+ *  Freely editable afterward in the Quill editor; this only seeds the first draft. */
+export function buildAgreementContentFromContract(
+  value: ContractFormState,
+  employeeName?: string,
+): string {
+  const term =
+    value.employmentTerm === "definite"
+      ? `Definite${value.endDate ? ` (through ${value.endDate.slice(0, 10)})` : ""}`
+      : value.employmentTerm === "indefinite"
+        ? "Indefinite"
+        : "";
+
+  const type =
+    value.employmentType === "part-time"
+      ? `Part-time${value.daysPerWeek ? ` (${value.daysPerWeek} days/week)` : ""}`
+      : value.employmentType === "full-time"
+        ? "Full-time"
+        : "";
+
+  const currency = value.currency ?? "RWF";
+  const compensation = value.baseMonthlyRate
+    ? `${currency} ${value.baseMonthlyRate} / month${value.salaryScale ? ` (${value.salaryScale})` : ""}`
+    : "";
+  const grossAnnual = value.grossAnnualRate ? `${currency} ${value.grossAnnualRate} / year` : "";
+
+  return [
+    contentRow("Employee", employeeName),
+    contentRow("Job Title", value.jobTitle),
+    contentRow("Department", value.department),
+    contentRow("Work Location", value.workLocation),
+    contentRow("Manager", value.manager),
+    contentRow("Start Date", value.startDate?.slice(0, 10)),
+    contentRow("Employment Term", term),
+    contentRow("Employment Type", type),
+    contentRow("Compensation", compensation),
+    contentRow("Gross Annual Rate", grossAnnual),
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 /**
@@ -47,11 +111,22 @@ export function ContractFormFields({
   onChange,
   agreementFile,
   onAgreementFileChange,
+  agreementTemplateId,
+  onAgreementTemplateIdChange,
+  onAgreementTemplateContentChange,
+  employeeName,
   existingAgreementDocument,
   onViewExistingAgreement,
 }: ContractFormFieldsProps) {
   const set = (patch: ContractFormState) => onChange({ ...value, ...patch });
   const { data: employeesData } = useEmployees({ limit: 200 });
+  // A Category Template applies here if it's scoped to "Contract Templates", or left universal
+  // (category === null) — see category-template-sheet.tsx's own Category field. Deferred until
+  // "Use a saved template" is actually picked — no reason to fetch it for the (default) upload path.
+  const { data: allTemplates } = useDocumentCategoryTemplates(agreementTemplateId !== null);
+  const templates = allTemplates?.filter(
+    (t) => t.category === null || t.category === "Contract Templates",
+  );
   const managerOptions = (employeesData?.data ?? [])
     .map((emp) => `${emp.first_name} ${emp.last_name}`.trim())
     .filter((name, index, all) => name && all.indexOf(name) === index)
@@ -268,7 +343,7 @@ export function ContractFormFields({
           </span>
         </Label>
 
-        {existingAgreementDocument && !agreementFile && (
+        {existingAgreementDocument && !agreementFile && !agreementTemplateId && (
           <div className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
             <span className="flex items-center gap-2 text-sm text-gray-700 truncate">
               <FileText className="h-4 w-4 shrink-0 text-gray-400" />
@@ -286,20 +361,93 @@ export function ContractFormFields({
           </div>
         )}
 
-        <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50">
-          <Upload className="h-4 w-4 shrink-0" />
-          {agreementFile
-            ? agreementFile.name
-            : existingAgreementDocument
-              ? "Replace file…"
-              : "Upload signed agreement (PDF or Word)…"}
-          <input
-            type="file"
-            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            className="hidden"
-            onChange={(e) => onAgreementFileChange(e.target.files?.[0] ?? null)}
-          />
-        </label>
+        <div className="inline-flex rounded-lg border border-gray-200 p-1" role="radiogroup">
+          <button
+            type="button"
+            data-testid="agreement-source-upload"
+            aria-pressed={agreementTemplateId === null}
+            onClick={() => {
+              onAgreementTemplateIdChange(null);
+              onAgreementTemplateContentChange("");
+            }}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              agreementTemplateId === null ? "bg-brand-accent text-white" : "text-gray-500",
+            )}
+          >
+            Upload a file
+          </button>
+          <button
+            type="button"
+            data-testid="agreement-source-template"
+            aria-pressed={agreementTemplateId !== null}
+            onClick={() => {
+              onAgreementFileChange(null);
+              onAgreementTemplateIdChange("");
+            }}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              agreementTemplateId !== null ? "bg-brand-accent text-white" : "text-gray-500",
+            )}
+          >
+            Use a saved template
+          </button>
+        </div>
+
+        {agreementTemplateId !== null ? (
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Select
+                value={agreementTemplateId}
+                onValueChange={(v) => onAgreementTemplateIdChange(v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a saved template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(templates ?? []).map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!templates?.length && (
+                <p className="text-xs text-gray-500">
+                  No design templates yet — create one from Documents → Categories, or upload a file
+                  instead.
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-normal text-gray-500">
+                Agreement contents — pre-filled from the details above, edit as needed
+              </Label>
+              <div className="rounded-md border border-gray-200 bg-white">
+                <QuillEditor
+                  initialValue={buildAgreementContentFromContract(value, employeeName)}
+                  onChange={onAgreementTemplateContentChange}
+                  placeholder="Employment agreement contents…"
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50">
+            <Upload className="h-4 w-4 shrink-0" />
+            {agreementFile
+              ? agreementFile.name
+              : existingAgreementDocument
+                ? "Replace file…"
+                : "Upload signed agreement (PDF or Word)…"}
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              className="hidden"
+              onChange={(e) => onAgreementFileChange(e.target.files?.[0] ?? null)}
+            />
+          </label>
+        )}
       </div>
 
       <div className="space-y-1.5">

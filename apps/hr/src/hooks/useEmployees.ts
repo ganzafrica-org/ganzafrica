@@ -66,14 +66,6 @@ export function useDepartmentStats() {
   });
 }
 
-export function useEmployeeLeaves(employeeId: string) {
-  return useQuery({
-    queryKey: ["employeeLeaves", employeeId],
-    queryFn: () => employeesService.getEmployeeLeaves(employeeId),
-    enabled: !!employeeId,
-  });
-}
-
 export function useCreateEmployee() {
   const queryClient = useQueryClient();
   return useMutation({

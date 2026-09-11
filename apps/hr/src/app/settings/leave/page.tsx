@@ -1,284 +1,170 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Plus, X } from "lucide-react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Plus, Trash2 } from "lucide-react";
-import {
-  useLeavePolicies,
-  useSavePolicy,
-  useDeletePolicy,
-  useHolidays,
-  useCreateHoliday,
-  useDeleteHoliday,
+  useGenderLeaveStatus,
+  useSetGenderLeaveStatus,
+  useLeaveTypeGrants,
+  useGrantLeaveType,
+  useRevokeLeaveType,
 } from "@/hooks/useLeaveBalances";
-import type { EmploymentType, LeaveTypeName } from "@/services/leave-balances.service";
+import type { GrantOnlyType } from "@/services/leave-balances.service";
+import {
+  MultiEmployeePicker,
+  type PickedEmployee,
+} from "@/components/sections/employee/multi-employee-picker";
 
-const EMPLOYMENT_TYPES: EmploymentType[] = ["fellow", "analyst", "staff", "contractor", "intern"];
+const GRANT_TYPE_LABEL: Record<GrantOnlyType, string> = {
+  MATERNITY: "Maternity",
+  PATERNITY: "Paternity",
+};
 
-const LEAVE_TYPES: LeaveTypeName[] = [
-  "ANNUAL",
-  "SICK",
-  "MATERNITY",
-  "PATERNITY",
-  "UNPAID",
-  "OTHER",
-];
+function GrantDialog({
+  type,
+  open,
+  onOpenChange,
+}: {
+  type: GrantOnlyType;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [selected, setSelected] = useState<PickedEmployee[]>([]);
+  const grant = useGrantLeaveType();
 
-function PolicyForm() {
-  const [employmentType, setEmploymentType] = useState<EmploymentType>("staff");
-  const [type, setType] = useState<LeaveTypeName>("ANNUAL");
-  const [annualDays, setAnnualDays] = useState("18");
-  const [maxCarryOver, setMaxCarryOver] = useState("5");
-
-  const save = useSavePolicy();
+  const handleGrant = async () => {
+    await Promise.all(selected.map((s) => grant.mutateAsync({ type, employeeId: s.employeeId })));
+    setSelected([]);
+    onOpenChange(false);
+  };
 
   return (
-    <div className="grid gap-3 sm:grid-cols-5 sm:items-end">
-      <div className="space-y-1.5">
-        <Label htmlFor="policy-employment">Employment type</Label>
-        <Select
-          value={employmentType}
-          onValueChange={(v) => setEmploymentType(v as EmploymentType)}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Grant {GRANT_TYPE_LABEL[type]} leave</DialogTitle>
+        </DialogHeader>
+        <MultiEmployeePicker selected={selected} onChange={setSelected} />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleGrant} disabled={selected.length === 0 || grant.isPending}>
+            {grant.isPending ? "Granting…" : "Grant"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LeaveTypeGrantList({ type }: { type: GrantOnlyType }) {
+  const { data: grants = [], isLoading } = useLeaveTypeGrants(type);
+  const revoke = useRevokeLeaveType();
+  const [showGrantDialog, setShowGrantDialog] = useState(false);
+
+  return (
+    <div className="space-y-2 rounded-lg border p-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-semibold text-slate-700">{GRANT_TYPE_LABEL[type]}</h4>
+        <Button size="sm" variant="outline" onClick={() => setShowGrantDialog(true)}>
+          <Plus className="mr-1.5 size-3.5" /> Grant
+        </Button>
+      </div>
+
+      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {!isLoading && grants.length === 0 && (
+        <p className="text-sm text-muted-foreground">Not granted to anyone yet.</p>
+      )}
+      {grants.map((g) => (
+        <div
+          key={g.employeeId}
+          className="flex items-center justify-between rounded bg-slate-50 px-3 py-1.5 text-sm"
         >
-          <SelectTrigger id="policy-employment">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {EMPLOYMENT_TYPES.map((t) => (
-              <SelectItem key={t} value={t} className="capitalize">
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          <span className="text-slate-700">
+            {g.firstName} {g.lastName}
+          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">
+              {g.usedDays} of {g.entitledDays} used
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`Revoke ${GRANT_TYPE_LABEL[type]} from ${g.firstName} ${g.lastName}`}
+              onClick={() => revoke.mutate({ type, employeeId: g.employeeId })}
+            >
+              <X className="size-4 text-red-500" />
+            </Button>
+          </div>
+        </div>
+      ))}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="policy-type">Leave type</Label>
-        <Select value={type} onValueChange={(v) => setType(v as LeaveTypeName)}>
-          <SelectTrigger id="policy-type">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {LEAVE_TYPES.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="policy-days">Days / year</Label>
-        <Input
-          id="policy-days"
-          type="number"
-          min={0}
-          value={annualDays}
-          onChange={(e) => setAnnualDays(e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="policy-carry">Max carry-over</Label>
-        <Input
-          id="policy-carry"
-          type="number"
-          min={0}
-          value={maxCarryOver}
-          onChange={(e) => setMaxCarryOver(e.target.value)}
-        />
-      </div>
-
-      <Button
-        onClick={() =>
-          save.mutate({
-            employment_type: employmentType,
-            type,
-            annual_days: Number(annualDays),
-            max_carry_over: Number(maxCarryOver),
-          })
-        }
-        disabled={save.isPending}
-      >
-        <Plus className="mr-1.5 size-4" /> Save
-      </Button>
+      <GrantDialog type={type} open={showGrantDialog} onOpenChange={setShowGrantDialog} />
     </div>
   );
 }
 
-function HolidayForm() {
-  const [date, setDate] = useState("");
-  const [name, setName] = useState("");
-  const create = useCreateHoliday();
+function LeaveTypeGrantsCard() {
+  const { data: enabled, isLoading } = useGenderLeaveStatus();
+  const setEnabled = useSetGenderLeaveStatus();
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
-      <div className="space-y-1.5">
-        <Label htmlFor="holiday-date">Date</Label>
-        <Input
-          id="holiday-date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="holiday-name">Name</Label>
-        <Input
-          id="holiday-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Liberation Day"
-        />
-      </div>
-      <Button
-        onClick={() => {
-          create.mutate({ date, name });
-          setDate("");
-          setName("");
-        }}
-        disabled={!date || !name || create.isPending}
-      >
-        <Plus className="mr-1.5 size-4" /> Add holiday
-      </Button>
-    </div>
+    <Card className="shadow-sm rounded-md">
+      <CardHeader>
+        <CardTitle className="text-base">Leave-type grants</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+          <div className="space-y-1">
+            <Label htmlFor="gender-leave-toggle">Enable Maternity/Paternity leave types</Label>
+            <p className="text-xs text-muted-foreground">
+              Off by default — these two types don&apos;t exist as an option for anyone until turned
+              on here, and even then only appear for employees granted them below, not every
+              employee automatically.
+            </p>
+          </div>
+          <Switch
+            id="gender-leave-toggle"
+            checked={!!enabled}
+            disabled={isLoading || setEnabled.isPending}
+            onCheckedChange={(checked) => setEnabled.mutate(checked)}
+          />
+        </div>
+
+        {enabled && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <LeaveTypeGrantList type="MATERNITY" />
+            <LeaveTypeGrantList type="PATERNITY" />
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
 export default function LeaveSettingsPage() {
-  const { data: policies = [], isLoading } = useLeavePolicies();
-  const { data: holidays = [] } = useHolidays();
-  const deletePolicy = useDeletePolicy();
-  const deleteHoliday = useDeleteHoliday();
-
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full flex-col gap-6 mt-6">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Time off settings</h1>
         <p className="text-sm text-muted-foreground">
-          Entitlements per employment type, and the holidays excluded from working-day counts.
+          Maternity/Paternity leave: turn the types on, then grant them to specific employees.
         </p>
       </div>
 
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">Leave policies</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <PolicyForm />
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employment type</TableHead>
-                <TableHead>Leave type</TableHead>
-                <TableHead className="text-right">Days / year</TableHead>
-                <TableHead className="text-right">Max carry-over</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    Loading…
-                  </TableCell>
-                </TableRow>
-              )}
-              {!isLoading && policies.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    No policies yet — employees cannot request balance-tracked leave until one
-                    exists.
-                  </TableCell>
-                </TableRow>
-              )}
-              {policies.map((policy) => (
-                <TableRow key={policy.id}>
-                  <TableCell className="capitalize">{policy.employment_type}</TableCell>
-                  <TableCell>{policy.type}</TableCell>
-                  <TableCell className="text-right">{Number(policy.annual_days)}</TableCell>
-                  <TableCell className="text-right">{Number(policy.max_carry_over)}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deletePolicy.mutate(policy.id)}
-                      aria-label="Delete policy"
-                    >
-                      <Trash2 className="size-4 text-red-500" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">Public holidays</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <HolidayForm />
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {holidays.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    No holidays configured.
-                  </TableCell>
-                </TableRow>
-              )}
-              {holidays.map((holiday) => (
-                <TableRow key={holiday.id}>
-                  <TableCell>{holiday.date}</TableCell>
-                  <TableCell>{holiday.name}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteHoliday.mutate(holiday.id)}
-                      aria-label="Delete holiday"
-                    >
-                      <Trash2 className="size-4 text-red-500" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <LeaveTypeGrantsCard />
     </div>
   );
 }

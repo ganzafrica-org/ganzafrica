@@ -47,6 +47,24 @@ export interface SequenceSigner {
   completed_at: string | null;
 }
 
+export interface SignatureTemplate {
+  id: number;
+  name: string;
+  description: string | null;
+  file_key: string | null;
+  is_active: boolean;
+}
+
+/** One member of the designated co-signer pool (settings/signing). */
+export interface SignerPoolMember {
+  employeeId: string;
+  userId: number;
+  firstName: string;
+  lastName: string;
+  jobTitle: string | null;
+  addedAt: string;
+}
+
 export const signingService = {
   async listMine(): Promise<MySignatureRequest[]> {
     const { data } = await httpClient.get<{ requests: MySignatureRequest[] }>("/hr/signing/my");
@@ -72,5 +90,44 @@ export const signingService = {
   async getDocumentUrl(id: number): Promise<string | null> {
     const { data } = await httpClient.get<{ url: string | null }>(`/hr/signing/my/${id}/document`);
     return data.url;
+  },
+
+  /** HR-only: templates available to send for signature. */
+  async listTemplates(): Promise<SignatureTemplate[]> {
+    const { data } = await httpClient.get<{ templates: SignatureTemplate[] }>(
+      "/hr/signing/templates",
+    );
+    return data.templates;
+  },
+
+  /** HR-only: send one document to an arbitrary, HR-chosen set of signers. */
+  async sendSequence(input: {
+    template_id: number;
+    subject: string;
+    ref_kind: string;
+    ref_id: string;
+    signerUserIds: number[];
+    mode: "sequential" | "parallel";
+  }): Promise<SequenceSigner[]> {
+    const { data } = await httpClient.post<{ requests: SequenceSigner[] }>(
+      "/hr/signing/requests/sequence",
+      input,
+    );
+    return data.requests;
+  },
+
+  // --- Designated co-signer pool ---
+
+  async listSignerPool(): Promise<SignerPoolMember[]> {
+    const { data } = await httpClient.get<{ pool: SignerPoolMember[] }>("/hr/signing/signer-pool");
+    return data.pool;
+  },
+
+  async addToSignerPool(employeeId: string): Promise<void> {
+    await httpClient.post(`/hr/signing/signer-pool/${employeeId}`);
+  },
+
+  async removeFromSignerPool(employeeId: string): Promise<void> {
+    await httpClient.delete(`/hr/signing/signer-pool/${employeeId}`);
   },
 };

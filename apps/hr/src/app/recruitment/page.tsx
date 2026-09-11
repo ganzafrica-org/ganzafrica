@@ -1,14 +1,18 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Briefcase, Plus, Users, ChevronRight } from "lucide-react";
+import { Briefcase, Plus, Users, ChevronRight, ClipboardCheck, UserCheck } from "lucide-react";
 import { useRecruitmentOpportunities } from "@/hooks/useRecruitment";
 import type { OpportunityStageCounts } from "@/services/recruitment.service";
 import { FunnelWidget } from "@/components/recruitment/funnel-widget";
+import { StatsHeader } from "@/components/sections/header";
+import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
+import { CreatePostingSheet } from "@/components/recruitment/create-posting-sheet";
 
 const ACTIVE_STAGES = [
   "submitted",
@@ -22,61 +26,129 @@ const ACTIVE_STAGES = [
 export default function RecruitmentPage() {
   const router = useRouter();
   const { data, isLoading, isError, refetch } = useRecruitmentOpportunities();
+  const [scrolled, setScrolled] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const opportunities = useMemo(() => data ?? [], [data]);
+
+  const stats = useMemo(
+    () => [
+      {
+        icon: Briefcase,
+        label: "Open Positions",
+        value: String(opportunities.filter((o) => o.status === "published").length),
+      },
+      {
+        icon: Users,
+        label: "Total Applicants",
+        value: String(opportunities.reduce((sum, o) => sum + o.total, 0)),
+      },
+      {
+        icon: ClipboardCheck,
+        label: "In Pipeline",
+        value: String(
+          opportunities.reduce(
+            (sum, o) => sum + ACTIVE_STAGES.reduce((s, stage) => s + (o.stages[stage] ?? 0), 0),
+            0,
+          ),
+        ),
+      },
+      {
+        icon: UserCheck,
+        label: "Hired",
+        value: String(opportunities.reduce((sum, o) => sum + (o.stages.hired ?? 0), 0)),
+      },
+    ],
+    [opportunities],
+  );
+
+  useEffect(() => {
+    const mainEl = document.querySelector("main.overflow-auto") as HTMLElement | null;
+    const onScroll = () => setScrolled((mainEl ? mainEl.scrollTop : window.scrollY) > 10);
+    onScroll();
+    mainEl?.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      mainEl?.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900">
-          <Briefcase className="h-6 w-6 text-blue-600" /> Recruitment
-        </h1>
-        <Button onClick={() => router.push("/recruitment/new")}>
-          <Plus className="mr-1 h-4 w-4" /> New posting
-        </Button>
+    <div className="space-y-6">
+      <StatsHeader
+        title="Recruitment & Postings"
+        subtitle="Manage open positions and applicants"
+        scrolled={scrolled}
+        stats={stats}
+        isLoading={isLoading}
+        ClassName="w-full"
+      />
+
+      <div className="space-y-6 px-6 pb-6">
+        <div className="flex items-end justify-end">
+          <Button
+            onClick={() => setCreateOpen(true)}
+            className="bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white"
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            New posting
+          </Button>
+        </div>
+
+        {isLoading && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-40 w-full rounded-lg" />
+            ))}
+          </div>
+        )}
+
+        {isError && (
+          <Card>
+            <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-slate-600">Couldn&apos;t load postings.</p>
+              <Button variant="outline" onClick={() => refetch()}>
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {!isLoading && !isError && data && data.length === 0 && (
+          <Card>
+            <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+              <Briefcase className="h-10 w-10 text-slate-300" />
+              <p className="font-medium text-slate-700">No open positions</p>
+              <p className="text-sm text-slate-500">Create one to start receiving applications.</p>
+              <Button onClick={() => setCreateOpen(true)}>
+                <Plus className="mr-1 h-4 w-4" /> Create posting
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {!isLoading && !isError && data && data.length > 0 && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {data.map((opp) => (
+              <PostingCard
+                key={opp.opportunity_id}
+                opp={opp}
+                onOpen={() => router.push(`/recruitment/${opp.opportunity_id}`)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {isLoading && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-40 w-full rounded-lg" />
-          ))}
-        </div>
-      )}
-
-      {isError && (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-            <p className="text-slate-600">Couldn&apos;t load postings.</p>
-            <Button variant="outline" onClick={() => refetch()}>
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {!isLoading && !isError && data && data.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <Briefcase className="h-10 w-10 text-slate-300" />
-            <p className="font-medium text-slate-700">No open positions</p>
-            <p className="text-sm text-slate-500">Create one to start receiving applications.</p>
-            <Button onClick={() => router.push("/recruitment/new")}>
-              <Plus className="mr-1 h-4 w-4" /> Create posting
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {!isLoading && !isError && data && data.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {data.map((opp) => (
-            <PostingCard
-              key={opp.opportunity_id}
-              opp={opp}
-              onOpen={() => router.push(`/recruitment/${opp.opportunity_id}`)}
-            />
-          ))}
-        </div>
-      )}
+      <ReusableSheet
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        maxWidth="w-full sm:max-w-3xl"
+        title="New posting"
+      >
+        <CreatePostingSheet onDone={() => setCreateOpen(false)} />
+      </ReusableSheet>
     </div>
   );
 }

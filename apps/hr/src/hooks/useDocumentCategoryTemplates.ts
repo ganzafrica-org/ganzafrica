@@ -9,10 +9,11 @@ import type {
 
 const KEY = ["documentCategoryTemplates"];
 
-export function useDocumentCategoryTemplates() {
+export function useDocumentCategoryTemplates(enabled = true) {
   return useQuery({
     queryKey: KEY,
     queryFn: () => documentCategoryTemplatesService.getAll(),
+    enabled,
   });
 }
 

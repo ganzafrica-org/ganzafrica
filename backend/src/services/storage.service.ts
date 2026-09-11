@@ -1,46 +1,43 @@
 /**
- * Shared object-storage helpers (DO Spaces / S3-compatible). Generalizes the presigned-download
- * pattern (was inline in pdf.service) so private files — offer letters, employee documents, signed
- * copies — are all served via short-lived expiring links rather than public URLs.
+ * Shared object-storage helpers (Azure Blob Storage) — private files (offer letters, employee
+ * documents, signed copies) are all served via short-lived expiring SAS links rather than public
+ * URLs. `key` throughout is a blob name (path) within the private container, e.g.
+ * "document/1699999999-123-agreement.pdf".
  */
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-import type { Readable } from "stream";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import {
+  BlobServiceClient,
+  StorageSharedKeyCredential,
+  BlobSASPermissions,
+} from "@azure/storage-blob";
 import env from "../config/env";
 import { Logger } from "../config";
 
 const logger = new Logger("StorageService");
 const MAX_PRESIGN_SECONDS = 7 * 24 * 60 * 60;
 
-const s3Client = new S3Client({
-  endpoint: env.DO_SPACES_ENDPOINT,
-  region: env.DO_SPACES_REGION,
-  credentials: {
-    accessKeyId: env.DO_SPACES_ACCESS_KEY,
-    secretAccessKey: env.DO_SPACES_SECRET_KEY,
-  },
-  forcePathStyle: false,
-});
+const sharedKeyCredential = new StorageSharedKeyCredential(
+  env.AZURE_STORAGE_ACCOUNT,
+  env.AZURE_STORAGE_ACCOUNT_KEY,
+);
+const blobServiceClient = new BlobServiceClient(env.AZURE_STORAGE_ENDPOINT, sharedKeyCredential);
+const privateContainer = blobServiceClient.getContainerClient(env.AZURE_STORAGE_CONTAINER_PRIVATE);
 
-/** Presigned GET for a private object. Default 5 minutes; capped at S3's 7-day ceiling. */
+/** Presigned (SAS) GET for a private blob. Default 5 minutes; capped at 7 days. */
 export async function getPresignedDownload(key: string, expiresIn = 300): Promise<string> {
   if (expiresIn > MAX_PRESIGN_SECONDS) {
     throw new Error("presigned URLs cannot exceed 7 days");
   }
-  const command = new GetObjectCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key });
-  const url = await getSignedUrl(s3Client as never, command as never, { expiresIn });
+  const blobClient = privateContainer.getBlobClient(key);
+  const url = await blobClient.generateSasUrl({
+    permissions: BlobSASPermissions.parse("r"),
+    expiresOn: new Date(Date.now() + expiresIn * 1000),
+  });
   logger.info(`Presigned download for ${key}, expires in ${expiresIn}s`);
   return url;
 }
 
-/** Fetch a private object's full bytes (out-of-band text extraction, never the request path). */
+/** Fetch a private blob's full bytes (out-of-band text extraction, never the request path). */
 export async function getObjectBuffer(key: string): Promise<Buffer> {
-  const command = new GetObjectCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key });
-  const response = await s3Client.send(command);
-  const stream = response.Body as Readable;
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-  return Buffer.concat(chunks);
+  const blobClient = privateContainer.getBlobClient(key);
+  return blobClient.downloadToBuffer();
 }

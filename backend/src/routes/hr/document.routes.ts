@@ -30,6 +30,15 @@ router.get(
 // Retention preview (documents due for auto-archiving). Before "/:id" for the same reason.
 router.get("/retention/preview", manage, documentController.previewRetention);
 
+// The "pick a saved template instead of uploading" source list. Before "/:id" for the same
+// reason; manage-only since it's only ever consumed by the create-document forms.
+router.get(
+  "/templates",
+  manage,
+  validate(documentValidation.listDocumentTemplatesSchema),
+  documentController.listDocumentTemplates,
+);
+
 router.get(
   "/:id",
   read,

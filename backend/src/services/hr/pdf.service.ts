@@ -2,26 +2,21 @@
 import fs from "fs";
 import path from "path";
 import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+  BlobServiceClient,
+  StorageSharedKeyCredential,
+  BlobSASPermissions,
+} from "@azure/storage-blob";
 import env from "../../config/env";
 import { Logger } from "../../config";
 
 const logger = new Logger("PDFService");
 
-const s3Client = new S3Client({
-  endpoint: env.DO_SPACES_ENDPOINT,
-  region: env.DO_SPACES_REGION,
-  credentials: {
-    accessKeyId: env.DO_SPACES_ACCESS_KEY,
-    secretAccessKey: env.DO_SPACES_SECRET_KEY,
-  },
-  forcePathStyle: false,
-});
+const sharedKeyCredential = new StorageSharedKeyCredential(
+  env.AZURE_STORAGE_ACCOUNT,
+  env.AZURE_STORAGE_ACCOUNT_KEY,
+);
+const blobServiceClient = new BlobServiceClient(env.AZURE_STORAGE_ENDPOINT, sharedKeyCredential);
+const privateContainer = blobServiceClient.getContainerClient(env.AZURE_STORAGE_CONTAINER_PRIVATE);
 
 export interface PayslipData {
   name: string;
@@ -730,27 +725,22 @@ export async function uploadPayslipToSpaces(
       : period.replace(/[^a-zA-Z0-9-]/g, "_");
     const key = `hr/${cleanName}/${month}/payslip.pdf`;
 
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: env.DO_SPACES_BUCKET,
-        Key: key,
-        Body: pdfBuffer,
-        ACL: "private",
-        ContentType: "application/pdf",
-        Metadata: { employeeName, period, generatedAt: new Date().toISOString() },
-      }),
-    );
+    const blockBlobClient = privateContainer.getBlockBlobClient(key);
+    await blockBlobClient.uploadData(pdfBuffer, {
+      blobHTTPHeaders: { blobContentType: "application/pdf" },
+      metadata: { employeeName, period, generatedAt: new Date().toISOString() },
+    });
 
-    const permanentUrl = `${env.DO_SPACES_ENDPOINT.replace(/\/$/, "")}/${env.DO_SPACES_BUCKET}/${key}`;
-    logger.info(`Payslip uploaded to Spaces: ${key}`);
+    const permanentUrl = blockBlobClient.url;
+    logger.info(`Payslip uploaded to Azure Blob Storage: ${key}`);
     return { url: permanentUrl, key };
   } catch (error) {
-    logger.error("Error uploading payslip to Spaces:", error);
+    logger.error("Error uploading payslip to Azure Blob Storage:", error);
     throw error;
   }
 }
 
-const MAX_PRESIGN_SECONDS = 7 * 24 * 60 * 60; // S3 SigV4 hard cap
+const MAX_PRESIGN_SECONDS = 7 * 24 * 60 * 60; // SAS hard cap (mirrors the old S3 SigV4 cap)
 
 export async function generateSignedPayslipUrl(
   key: string,
@@ -761,8 +751,11 @@ export async function generateSignedPayslipUrl(
     throw new Error("presigned URLs cannot exceed 7 days; use a payslip access token instead");
   }
   try {
-    const command = new GetObjectCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key });
-    const signedUrl = await getSignedUrl(s3Client as any, command as any, { expiresIn });
+    const blobClient = privateContainer.getBlobClient(key);
+    const signedUrl = await blobClient.generateSasUrl({
+      permissions: BlobSASPermissions.parse("r"),
+      expiresOn: new Date(Date.now() + expiresIn * 1000),
+    });
     logger.info(`Generated signed URL for ${key}, expires in ${expiresIn}s`);
     return signedUrl;
   } catch (error) {
@@ -784,10 +777,10 @@ export async function generateAndUploadPayslip(data: PayslipData) {
 
 export async function deletePayslipFromSpaces(key: string): Promise<void> {
   try {
-    await s3Client.send(new DeleteObjectCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key }));
-    logger.info(`Payslip deleted from Spaces: ${key}`);
+    await privateContainer.getBlockBlobClient(key).deleteIfExists();
+    logger.info(`Payslip deleted from Azure Blob Storage: ${key}`);
   } catch (error) {
-    logger.error(`Error deleting payslip from Spaces (${key}):`, error);
+    logger.error(`Error deleting payslip from Azure Blob Storage (${key}):`, error);
     throw error;
   }
 }

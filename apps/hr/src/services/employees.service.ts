@@ -5,7 +5,6 @@ import type {
   Employee,
   EmployeeDirectoryResponse,
   EmployeeStatusCounts,
-  Leave,
   UpdateEmployeeRequest,
   UpdateMyProfileRequest,
 } from "@/types/api";
@@ -34,10 +33,6 @@ export const employeesService = {
     // Backend wraps the payload as { me: Employee }, unlike every other endpoint here.
     const response = await httpClient.get<{ me: Employee }>("/hr/employees/me");
     return response.data.me;
-  },
-  async getEmployeeLeaves(employeeId: string) {
-    const response = await httpClient.get<Leave[]>(`/hr/employees/${employeeId}/leaves`);
-    return response.data;
   },
   async listDepartments() {
     const response = await httpClient.get<{ departments: string[] }>("/hr/employees/departments");

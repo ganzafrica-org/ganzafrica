@@ -77,7 +77,7 @@ export default function OnboardingPage() {
         </Button>
       </div>
 
-      <Card className="shadow-sm">
+      <Card className="shadow-sm rounded-md">
         <CardContent className="p-6">
           <div className="mb-4 flex justify-end">
             <Select value={status} onValueChange={setStatus}>

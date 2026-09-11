@@ -3,7 +3,7 @@ import * as assetsService from "../../services/hr/assets.service";
 import { getEmployeeForUser } from "../../services/hr/employee-context";
 import { getFileUrl } from "../../middlewares/upload";
 
-// multer-s3 augments each file with `location`/`key` (not part of Express.Multer.File) —
+// the upload middleware augments each file with `location`/`key` (not part of Express.Multer.File) —
 // same shape task.controller.ts's uploadTaskAttachments reads from req.files.
 function buildImageInputs(files: unknown, markFirstPrimary: boolean) {
   if (!Array.isArray(files) || files.length === 0) return undefined;

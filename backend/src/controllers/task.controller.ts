@@ -9,12 +9,14 @@ const logger = new Logger("TaskController");
 
 /**
  * Helper function to get the public URL for uploaded files
- * Uses CDN URL if available, otherwise falls back to Spaces direct URL
+ * Uses CDN URL if available, otherwise falls back to the direct blob URL
  */
 function getFileUrl(location: string): string {
-  if (env.DO_SPACES_CDN_URL) {
-    const spacesBaseUrl = `${env.DO_SPACES_ENDPOINT}/${env.DO_SPACES_BUCKET}`;
-    return location.replace(spacesBaseUrl, env.DO_SPACES_CDN_URL.replace(/\/$/, ""));
+  if (env.AZURE_STORAGE_CDN_URL) {
+    return location.replace(
+      env.AZURE_STORAGE_ENDPOINT.replace(/\/$/, ""),
+      env.AZURE_STORAGE_CDN_URL.replace(/\/$/, ""),
+    );
   }
   return location;
 }
@@ -998,7 +1000,7 @@ export const uploadTaskAttachments = async (req: Request, res: Response) => {
     // Get current task to check access and get existing attachments
     const task = await taskService.getTaskById(taskId, userId);
 
-    // Process uploaded files - multer-s3 provides different properties
+    // Process uploaded files - the upload middleware provides different properties
     const uploadedFiles = (req.files as any[]).map((file) => {
       const { key, originalname, size, mimetype, location } = file;
 
@@ -1008,14 +1010,14 @@ export const uploadTaskAttachments = async (req: Request, res: Response) => {
       // Extract filename from the key
       const filename = key.split("/").pop();
 
-      // Get the public URL (uses CDN if configured, otherwise direct Spaces URL)
+      // Get the public URL (uses CDN if configured, otherwise the direct blob URL)
       const fileUrl = getFileUrl(location);
 
       return {
         id: Math.random().toString(36).slice(2),
         filename: originalname,
         url: fileUrl,
-        key, // S3 key for deletion later if needed
+        key, // blob key for deletion later if needed
         size,
         type: mimetype,
         category: subdir,

@@ -30,7 +30,7 @@ export function LeaveRequests() {
   return (
     <div className="bg-white">
       <div className="space-y-4">
-        {leaveRequests.slice(0, 5).map((request) => (
+        {leaveRequests.slice(0, 3).map((request) => (
           <Card
             key={request.id}
             className="p-4 bg-white border border-gray-100 shadow-none hover:border-emerald-200 hover:shadow-md transition-all cursor-pointer group"

@@ -35,6 +35,11 @@ import { useProcesses, useProcess, usePatchTask } from "@/hooks/useProcesses";
 import { ContractSigningStatus } from "@/components/processes/contract-signing-status";
 import type { CreateEmployeeRequest, EmploymentType, Contract } from "@/types/api";
 
+// Same shape the backend's zod schema accepts (z.string().email()) — a simple, permissive
+// format check so a typo is caught here with a clear message instead of surfacing as the
+// generic 422 from the create-employee request.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 type StepType = "profile" | "contract";
 
 const STEPS: { id: StepType; title: string; subtitle: string; icon: React.ReactNode }[] = [
@@ -177,6 +182,8 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   const [managerName, setManagerName] = useState<string | null>(null);
   const [contract, setContract] = useState<ContractFormState>({ currency: "RWF" });
   const [agreementFile, setAgreementFile] = useState<File | null>(null);
+  const [agreementTemplateId, setAgreementTemplateId] = useState<string | null>(null);
+  const [agreementTemplateContent, setAgreementTemplateContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [createdResult, setCreatedResult] = useState<CreatedResult | null>(null);
 
@@ -190,16 +197,31 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
     setManagerName(null);
     setContract({ currency: "RWF" });
     setAgreementFile(null);
+    setAgreementTemplateId(null);
+    setAgreementTemplateContent("");
     setError(null);
     setCreatedResult(null);
   };
 
-  const profileValid = !!(profile.first_name && profile.last_name && profile.personal_email);
+  /** Required fields, plus email format — a specific message per failure. */
+  function profileError(): string | null {
+    if (!profile.first_name || !profile.last_name || !profile.personal_email) {
+      return "First name, last name and personal email are required.";
+    }
+    if (!EMAIL_RE.test(profile.personal_email)) {
+      return "Enter a valid personal email address.";
+    }
+    if (profile.work_email && !EMAIL_RE.test(profile.work_email)) {
+      return "Enter a valid work email address, or leave it blank.";
+    }
+    return null;
+  }
 
   const handleNext = () => {
     if (currentStep === "profile") {
-      if (!profileValid) {
-        setError("First name, last name and personal email are required.");
+      const message = profileError();
+      if (message) {
+        setError(message);
         return;
       }
       setError(null);
@@ -226,7 +248,10 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   };
 
   const handleSubmit = async () => {
-    const missingContractFields = getMissingContractFields(contract, !!agreementFile);
+    const missingContractFields = getMissingContractFields(
+      contract,
+      !!agreementFile || !!(agreementTemplateId && agreementTemplateContent),
+    );
     if (missingContractFields.length > 0) {
       setError(
         `Missing required contract field${missingContractFields.length > 1 ? "s" : ""}: ` +
@@ -263,6 +288,8 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
           employeeId: employee.id,
           form: contract,
           agreementFile,
+          agreementTemplateId,
+          agreementTemplateContent,
         });
       } finally {
         setIsSubmittingContract(false);
@@ -555,6 +582,11 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
                       onChange={(patch) => setContract((c) => ({ ...c, ...patch }))}
                       agreementFile={agreementFile}
                       onAgreementFileChange={setAgreementFile}
+                      agreementTemplateId={agreementTemplateId}
+                      onAgreementTemplateIdChange={setAgreementTemplateId}
+                      agreementTemplateContent={agreementTemplateContent}
+                      onAgreementTemplateContentChange={setAgreementTemplateContent}
+                      employeeName={`${profile.first_name} ${profile.last_name}`.trim()}
                     />
                   </>
                 )}

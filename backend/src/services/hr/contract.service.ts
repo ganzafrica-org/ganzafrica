@@ -225,16 +225,20 @@ export async function updateContract(
  * signature request is the same (arguably stronger) evidence that guard exists to require, and
  * the Contracts-tab manual create/edit path is left completely unchanged for contracts outside
  * the onboarding flow.
+ *
+ * `agreementDocumentId` must be an hr_documents id (from recordSignedContractDocument) or null —
+ * never a raw storage key. isAgreementDocumentId on the frontend only recognizes an hr_documents
+ * id here; a raw key would silently break the Contract view's document preview.
  */
 export async function activateViaSignature(
   contractId: string,
-  signedFileKey: string | null,
+  agreementDocumentId: string | null,
 ): Promise<ContractRecord> {
   const [updated] = await db
     .update(hr_contracts)
     .set({
       status: "ACTIVE",
-      employment_agreement_url: signedFileKey,
+      employment_agreement_url: agreementDocumentId,
       updated_at: new Date(),
     })
     .where(eq(hr_contracts.id, contractId))
@@ -259,45 +263,54 @@ function bytesToHuman(bytes: number): string {
 /**
  * Gives a fully-executed e-signature its own hr_documents row, so it counts and shows up
  * alongside every other document about the employee (see employees-core.service.ts's document
- * count, which unions on hr_documents.contract_id). Only called once a real base file backs the
- * signature (signing.service.ts's completeSequenceStep checks the template has a file_key) —
- * a fields-only template's fabricated `signed/request-N.json` key has nothing behind it in
- * storage, so it would create a broken/undownloadable document row.
+ * count, which unions on hr_documents.contract_id), and returns its id so the caller can point
+ * hr_contracts.employment_agreement_url at it (the Contract view's document preview only
+ * recognizes an hr_documents id there, not a raw storage key). Only called once a real base file
+ * backs the signature (signing.service.ts's completeSequenceStep checks the template has a
+ * file_key) — a fields-only template's fabricated `signed/request-N.json` key has nothing behind
+ * it in storage, so it would create a broken/undownloadable document row.
  */
 export async function recordSignedContractDocument(
   contractId: string,
   signedFileKey: string,
-): Promise<void> {
+): Promise<string> {
   const [existing] = await db
     .select({ id: hr_documents.id })
     .from(hr_documents)
     .where(and(eq(hr_documents.contract_id, contractId), eq(hr_documents.file_path, signedFileKey)))
     .limit(1);
-  if (existing) return;
+  if (existing) return existing.id;
 
   const [contract] = await db
     .select()
     .from(hr_contracts)
     .where(eq(hr_contracts.id, contractId))
     .limit(1);
-  if (!contract?.employee_ref_id) return;
+  if (!contract?.employee_ref_id) {
+    throw new AppError("Contract has no employee to attach the signed document to", 404);
+  }
 
   const buf = await getObjectBuffer(signedFileKey);
 
-  await db.insert(hr_documents).values({
-    document_name: `${contract.job_title} — Signed Employment Contract`,
-    category: "Contract Templates",
-    version: "1",
-    description: "Signed via e-signature.",
-    department: contract.department ?? "General",
-    file_path: signedFileKey,
-    file_size: bytesToHuman(buf.length),
-    downloads: 0,
-    versions: [],
-    created_by_employee_id: contract.employee_ref_id,
-    access: {},
-    contract_id: contractId,
-  });
+  const [inserted] = await db
+    .insert(hr_documents)
+    .values({
+      document_name: `${contract.job_title} — Signed Employment Contract`,
+      category: "Contract Templates",
+      version: "1",
+      description: "Signed via e-signature.",
+      department: contract.department ?? "General",
+      file_path: signedFileKey,
+      file_size: bytesToHuman(buf.length),
+      downloads: 0,
+      versions: [],
+      created_by_employee_id: contract.employee_ref_id,
+      access: {},
+      contract_id: contractId,
+    })
+    .returning({ id: hr_documents.id });
+
+  return inserted.id;
 }
 
 export async function deleteContract(employeeId: string, contractId: string): Promise<void> {
