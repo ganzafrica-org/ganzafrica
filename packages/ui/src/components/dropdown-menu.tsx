@@ -3,9 +3,11 @@
 import * as React from "react";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronRight, Circle } from "lucide-react";
-const SafeCheck = Check as unknown as React.ComponentType<any>;
-const SafeCircle = Circle as unknown as React.ComponentType<any>;
-const SafeChevronRight = ChevronRight as unknown as React.ComponentType<any>;
+const SafeCheck = Check as unknown as React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const SafeCircle = Circle as unknown as React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const SafeChevronRight = ChevronRight as unknown as React.ComponentType<
+  React.SVGProps<SVGSVGElement>
+>;
 
 import { cn } from "@workspace/ui/lib/utils";
 

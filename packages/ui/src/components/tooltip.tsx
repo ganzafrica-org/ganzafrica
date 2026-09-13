@@ -53,7 +53,8 @@ interface TooltipProps {
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   delayDuration?: number;
-  [key: string]: any;
+  skipDelayDuration?: number;
+  disableHoverableContent?: boolean;
 }
 
 const Tooltip: React.FC<TooltipProps> = ({
@@ -62,33 +63,25 @@ const Tooltip: React.FC<TooltipProps> = ({
   defaultOpen,
   onOpenChange,
   delayDuration,
-  ...props
+  skipDelayDuration,
+  disableHoverableContent,
 }) => {
   const [isOpen, setIsOpen] = React.useState<boolean>(defaultOpen || false);
   const openState = open !== undefined ? open : isOpen;
-  const timer = React.useRef<NodeJS.Timeout | null>(null);
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    onOpenChange?.(open);
-  };
-
-  const contextValue = React.useMemo(
-    () => ({
+  const contextValue = React.useMemo(() => {
+    const handleOpenChange = (open: boolean) => {
+      setIsOpen(open);
+      onOpenChange?.(open);
+    };
+    return {
       open: openState,
       setOpen: handleOpenChange,
       delayDuration: delayDuration || 700,
-      skipDelayDuration: props.skipDelayDuration || 300,
-      disableHoverableContent: props.disableHoverableContent || false,
-    }),
-    [
-      openState,
-      handleOpenChange,
-      delayDuration,
-      props.skipDelayDuration,
-      props.disableHoverableContent,
-    ],
-  );
+      skipDelayDuration: skipDelayDuration || 300,
+      disableHoverableContent: disableHoverableContent || false,
+    };
+  }, [openState, onOpenChange, delayDuration, skipDelayDuration, disableHoverableContent]);
 
   return <TooltipContext.Provider value={contextValue}>{children}</TooltipContext.Provider>;
 };
@@ -100,7 +93,7 @@ interface TooltipTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonEleme
 
 const TooltipTrigger = React.forwardRef<HTMLButtonElement, TooltipTriggerProps>(
   ({ className, asChild = false, ...props }, ref) => {
-    const { open, setOpen, delayDuration } = React.useContext(TooltipContext);
+    const { setOpen, delayDuration } = React.useContext(TooltipContext);
     const triggerRef = React.useRef<HTMLButtonElement>(null);
     const mergedRef = useMergedRef(triggerRef, ref);
 
