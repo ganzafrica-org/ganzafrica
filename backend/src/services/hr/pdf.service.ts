@@ -8,7 +8,6 @@ import {
 } from "@azure/storage-blob";
 import env from "../../config/env";
 import { Logger } from "../../config";
-import { deleteObject, getPresignedDownload, putObject } from "../storage.service";
 
 const logger = new Logger("PDFService");
 
@@ -717,7 +716,7 @@ export async function uploadPayslipToSpaces(
   pdfBuffer: Buffer,
   employeeName: string,
   period: string,
-): Promise<{ key: string }> {
+): Promise<{ url: string; key: string }> {
   try {
     const cleanName = employeeName.replace(/[^a-zA-Z0-9]/g, "_");
     const monthMatch = period.match(/(\d{2})\.(\d{2})$/);
@@ -763,7 +762,6 @@ export async function generateSignedPayslipUrl(
     logger.error("Error generating signed URL:", error);
     throw error;
   }
-  return getPresignedDownload(key, expiresIn);
 }
 
 export async function generateAndUploadPayslip(data: PayslipData) {

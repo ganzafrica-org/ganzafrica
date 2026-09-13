@@ -1,6 +1,5 @@
 import type { Request } from "express";
 import multer from "multer";
-import type { Request } from "express";
 import { PassThrough } from "stream";
 import {
   BlobServiceClient,
@@ -113,62 +112,50 @@ interface MulterFile {
 
 interface MulterRequest extends Express.Request {}
 
+// Fallback extension list for when a proxy sends a generic/absent mimetype (or the literal
+// "application/octet-stream"/"application/x-binary") — the file is still allowed if its name ends
+// in one of these.
+const commonExtensions = [
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "ppt",
+  "pptx",
+  "txt",
+  "csv",
+  "rtf",
+  "zip",
+  "rar",
+  "7z",
+  "json",
+  "xml",
+  "html",
+  "css",
+  "js",
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "webp",
+  "svg",
+  "mp4",
+  "webm",
+  "ogg",
+  "mov",
+  "avi",
+  "mkv",
+];
+
 const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterCallback): void => {
   // Allow if mimetype is in allowed list (handle undefined/empty from some proxies)
-
   const mimetype = file.mimetype || "";
   if (mimetype && allowedFileTypes.includes(mimetype)) return cb(null, true);
 
-  // Special handling for generic binary types - check file extension
-  if (mimetype === "application/octet-stream" || mimetype === "application/x-binary") {
-    const extension = file.originalname.toLowerCase().split(".").pop();
-    const allowedExtensions = [
-      "pdf",
-      "doc",
-      "docx",
-      "xls",
-      "xlsx",
-      "ppt",
-      "pptx",
-      "txt",
-      "csv",
-      "rtf",
-      "zip",
-      "rar",
-      "7z",
-      "json",
-      "xml",
-      "html",
-      "css",
-      "js",
-      "jpg",
-      "jpeg",
-      "png",
-      "gif",
-      "webp",
-      "svg",
-      "mp4",
-      "webm",
-      "ogg",
-      "mov",
-      "avi",
-      "mkv",
-    ];
-
-    if (extension && allowedExtensions.includes(extension)) {
-      cb(null, true);
-      return;
-    }
-  }
-
-  // Check for common file extensions even with unknown mimetypes
+  // Some proxies send a generic/absent mimetype; fall back to the file extension.
   const extension = file.originalname.toLowerCase().split(".").pop();
   if (extension && commonExtensions.includes(extension)) return cb(null, true);
-
-  if (extension && commonExtensions.includes(extension)) {
-    cb(null, true);
-    return;
-  }
 
   cb(
     new Error(
@@ -238,6 +225,10 @@ const upload = multer({
     fileSize: 100 * 1024 * 1024, // 100MB limit
   },
 });
+
+// Named alias for the same public-container uploader — some routes prefer this over the default
+// export for clarity at the call site (e.g. alongside privateUpload).
+export const publicUpload = upload;
 
 // Private upload variant for documents and other sensitive files (served via short-lived SAS
 // links — see storage.service.ts's getPresignedDownload — never a direct/public blob URL).

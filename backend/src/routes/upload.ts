@@ -7,22 +7,6 @@ const logger = new Logger("UploadRoute");
 const router: Router = Router();
 
 /**
-
- * Helper function to get the public URL for uploaded files
- * Uses CDN URL if available, otherwise falls back to the direct blob URL
- */
-function getFileUrl(location: string): string {
-  if (env.AZURE_STORAGE_CDN_URL) {
-    return location.replace(
-      env.AZURE_STORAGE_ENDPOINT.replace(/\/$/, ""),
-      env.AZURE_STORAGE_CDN_URL.replace(/\/$/, ""),
-    );
-  }
-  return location;
-}
-
-/**
-
  * @swagger
  * tags:
  *   name: Uploads

@@ -3,28 +3,12 @@ import { taskService } from "../services/task.service";
 import * as userService from "../services/user.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
-import { getFileSubdirectory } from "../middlewares/upload";
+import { getFileSubdirectory, getFileUrl } from "../middlewares/upload";
 import { getPresignedDownload } from "../services/storage.service";
 
 const logger = new Logger("TaskController");
 
 /**
-
- * Helper function to get the public URL for uploaded files
- * Uses CDN URL if available, otherwise falls back to the direct blob URL
- */
-function getFileUrl(location: string): string {
-  if (env.AZURE_STORAGE_CDN_URL) {
-    return location.replace(
-      env.AZURE_STORAGE_ENDPOINT.replace(/\/$/, ""),
-      env.AZURE_STORAGE_CDN_URL.replace(/\/$/, ""),
-    );
-  }
-  return location;
-}
-
-/**
-
  * @swagger
  * components:
  *   schemas:
