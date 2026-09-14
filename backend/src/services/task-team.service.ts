@@ -6,6 +6,7 @@ import {
   task_project_members,
   users,
 } from "../db/schema";
+import { taskTeamStatusEnum, taskProjectStatusEnum } from "../db/schema/enums";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
 import { AppError } from "../middlewares";
 import { Logger } from "../config";
@@ -286,12 +287,15 @@ export const listTaskTeams = async (filters?: {
         },
       })
       .from(task_teams)
-      .leftJoin(users, eq(task_teams.created_by, users.id));
+      .leftJoin(users, eq(task_teams.created_by, users.id))
+      .$dynamic();
 
     const conditions = [];
 
     if (filters?.status) {
-      conditions.push(eq(task_teams.status, filters.status as any));
+      conditions.push(
+        eq(task_teams.status, filters.status as (typeof taskTeamStatusEnum.enumValues)[number]),
+      );
     }
 
     if (filters?.created_by) {
@@ -327,7 +331,7 @@ export const listTaskTeams = async (filters?: {
     }
 
     if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any;
+      query = query.where(and(...conditions));
     }
 
     const teams = await query.orderBy(desc(task_teams.created_at)).limit(limit).offset(offset);
@@ -629,34 +633,15 @@ export const listTaskProjects = async (
   },
 ) => {
   try {
-    let query = db
-      .select({
-        id: task_team_projects.id,
-        team_id: task_team_projects.team_id,
-        name: task_team_projects.name,
-        description: task_team_projects.description,
-        status: task_team_projects.status,
-        start_date: task_team_projects.start_date,
-        end_date: task_team_projects.end_date,
-        color: task_team_projects.color,
-        created_by: task_team_projects.created_by,
-        created_at: task_team_projects.created_at,
-        updated_at: task_team_projects.updated_at,
-        creator: {
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          avatar_url: users.avatar_url,
-        },
-      })
-      .from(task_team_projects)
-      .leftJoin(users, eq(task_team_projects.created_by, users.id))
-      .where(eq(task_team_projects.team_id, teamId));
-
     const conditions = [eq(task_team_projects.team_id, teamId)];
 
     if (filters?.status) {
-      conditions.push(eq(task_team_projects.status, filters.status as any));
+      conditions.push(
+        eq(
+          task_team_projects.status,
+          filters.status as (typeof taskProjectStatusEnum.enumValues)[number],
+        ),
+      );
     }
 
     if (filters?.search) {

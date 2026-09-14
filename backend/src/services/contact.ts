@@ -95,8 +95,7 @@ export const listContacts = async (
         break;
     }
 
-    // Use any type to bypass TypeScript's checks
-    let queryBuilder: any = db.select().from(contacts);
+    let queryBuilder = db.select().from(contacts).$dynamic();
 
     // Add filters
     if (status) {
@@ -380,8 +379,7 @@ export const listNewsletterSubscribers = async (
         break;
     }
 
-    // Use any type to bypass TypeScript's checks
-    let queryBuilder: any = db.select().from(newsletter_subscribers);
+    let queryBuilder = db.select().from(newsletter_subscribers).$dynamic();
 
     // Apply active filter if requested
     if (activeOnly) {

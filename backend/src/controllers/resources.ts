@@ -159,33 +159,34 @@ export const getAllResources = async (req: Request, res: Response): Promise<void
         externalUrl: alumni_resources.external_url,
         createdAt: alumni_resources.created_at,
       })
-      .from(alumni_resources);
+      .from(alumni_resources)
+      .$dynamic();
 
     // Apply where clause if exists
     if (whereClause) {
-      query = query.where(whereClause) as any;
+      query = query.where(whereClause);
     }
 
     // Apply sort order
     switch (sort) {
       case "oldest":
-        query = query.orderBy(asc(alumni_resources.created_at)) as any;
+        query = query.orderBy(asc(alumni_resources.created_at));
         break;
       case "downloads":
-        query = query.orderBy(desc(alumni_resources.downloads)) as any;
+        query = query.orderBy(desc(alumni_resources.downloads));
         break;
       case "rating":
         query = query.orderBy(
           desc(
             sql`CASE WHEN ${alumni_resources.rating_count} > 0 THEN ${alumni_resources.rating_sum}::float / ${alumni_resources.rating_count} ELSE 0 END`,
           ),
-        ) as any;
+        );
         break;
       case "views":
-        query = query.orderBy(desc(alumni_resources.views)) as any;
+        query = query.orderBy(desc(alumni_resources.views));
         break;
       default:
-        query = query.orderBy(desc(alumni_resources.created_at)) as any;
+        query = query.orderBy(desc(alumni_resources.created_at));
     }
 
     // Apply pagination
@@ -193,7 +194,7 @@ export const getAllResources = async (req: Request, res: Response): Promise<void
 
     // Get likes count for each resource
     const resourceIds = resources.map((r) => r.id);
-    let likesMap: Record<number, number> = {};
+    const likesMap: Record<number, number> = {};
 
     if (resourceIds.length > 0) {
       const likesResult = await db
