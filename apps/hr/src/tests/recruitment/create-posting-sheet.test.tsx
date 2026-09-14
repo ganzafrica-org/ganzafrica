@@ -11,6 +11,24 @@ import { server } from "@/tests/mocks/server";
 import { renderWithClient } from "@/tests/recruitment/test-utils";
 import RecruitmentPage from "@/app/recruitment/page";
 
+// AnimatePresence's exit animation never resolves under jsdom (no real rAF timing), so the sheet's
+// "New posting" heading can stay mounted well past this test's waitFor — replace with a plain
+// pass-through so open/close happens synchronously, like the other sheet tests do.
+vi.mock("framer-motion", () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  motion: {
+    div: ({
+      children,
+      initial: _initial,
+      animate: _animate,
+      exit: _exit,
+      variants: _variants,
+      transition: _transition,
+      ...rest
+    }: Record<string, unknown> & { children?: React.ReactNode }) => <div {...rest}>{children}</div>,
+  },
+}));
+
 const API = "http://localhost:3002/api";
 
 const pushMock = vi.fn();

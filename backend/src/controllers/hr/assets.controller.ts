@@ -5,9 +5,14 @@ import { getFileUrl } from "../../middlewares/upload";
 
 // the upload middleware augments each file with `location`/`key` (not part of Express.Multer.File) —
 // same shape task.controller.ts's uploadTaskAttachments reads from req.files.
+interface UploadedFile {
+  location: string;
+  key: string;
+}
+
 function buildImageInputs(files: unknown, markFirstPrimary: boolean) {
   if (!Array.isArray(files) || files.length === 0) return undefined;
-  return (files as any[]).map((file, index) => ({
+  return (files as UploadedFile[]).map((file, index) => ({
     url: getFileUrl(file.location),
     storageKey: file.key,
     isPrimary: markFirstPrimary && index === 0,

@@ -162,6 +162,11 @@
  *         description: Emails sent
  */
 import * as payrollService from "../../services/hr/payroll.service";
+import type {
+  CreatePayrollData,
+  PayrollFilters,
+  PaginationOptions,
+} from "../../services/hr/payroll.service";
 import * as payslipTokenService from "../../services/hr/payslip-token.service";
 import * as pdfService from "../../services/hr/pdf.service";
 import * as payrollEmailService from "../../services/hr/payroll-email.service";
@@ -181,18 +186,20 @@ const USD_SALARY_EMAILS = new Set(
     .filter(Boolean),
 );
 
+type PayrollCsvRow = Record<string, string>;
+
 /**
  * Parse CSV file into rows
  */
-function parsePayrollCSV(filePath: string): Promise<any[]> {
+function parsePayrollCSV(filePath: string): Promise<PayrollCsvRow[]> {
   return new Promise((resolve, reject) => {
     const fileContent = fs.readFileSync(filePath, "utf-8");
-    Papa.parse(fileContent, {
+    Papa.parse<PayrollCsvRow>(fileContent, {
       header: true,
       skipEmptyLines: true,
       transformHeader: (header) => header.trim(),
       complete: (results) => resolve(results.data),
-      error: (error: any) => reject(error),
+      error: (error: Error) => reject(error),
     });
   });
 }
@@ -219,7 +226,7 @@ function detectFormat(headers: string[]): "format1" | "format2" | "format3" | "f
 /**
  * Parse a numeric string (handles commas, dashes, spaces)
  */
-function parseNumber(value: any): string {
+function parseNumber(value: string | undefined): string {
   if (!value) return "0";
   const str = String(value).trim();
   if (str === "-" || str === "") return "0";
@@ -229,7 +236,7 @@ function parseNumber(value: any): string {
 /**
  * Parse date to YYYY-MM-DD. Supports DD.MM.YY and DD.MM.YYYY formats.
  */
-function parseDate(value: any): string | undefined {
+function parseDate(value: string | undefined): string | undefined {
   if (!value) return undefined;
   const trimmed = String(value).trim();
   if (!trimmed) return undefined;
@@ -271,11 +278,11 @@ function parseDate(value: any): string | undefined {
  *   TPR 30%, Net Salary before CBHI, CBHI 0.5%, Net Salary, Date of BNR rate, NCBA Rate, Net Salary Paid in USD
  */
 function processFormat1Row(
-  row: any,
+  row: PayrollCsvRow,
   userId: number | null,
   uploadedBy: number,
   filename: string,
-): any | null {
+): CreatePayrollData | null {
   const email = (row["Email address"] || row.Email || row.email || "").trim();
   const name = (row.Name || row.name || "").trim();
   if (!email || !name) return null;
@@ -337,11 +344,11 @@ function processFormat1Row(
  *   Gross fees, WOP USD, Date rate, NCBA Rate Used, WOP RWF, Net payments, Gross (RWF), Email
  */
 function processFormat2Row(
-  row: any,
+  row: PayrollCsvRow,
   userId: number | null,
   uploadedBy: number,
   filename: string,
-): any | null {
+): CreatePayrollData | null {
   const email = (row.Email || row.email || "").trim();
   const name = (row["Program name"] || row.Name || row.name || "").trim();
   if (!email || !name) return null;
@@ -390,11 +397,11 @@ function processFormat2Row(
  *   Basic, Housing allowances 20%, Function allowance 5%, Transport allowance 5%, Gross, Email
  */
 function processFormat3Row(
-  row: any,
+  row: PayrollCsvRow,
   userId: number | null,
   uploadedBy: number,
   filename: string,
-): any | null {
+): CreatePayrollData | null {
   const email = (row.Email || row.email || "").trim();
   const name = (row.Name || row.name || "").trim();
   if (!email || !name) return null;
@@ -440,11 +447,11 @@ function processFormat3Row(
  * Columns: Payroll Period, Date of payment, Employee Id, Name, Gross, WOP, Net, Email
  */
 function processFormat4Row(
-  row: any,
+  row: PayrollCsvRow,
   userId: number | null,
   uploadedBy: number,
   filename: string,
-): any | null {
+): CreatePayrollData | null {
   const email = (row.Email || row.email || "").trim();
   const name = (row.Name || row.name || "").trim();
   if (!email || !name) return null;
@@ -491,8 +498,8 @@ export async function uploadPayrollCSV(req: Request, res: Response, next: NextFu
     const format = detectFormat(headers);
     logger.info(`Detected payroll format: ${format}`);
 
-    const validRecords: any[] = [];
-    const invalidRecords: any[] = [];
+    const validRecords: CreatePayrollData[] = [];
+    const invalidRecords: { row: PayrollCsvRow; email: string; name: string; error: string }[] = [];
 
     for (const row of rows) {
       const email = (row["Email address"] || row.Email || row.email || "").trim();
@@ -504,7 +511,7 @@ export async function uploadPayrollCSV(req: Request, res: Response, next: NextFu
       // Optionally link to existing user (not required)
       const user = email ? await payrollService.findUserByEmail(email.toLowerCase()) : null;
 
-      let record: any = null;
+      let record: CreatePayrollData | null = null;
 
       if (format === "format1") {
         record = processFormat1Row(row, user?.id ?? null, uploadedBy, req.file!.originalname);
@@ -598,7 +605,7 @@ export async function getPayrolls(req: Request, res: Response, next: NextFunctio
       sort_order,
     } = req.query;
 
-    const filters: any = {};
+    const filters: PayrollFilters = {};
     if (user_id) filters.user_id = parseInt(user_id as string);
     if (payroll_period) filters.payroll_period = payroll_period as string;
     if (email) filters.email = email as string;
@@ -608,7 +615,7 @@ export async function getPayrolls(req: Request, res: Response, next: NextFunctio
     if (start_date) filters.start_date = new Date(start_date as string);
     if (end_date) filters.end_date = new Date(end_date as string);
 
-    const pagination: any = {};
+    const pagination: PaginationOptions = {};
     if (page) pagination.page = parseInt(page as string);
     if (limit) pagination.limit = parseInt(limit as string);
     if (sort_by) pagination.sort_by = sort_by as string;
@@ -696,10 +703,10 @@ export async function sendPayslipEmails(req: Request, res: Response, next: NextF
 
     payrollEmailService
       .sendPayslipsBatch(payroll_ids)
-      .then((result: any) => {
+      .then((result) => {
         logger.info(`Email batch complete: ${result.successful}/${result.total} sent successfully`);
       })
-      .catch((error: any) => {
+      .catch((error) => {
         logger.error("Error in background email sending:", error);
       });
 

@@ -7,7 +7,7 @@ import { screen, cleanup } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/mocks/server";
 import { renderWithClient } from "@/tests/recruitment/test-utils";
-import MyOnboardingPage from "@/app/employees/onboarding/me/page";
+import MyOnboardingPage from "@/app/onboarding/me/page";
 
 const API = "http://localhost:3002/api";
 
@@ -72,8 +72,7 @@ describe("My onboarding page", () => {
 
     renderWithClient(<MyOnboardingPage />);
 
-    expect(await screen.findByText("Welcome to GanzAfrica")).toBeInTheDocument();
-    // Two rings now render "25%" (the welcome card's and the StatsHeader's) — assert at least one.
+    expect(await screen.findByText("Sign your contract")).toBeInTheDocument();
     expect(screen.getAllByText("25%").length).toBeGreaterThan(0);
     expect(screen.getByText("Your action items")).toBeInTheDocument();
     expect(screen.getByText("Being handled for you")).toBeInTheDocument();
@@ -118,8 +117,8 @@ describe("My onboarding page", () => {
 
     renderWithClient(<MyOnboardingPage />);
 
-    expect(await screen.findByText("You're all set")).toBeInTheDocument();
-    expect(screen.getByText(/fully active/)).toBeInTheDocument();
+    expect(await screen.findByText(/everything is done/i)).toBeInTheDocument();
+    expect(screen.getByText(/manager and hr have been notified/i)).toBeInTheDocument();
   });
 
   it("handles having no onboarding at all", async () => {

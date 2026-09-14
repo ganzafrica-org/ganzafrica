@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import type { calendar_v3 } from "googleapis";
 import { AppError } from "../middlewares";
 import * as googleCalendarService from "../services/google-calendar.service";
 import Logger from "../config/logger";
@@ -267,7 +268,7 @@ export const getEvents = async (req: Request, res: Response): Promise<void> => {
       );
 
       // Flatten all events into a single array with userId attached
-      const allEvents: any[] = [];
+      const allEvents: (calendar_v3.Schema$Event & { userId: string })[] = [];
       results.forEach(({ userId, events }) => {
         events.forEach((event) => {
           allEvents.push({

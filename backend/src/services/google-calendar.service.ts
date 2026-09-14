@@ -1,4 +1,4 @@
-import { google } from "googleapis";
+import { google, calendar_v3 } from "googleapis";
 import env from "../config/env";
 import Logger from "../config/logger";
 import { db } from "../db/client";
@@ -253,7 +253,7 @@ export const getGoogleCalendarEvents = async (
   userId: string,
   timeMin: string,
   timeMax: string,
-): Promise<any[]> => {
+): Promise<Array<calendar_v3.Schema$Event & { userId: string }>> => {
   try {
     logger.info(`Fetching Google Calendar events for user ${userId}`, {
       timeMin,
@@ -313,13 +313,18 @@ export const getGoogleCalendarEvents = async (
 /**
  * Get Google Calendar events for multiple users
  */
+type UserCalendarEvents = {
+  userId: string;
+  events: Array<calendar_v3.Schema$Event & { userId: string }>;
+};
+
 export const getGoogleCalendarEventsForUsers = async (
   userIds: string[],
   timeMin: string,
   timeMax: string,
-): Promise<Array<{ userId: string; events: any[] }>> => {
+): Promise<UserCalendarEvents[]> => {
   const results = await Promise.allSettled(
-    userIds.map(async (userId) => {
+    userIds.map(async (userId): Promise<UserCalendarEvents> => {
       try {
         const events = await getGoogleCalendarEvents(userId, timeMin, timeMax);
         return { userId, events };
@@ -332,7 +337,7 @@ export const getGoogleCalendarEventsForUsers = async (
 
   return results
     .filter(
-      (result): result is PromiseFulfilledResult<{ userId: string; events: any[] }> =>
+      (result): result is PromiseFulfilledResult<UserCalendarEvents> =>
         result.status === "fulfilled",
     )
     .map((result) => result.value);
