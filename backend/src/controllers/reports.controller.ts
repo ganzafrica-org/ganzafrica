@@ -3,16 +3,12 @@ import { db } from "../db/client";
 import {
   report_files,
   project_deliverables,
-  report_analytics,
-  report_templates,
-  report_categories,
   task_teams,
   task_team_projects,
   tasks,
   users,
 } from "../db/schema";
 import { eq, and, gte, lte, desc, asc, sql, inArray } from "drizzle-orm";
-import upload from "../middlewares/upload";
 import { getFileSubdirectory, getFileUrl } from "../middlewares/upload";
 import { getPresignedDownload } from "../services/storage.service";
 import { Logger } from "../config";
@@ -30,7 +26,6 @@ export const getReports = async (req: Request, res: Response) => {
       fileType,
       page = 1,
       limit = 20,
-      sortBy = "created_at",
       sortOrder = "desc",
     } = req.query;
 

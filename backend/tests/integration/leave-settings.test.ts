@@ -122,47 +122,9 @@ describe("MOD-06 holidays (admin CRUD table — still a valid data source, just 
     expect(await listHolidays(2026)).toHaveLength(1);
   });
 
-  it("a single-country org (no holiday ever tagged) sees every holiday — identical to today's behavior (regression)", async () => {
-    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
-    await createHoliday({ date: "2026-01-01", name: "New Year" });
-    await createHoliday({ date: "2026-07-01", name: "Independence Day" });
-
-    const relevant = await listRelevantHolidays(2026);
-    expect(relevant.map((h) => h.name).sort()).toEqual(["Independence Day", "New Year"]);
-  });
-
-  it("a two-country org sees the union: universal holidays plus each represented country's own", async () => {
-    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
-    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Kenya" });
-    await createHoliday({ date: "2026-01-01", name: "New Year" }); // universal
-    await createHoliday({ date: "2026-07-01", name: "Rwanda Independence Day", country: "Rwanda" });
-    await createHoliday({ date: "2026-12-12", name: "Kenya Jamhuri Day", country: "Kenya" });
-    await createHoliday({ date: "2026-05-25", name: "Ghana Republic Day", country: "Ghana" }); // no employee there
-
-    const relevant = await listRelevantHolidays(2026);
-    expect(relevant.map((h) => h.name).sort()).toEqual([
-      "Kenya Jamhuri Day",
-      "New Year",
-      "Rwanda Independence Day",
-    ]);
-  });
-
-  it("no represented countries (no active employees) falls back to universal-only holidays", async () => {
-    await createHoliday({ date: "2026-01-01", name: "New Year" }); // universal
-    await createHoliday({ date: "2026-07-01", name: "Rwanda Independence Day", country: "Rwanda" });
-
-    const relevant = await listRelevantHolidays(2026);
-    expect(relevant.map((h) => h.name)).toEqual(["New Year"]);
-  });
-
-  it("omitting the year returns holidays across every year, not just one", async () => {
-    await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
-    await createHoliday({ date: "2025-01-01", name: "New Year 2025" });
-    await createHoliday({ date: "2026-01-01", name: "New Year 2026" });
-
-    const relevant = await listRelevantHolidays();
-    expect(relevant.map((h) => h.name).sort()).toEqual(["New Year 2025", "New Year 2026"]);
-  });
+  // listRelevantHolidays behavior (single/two-country union, no-country, default-year) is covered
+  // against its real source — the mocked Nager.Date boundary — in the describe block below, since
+  // this admin table no longer feeds it.
 });
 
 describe("MOD-06 listRelevantHolidays — real holidays (Nager.Date) per represented country", () => {

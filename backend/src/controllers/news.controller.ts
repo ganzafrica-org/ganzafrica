@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { newsService } from "../services/news.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
+import type { newsCategoryEnum, newsStatusEnum } from "../db/schema/enums";
 
 const logger = new Logger("NewsController");
 
@@ -159,8 +160,8 @@ export const createNews = async (req: Request, res: Response) => {
 export const listNews = async (req: Request, res: Response) => {
   try {
     const filter = {
-      category: req.query.category as any,
-      status: req.query.status as any,
+      category: req.query.category as (typeof newsCategoryEnum.enumValues)[number] | undefined,
+      status: req.query.status as (typeof newsStatusEnum.enumValues)[number] | undefined,
       search: req.query.search as string,
       tags: req.query.tags ? (req.query.tags as string).split(",").map(Number) : undefined,
       limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,

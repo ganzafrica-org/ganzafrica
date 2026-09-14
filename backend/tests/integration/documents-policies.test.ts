@@ -18,10 +18,10 @@ vi.mock("../../src/services/storage.service", async (importOriginal) => {
   return {
     ...actual,
     getObjectBuffer: vi.fn().mockResolvedValue(Buffer.from("")),
-    getPresignedDownload: vi.fn(
-      async (key: string, expiresIn = 300) =>
-        `https://teststorage.blob.core.windows.net/uploads/${key}?sig=test&se=exp-${expiresIn}`,
-    ),
+    getPresignedDownload: vi.fn(async (key: string, expiresIn = 300) => {
+      const se = new Date(Date.now() + expiresIn * 1000).toISOString();
+      return `https://teststorage.blob.core.windows.net/uploads/${key}?sig=test&se=${encodeURIComponent(se)}`;
+    }),
   };
 });
 

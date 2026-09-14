@@ -6,13 +6,22 @@ import { db } from "../db/client";
 import { project_categories } from "../db/schema";
 import { eq } from "drizzle-orm";
 
-// Import Express and Multer types
-import { Multer } from "multer";
-
 // No need to extend Express.Request as it already has the files property
 // in @types/express-serve-static-core and @types/multer
 
 const logger = new Logger("ProjectController");
+
+interface ProjectMemberInput {
+  team_id: string | number;
+  start_date?: string;
+  end_date?: string;
+  [key: string]: unknown;
+}
+
+interface ProjectPartnerInput {
+  partner_id: string | number;
+  [key: string]: unknown;
+}
 
 /**
  * @swagger
@@ -274,7 +283,7 @@ export const createProject = async (req: Request, res: Response) => {
 
       // Parse team member data if provided
       members: members
-        ? members.map((member: any, index: number) => {
+        ? members.map((member: ProjectMemberInput, index: number) => {
             if (!member.start_date || member.start_date.trim() === "") {
               throw new AppError(
                 `Member start date is required for team member ${index + 1}. Please provide a valid date in YYYY-MM-DD format.`,
@@ -309,7 +318,7 @@ export const createProject = async (req: Request, res: Response) => {
 
       // Parse partners data if provided
       partners: partners
-        ? partners.map((partner: any) => ({
+        ? partners.map((partner: ProjectPartnerInput) => ({
             ...partner,
             partner_id: Number(partner.partner_id),
           }))
