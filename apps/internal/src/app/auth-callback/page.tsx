@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, Suspense, useState } from "react";
+import React, { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import apiClient from "../../lib/api-client";
@@ -18,7 +18,6 @@ function isAuthorized(email?: string): boolean {
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -59,7 +58,7 @@ function AuthCallbackContent() {
       window.location.href = login.toString();
     };
 
-    run().finally(() => setIsProcessing(false));
+    run();
   }, [searchParams, router]);
 
   return (

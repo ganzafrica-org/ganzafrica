@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { authFetch } from "@/lib/auth-fetch";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -62,6 +62,22 @@ interface Payroll {
   payslip_file_key?: string;
 }
 
+interface InvalidPayrollRecord {
+  email: string;
+  name: string;
+  error: string;
+}
+
+interface UploadResult {
+  summary: {
+    total_rows: number;
+    valid_records: number;
+    invalid_records: number;
+  };
+  valid_records: Record<string, unknown>[];
+  invalid_records: InvalidPayrollRecord[];
+}
+
 export default function PayslipsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -76,7 +92,7 @@ export default function PayslipsPage() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<any>(null);
+  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
 
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -101,7 +117,7 @@ export default function PayslipsPage() {
       if (!params.has("limit")) params.set("limit", "20");
       router.replace(`?${params.toString()}`, { scroll: false });
     }
-  }, []);
+  }, [searchParams, router]);
 
   // Update URL params
   const updateParams = (updates: Record<string, string>) => {
@@ -119,7 +135,7 @@ export default function PayslipsPage() {
   };
 
   // Fetch payrolls
-  const fetchPayrolls = async () => {
+  const fetchPayrolls = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -135,7 +151,7 @@ export default function PayslipsPage() {
       if (!response.ok) throw new Error("Failed to fetch payrolls");
 
       const data = await response.json();
-      setPayrolls(data.data.map((item: any) => item.payroll));
+      setPayrolls(data.data.map((item: { payroll: Payroll }) => item.payroll));
       setTotalPages(data.pagination.total_pages);
       setTotalRecords(data.pagination.total);
     } catch (error) {
@@ -144,11 +160,11 @@ export default function PayslipsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, search, period, emailSent]);
 
   useEffect(() => {
     fetchPayrolls();
-  }, [page, limit, search, period, emailSent]);
+  }, [fetchPayrolls]);
 
   const handleRefresh = () => {
     fetchPayrolls();
@@ -601,7 +617,7 @@ export default function PayslipsPage() {
                 type="file"
                 accept=".csv"
                 onChange={handleFileChange}
-                disabled={uploading || uploadResult}
+                disabled={uploading || !!uploadResult}
               />
             </div>
 
@@ -648,7 +664,7 @@ export default function PayslipsPage() {
                         <ul className="mt-2 space-y-1 text-sm">
                           {uploadResult.invalid_records
                             .slice(0, 5)
-                            .map((record: any, i: number) => (
+                            .map((record: InvalidPayrollRecord, i: number) => (
                               <li key={i} className="text-red-600">
                                 {record.email} - {record.name} ({record.error})
                               </li>
