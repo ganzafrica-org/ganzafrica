@@ -163,8 +163,8 @@ export const getAllAchievements = async (req: Request, res: Response): Promise<v
     // Get likes and comments counts for each achievement
     const achievementIds = achievements.map((a) => a.id);
 
-    let likesMap: Record<number, number> = {};
-    let commentsMap: Record<number, number> = {};
+    const likesMap: Record<number, number> = {};
+    const commentsMap: Record<number, number> = {};
 
     if (achievementIds.length > 0) {
       // Use IN instead of ANY for better compatibility
@@ -494,7 +494,7 @@ export const updateAchievement = async (req: Request, res: Response): Promise<vo
     const { title, description, category, type, date, organization, location, link, tags } =
       req.body;
 
-    const updateData: Record<string, any> = {};
+    const updateData: Partial<typeof alumni_achievements.$inferInsert> = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (category !== undefined) {

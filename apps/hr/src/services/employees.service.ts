@@ -51,16 +51,6 @@ export const employeesService = {
     const response = await httpClient.post<{ employee: Employee }>("/hr/employees", payload);
     return response.data.employee;
   },
-  async getDepartmentStats() {
-    const response = await httpClient.get<DepartmentStatsSummary>(
-      "/hr/employees/departments/stats",
-    );
-    return response.data;
-  },
-  async createEmployee(payload: CreateEmployeeRequest) {
-    const response = await httpClient.post<{ employee: Employee }>("/hr/employees", payload);
-    return response.data.employee;
-  },
   async updateEmployee(id: string, payload: UpdateEmployeeRequest) {
     const response = await httpClient.patch<{ employee: Employee }>(`/hr/employees/${id}`, payload);
     return response.data.employee;

@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "../db/client";
 import { alumni_events, event_registrations } from "../db/schema";
-import { users } from "../db/schema";
-import { eq, and, or, ilike, sql, desc, asc, count, gte, lte } from "drizzle-orm";
+import { eq, and, or, ilike, sql, asc, count, gte, lte } from "drizzle-orm";
 import { Logger } from "../config";
 
 const logger = new Logger("EventsController");
@@ -125,10 +124,7 @@ export const getAllEvents = async (req: Request, res: Response): Promise<void> =
       conditions.push(lte(alumni_events.event_date, new Date(endDate as string)));
     }
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
     // If myEvents filter is enabled, we need to join with registrations
-    let query;
     if (myEvents === "true" && req.user) {
       const userId = parseInt(req.user.id, 10);
 
@@ -184,7 +180,7 @@ export const getAllEvents = async (req: Request, res: Response): Promise<void> =
     const totalPages = Math.ceil(totalCount / limitNum);
 
     // Get events
-    query = db
+    let query = db
       .select({
         id: alumni_events.id,
         title: alumni_events.title,
@@ -212,21 +208,22 @@ export const getAllEvents = async (req: Request, res: Response): Promise<void> =
         views: alumni_events.views,
         createdAt: alumni_events.created_at,
       })
-      .from(alumni_events);
+      .from(alumni_events)
+      .$dynamic();
 
     if (finalWhereClause) {
-      query = query.where(finalWhereClause) as any;
+      query = query.where(finalWhereClause);
     }
 
     // Default sort: upcoming events first
-    query = query.orderBy(asc(alumni_events.event_date)) as any;
+    query = query.orderBy(asc(alumni_events.event_date));
 
     const events = await query.limit(limitNum).offset(offset);
 
     // Get attendee counts and registration status for each event
-    const eventIds = events.map((e: any) => e.id);
-    let attendeeCounts: Record<number, number> = {};
-    let registrationStatus: Record<number, boolean> = {};
+    const eventIds = events.map((e) => e.id);
+    const attendeeCounts: Record<number, number> = {};
+    const registrationStatus: Record<number, boolean> = {};
 
     if (eventIds.length > 0) {
       // Get attendee counts
@@ -286,7 +283,7 @@ export const getAllEvents = async (req: Request, res: Response): Promise<void> =
     const categories = [...new Set(allEvents.map((e) => e.category).filter(Boolean))].sort();
 
     res.status(200).json({
-      events: events.map((e: any) => ({
+      events: events.map((e) => ({
         id: e.id,
         title: e.title,
         description: e.description,
