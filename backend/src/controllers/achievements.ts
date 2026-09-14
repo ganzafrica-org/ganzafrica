@@ -134,26 +134,27 @@ export const getAllAchievements = async (req: Request, res: Response): Promise<v
         userAvatar: users.avatar_url,
       })
       .from(alumni_achievements)
-      .leftJoin(users, eq(alumni_achievements.user_id, users.id));
+      .leftJoin(users, eq(alumni_achievements.user_id, users.id))
+      .$dynamic();
 
     // Apply where clause if exists
     if (whereClause) {
-      query = query.where(whereClause) as any;
+      query = query.where(whereClause);
     }
 
     // Apply sort order
     switch (sort) {
       case "oldest":
-        query = query.orderBy(asc(alumni_achievements.date)) as any;
+        query = query.orderBy(asc(alumni_achievements.date));
         break;
       case "most-liked":
-        query = query.orderBy(desc(alumni_achievements.created_at)) as any;
+        query = query.orderBy(desc(alumni_achievements.created_at));
         break;
       case "most-viewed":
-        query = query.orderBy(desc(alumni_achievements.views)) as any;
+        query = query.orderBy(desc(alumni_achievements.views));
         break;
       default:
-        query = query.orderBy(desc(alumni_achievements.created_at)) as any;
+        query = query.orderBy(desc(alumni_achievements.created_at));
     }
 
     // Apply pagination

@@ -2,7 +2,6 @@
 
 import React, { useEffect, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
 import Image from "next/image";
 import { Progress } from "@/components/ui/progress";
 import { completeAuthCallback } from "@/lib/auth-callback";

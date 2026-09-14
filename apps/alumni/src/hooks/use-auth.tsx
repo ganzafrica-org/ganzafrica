@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Login happens at the portal; kept for API compatibility (redirects there).
-  const login = async (_credentials: LoginCredentials): Promise<boolean> => {
+  const login = async (): Promise<boolean> => {
     window.location.href = `${PORTAL_URL}/login`;
     return false;
   };
