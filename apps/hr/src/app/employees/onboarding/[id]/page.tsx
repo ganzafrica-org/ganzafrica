@@ -118,6 +118,7 @@ export default function OnboardingDetailPage() {
       <div className="px-6 pb-6">
         <ProcessStatus
           tasks={tasks}
+          progress={progress}
           canManage={canManage}
           variant="full"
           employeeId={instance.employee_id}

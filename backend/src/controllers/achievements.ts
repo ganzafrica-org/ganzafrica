@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { db } from "../db/client";
 import { alumni_achievements, achievement_likes, achievement_comments } from "../db/schema";
 import { users } from "../db/schema";
-import { eq, and, or, ilike, sql, desc, asc, count, countDistinct } from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, count } from "drizzle-orm";
 import { Logger } from "../config";
 
 const logger = new Logger("AchievementsController");
