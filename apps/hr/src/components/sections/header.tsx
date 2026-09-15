@@ -105,6 +105,18 @@ export function StatsHeader({
                 const Icon = stat.icon;
                 const isDown = stat.delta?.direction === "down";
 
+                if (stat.content) {
+                  return (
+                    <div
+                      key={`${stat.label}-${idx}`}
+                      className="bg-transparent border-white/10 pl-6 py-2 border-l"
+                    >
+                      <span className="text-default font-medium mb-2 block">{stat.label}</span>
+                      {stat.content}
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={`${stat.label}-${idx}`}

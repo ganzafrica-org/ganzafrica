@@ -8,7 +8,8 @@ import { clearPermissionCache } from "../../src/middlewares";
 import { makeUser } from "../factories";
 
 const sendEmailMock = vi.fn(async () => ({ id: "x" }));
-vi.mock("../../src/services/email.service", () => ({
+vi.mock("../../src/services/email.service", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../src/services/email.service")>()),
   sendEmail: (...a: unknown[]) => sendEmailMock(...a),
 }));
 

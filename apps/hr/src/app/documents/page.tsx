@@ -596,7 +596,7 @@ export default function DocumentManagementPage() {
         <ReusableSheet
           open={formOpen}
           onOpenChange={setFormOpen}
-          maxWidth="w-full sm:max-w-2xl"
+          maxWidth="w-full sm:max-w-3xl"
           title={editingDocument ? "Edit Document" : "Upload New Document"}
         >
           <DocumentFormSheet

@@ -3,7 +3,7 @@ import { taskService } from "../services/task.service";
 import * as userService from "../services/user.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
-import { getFileSubdirectory } from "../middlewares/upload";
+import { getFileSubdirectory, getFileUrl } from "../middlewares/upload";
 import { getPresignedDownload } from "../services/storage.service";
 
 const logger = new Logger("TaskController");
@@ -987,17 +987,28 @@ export const uploadTaskAttachments = async (req: Request, res: Response) => {
     // Get current task to check access and get existing attachments
     const task = await taskService.getTaskById(taskId, userId);
 
-    // Attachments are private: store the blob key and mint a fresh SAS link on read.
-    const uploadedFiles = (req.files as Express.Multer.File[]).map((file) => {
-      const key = file.key!;
+    // Process uploaded files - the upload middleware provides different properties
+    const uploadedFiles = (req.files as any[]).map((file) => {
+      const { key, originalname, size, mimetype, location } = file;
+
+      // Get subdirectory based on file type
+      const subdir = getFileSubdirectory(mimetype);
+
+      // Extract filename from the key
+      const filename = key.split("/").pop();
+
+      // Get the public URL (uses CDN if configured, otherwise the direct blob URL)
+      const fileUrl = getFileUrl(location);
+
       return {
         id: Math.random().toString(36).slice(2),
-        filename: file.originalname,
-        key,
-        size: file.size,
-        type: file.mimetype,
-        category: getFileSubdirectory(file.mimetype),
-        uploaded_by: userId,
+        filename: originalname,
+        url: fileUrl,
+        key, // blob key for deletion later if needed
+        size,
+        type: mimetype,
+        category: subdir,
+        uploaded_by: userId, // Add uploader information
         uploaded_at: new Date().toISOString(),
       };
     });

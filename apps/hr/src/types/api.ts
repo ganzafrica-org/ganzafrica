@@ -636,6 +636,18 @@ export interface CreateDocumentRequest {
   status?: "PUBLISHED" | "DRAFT";
   access: DocumentACL;
   contractId?: string;
+  /** Clone an existing document's stored file instead of uploading a new one — mutually
+   *  exclusive with the `file` argument passed to documentsService.createDocument. */
+  sourceDocumentId?: string;
+}
+
+/** A pickable entry in the "use a saved template instead of uploading" list. */
+export interface DocumentTemplateOption {
+  id: string;
+  document_name: string;
+  description: string;
+  department: string;
+  updated_at: string;
 }
 
 export interface UpdateDocumentRequest {
@@ -657,12 +669,34 @@ export interface UpdateDocumentRequest {
 export const DOCUMENT_CATEGORY_TEMPLATE_COLORS = ["green", "yellow", "blue", "orange"] as const;
 export type DocumentCategoryTemplateColor = (typeof DOCUMENT_CATEGORY_TEMPLATE_COLORS)[number];
 
+// Branding fields (v1.1, additive) — all optional on input, always present on output (DB
+// defaults backfill any template created before this feature existed).
+export const DOCUMENT_CATEGORY_TEMPLATE_BORDER_STYLES = [
+  "NONE",
+  "SIMPLE",
+  "DOUBLE",
+  "ACCENT",
+] as const;
+export type DocumentCategoryTemplateBorderStyle =
+  (typeof DOCUMENT_CATEGORY_TEMPLATE_BORDER_STYLES)[number];
+
+export const DOCUMENT_CATEGORY_TEMPLATE_LOGO_POSITIONS = ["TOP_LEFT", "BOTTOM_LEFT"] as const;
+export type DocumentCategoryTemplateLogoPosition =
+  (typeof DOCUMENT_CATEGORY_TEMPLATE_LOGO_POSITIONS)[number];
+
 export interface DocumentCategoryTemplate {
   id: string;
   name: string;
   color: DocumentCategoryTemplateColor;
+  /** Which document category this template applies to when picked from "use a saved template"
+   *  — null means universal (offered regardless of the category being created). */
+  category: DocumentCategory | null;
   header_text: string | null;
   description: string | null;
+  titleColor: string;
+  borderStyle: DocumentCategoryTemplateBorderStyle;
+  logoUrl: string;
+  logoPosition: DocumentCategoryTemplateLogoPosition;
   created_at: string;
   updated_at: string;
 }
@@ -670,8 +704,13 @@ export interface DocumentCategoryTemplate {
 export interface CreateDocumentCategoryTemplateRequest {
   name: string;
   color: DocumentCategoryTemplateColor;
+  category?: DocumentCategory | null;
   header_text?: string;
   description?: string;
+  titleColor?: string;
+  borderStyle?: DocumentCategoryTemplateBorderStyle;
+  logoUrl?: string;
+  logoPosition?: DocumentCategoryTemplateLogoPosition;
 }
 
 export interface UpdateDocumentCategoryTemplateRequest extends Partial<CreateDocumentCategoryTemplateRequest> {}

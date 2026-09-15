@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { isAxiosError } from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -298,8 +299,9 @@ export default function MentorshipPage() {
       toast.success("Mentee added successfully!");
       // Refresh the list
       setFellows((prev) => prev.map((f) => (f.id === fellowId ? { ...f, isAvailable: false } : f)));
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || "Failed to add mentee");
+    } catch (error) {
+      const message = isAxiosError(error) ? error.response?.data?.error : undefined;
+      toast.error(message || "Failed to add mentee");
     } finally {
       setAddingMenteeId(null);
     }

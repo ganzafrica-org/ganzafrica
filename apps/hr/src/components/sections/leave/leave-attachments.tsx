@@ -54,7 +54,7 @@ export function LeaveAttachments({ leaveId }: Props) {
         ))}
       </ul>
       {openDoc && (
-        <div className="mt-2 h-72 overflow-hidden rounded-lg border">
+        <div className="mt-2">
           <DocumentViewer document={openDoc} />
         </div>
       )}

@@ -408,7 +408,7 @@ export const mentorshipApi = {
     return response.data;
   },
 
-  addMentee: async (fellowId: number): Promise<{ message: string; mentorship: any }> => {
+  addMentee: async (fellowId: number): Promise<{ message: string; mentorship: Mentorship }> => {
     const response = await apiClient.post("/mentorship/add-mentee", {
       fellowId,
     });
@@ -428,7 +428,7 @@ export const mentorshipApi = {
   updateConnection: async (
     id: number,
     data: { totalSessions?: number; status?: string },
-  ): Promise<{ message: string; mentorship: any }> => {
+  ): Promise<{ message: string; mentorship: Mentorship }> => {
     const response = await apiClient.put(`/mentorship/connections/${id}`, data);
     return response.data;
   },

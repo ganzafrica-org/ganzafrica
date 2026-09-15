@@ -1,26 +1,35 @@
 import type { Request } from "express";
 import multer from "multer";
-import { BlobServiceClient, type ContainerClient } from "@azure/storage-blob";
+import { PassThrough } from "stream";
+import {
+  BlobServiceClient,
+  StorageSharedKeyCredential,
+  type ContainerClient,
+} from "@azure/storage-blob";
 import env from "../config/env";
 
-// The Azure storage engine sets these on each uploaded file (mirrors what multer-s3 provided).
+// Azure equivalent of what @types/multer-s3 used to add — the storage engine below augments
+// each uploaded file with these, same shape every controller already reads (see the
+// "multer-s3 augments..." comments throughout).
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     namespace Multer {
       interface File {
-        /** Blob key/path within the container, e.g. `uploads/document/123-file.pdf`. */
         key?: string;
-        /** Absolute blob URL (no SAS). Private objects need `getPresignedDownload` to be readable. */
         location?: string;
+        bucket?: string;
       }
     }
   }
 }
 
-const blobService = BlobServiceClient.fromConnectionString(env.AZURE_STORAGE_CONNECTION_STRING);
-const privateContainer = blobService.getContainerClient(env.AZURE_STORAGE_CONTAINER_PRIVATE);
-const publicContainer = blobService.getContainerClient(env.AZURE_STORAGE_CONTAINER_PUBLIC);
+const sharedKeyCredential = new StorageSharedKeyCredential(
+  env.AZURE_STORAGE_ACCOUNT,
+  env.AZURE_STORAGE_ACCOUNT_KEY,
+);
+const blobServiceClient = new BlobServiceClient(env.AZURE_STORAGE_ENDPOINT, sharedKeyCredential);
+const publicContainer = blobServiceClient.getContainerClient(env.AZURE_STORAGE_CONTAINER_PUBLIC);
+const privateContainer = blobServiceClient.getContainerClient(env.AZURE_STORAGE_CONTAINER_PRIVATE);
 
 // Define allowed file types
 const allowedImageTypes = [
@@ -87,9 +96,25 @@ export function getFileSubdirectory(mimetype: string): string {
  * back through `getPresignedDownload` (a SAS URL) instead.
  */
 export function getFileUrl(location: string): string {
+  if (env.AZURE_STORAGE_CDN_URL) {
+    return location.replace(
+      env.AZURE_STORAGE_ENDPOINT.replace(/\/$/, ""),
+      env.AZURE_STORAGE_CDN_URL.replace(/\/$/, ""),
+    );
+  }
   return location;
 }
 
+interface MulterFile {
+  mimetype: string;
+  originalname: string;
+}
+
+interface MulterRequest extends Express.Request {}
+
+// Fallback extension list for when a proxy sends a generic/absent mimetype (or the literal
+// "application/octet-stream"/"application/x-binary") — the file is still allowed if its name ends
+// in one of these.
 const commonExtensions = [
   "pdf",
   "doc",
@@ -121,12 +146,10 @@ const commonExtensions = [
   "mov",
   "avi",
   "mkv",
-  "bmp",
-  "tiff",
-  "ico",
 ];
 
-const fileFilter: multer.Options["fileFilter"] = (_req, file, cb) => {
+const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterCallback): void => {
+  // Allow if mimetype is in allowed list (handle undefined/empty from some proxies)
   const mimetype = file.mimetype || "";
   if (mimetype && allowedFileTypes.includes(mimetype)) return cb(null, true);
 
@@ -141,75 +164,80 @@ const fileFilter: multer.Options["fileFilter"] = (_req, file, cb) => {
   );
 };
 
-function buildKey(file: Express.Multer.File): string {
-  const subdir = getFileSubdirectory(file.mimetype);
-  const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-  const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
-  return `uploads/${subdir}/${uniqueSuffix}-${originalName}`;
+/**
+ * multer storage engine backed by an Azure Blob container — the Azure equivalent of the old
+ * multer-s3 storage engine. Augments the uploaded file with `key` (the blob name) and `location`
+ * (the blob's URL), the same two properties every call site already reads (see the "multer-s3
+ * augments..." comments throughout the controllers — that augmentation shape is unchanged, only
+ * the backend producing it is).
+ */
+class AzureBlobStorage implements multer.StorageEngine {
+  constructor(private container: ContainerClient) {}
+
+  _handleFile(
+    _req: Request,
+    file: Express.Multer.File,
+    cb: (error?: any, info?: Partial<Express.Multer.File>) => void,
+  ) {
+    const subdir = getFileSubdirectory(file.mimetype);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
+    const blobName = `${subdir}/${uniqueSuffix}-${originalName}`;
+
+    let size = 0;
+    const counter = new PassThrough();
+    counter.on("data", (chunk: Buffer) => {
+      size += chunk.length;
+    });
+    file.stream.pipe(counter);
+
+    const blockBlobClient = this.container.getBlockBlobClient(blobName);
+    blockBlobClient
+      .uploadStream(counter, 4 * 1024 * 1024, 5, {
+        blobHTTPHeaders: { blobContentType: file.mimetype },
+      })
+      .then(() =>
+        cb(null, {
+          key: blobName,
+          location: `${this.container.url}/${blobName}`,
+          size,
+          bucket: this.container.containerName,
+        }),
+      )
+      .catch(cb);
+  }
+
+  _removeFile(_req: Request, file: Express.Multer.File, cb: (error: Error | null) => void) {
+    const key = file.key;
+    if (!key) return cb(null);
+    this.container
+      .getBlockBlobClient(key)
+      .deleteIfExists()
+      .then(() => cb(null))
+      .catch(cb);
+  }
 }
 
-/**
- * multer storage engine that streams the upload straight into Azure Blob. It sets the same fields
- * multer-s3 did — `key`, `location`, `size`, `contentType` — so existing controllers keep working.
- */
-function azureStorage(container: ContainerClient): multer.StorageEngine {
-  return {
-    _handleFile(req: Request, file, cb) {
-      const key = buildKey(file);
-      const blockBlob = container.getBlockBlobClient(key);
-      const chunks: Buffer[] = [];
-      let size = 0;
+const upload = multer({
+  storage: new AzureBlobStorage(publicContainer),
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit
+  },
+});
 
-      file.stream.on("data", (chunk: Buffer) => {
-        chunks.push(chunk);
-        size += chunk.length;
-      });
-      file.stream.on("error", cb);
-      file.stream.on("end", () => {
-        blockBlob
-          .uploadData(Buffer.concat(chunks), {
-            blobHTTPHeaders: { blobContentType: file.mimetype },
-            metadata: { originalName: file.originalname, uploadedAt: new Date().toISOString() },
-          })
-          .then(() =>
-            cb(null, {
-              key,
-              location: blockBlob.url,
-              size,
-              contentType: file.mimetype,
-            } as Partial<Express.Multer.File>),
-          )
-          .catch(cb);
-      });
-    },
-    _removeFile(_req, file, cb) {
-      const key = (file as Express.Multer.File & { key?: string }).key;
-      if (!key) return cb(null);
-      container
-        .getBlockBlobClient(key)
-        .deleteIfExists()
-        .then(() => cb(null))
-        .catch(cb);
-    },
-  };
-}
+// Named alias for the same public-container uploader — some routes prefer this over the default
+// export for clarity at the call site (e.g. alongside privateUpload).
+export const publicUpload = upload;
 
-const limits = { fileSize: 100 * 1024 * 1024 }; // 100MB
-
-/**
- * Default upload — PRIVATE by default. Files land in the private container and are read back via
- * short-lived SAS links (`getPresignedDownload`). This is the safe default for all internal files
- * (avatars, attachments, project/report files, HR assets).
- */
-const upload = multer({ storage: azureStorage(privateContainer), fileFilter, limits });
-
-/** Alias kept for existing imports; identical to the default private `upload`. */
-export const privateUpload = upload;
-
-/**
- * Public upload — ONLY for genuinely public website assets (news images, team/testimonial photos)
- * that anonymous visitors load directly. Stored in the public container with public read URLs.
- */
-export const publicUpload = multer({ storage: azureStorage(publicContainer), fileFilter, limits });
+// Private upload variant for documents and other sensitive files (served via short-lived SAS
+// links — see storage.service.ts's getPresignedDownload — never a direct/public blob URL).
+export const privateUpload = multer({
+  storage: new AzureBlobStorage(privateContainer),
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit
+  },
+});
 
 export default upload;

@@ -358,16 +358,18 @@ async function runKindHook(
     }
 
     case "asset_assignment": {
-      const assetId = ref.asset_id as string | undefined;
-      if (!assetId) {
-        throw new AppError("Assign the asset before completing this task", 422, "ASSET_MISSING");
-      }
+      // Unlike contract_signing/document_upload, nothing ever links a specific asset to this
+      // task's link_ref — assets are assigned from the Assets page, a separate flow with no
+      // knowledge of onboarding tasks. So the real signal is the employee's actual assignment
+      // state (hr_assets.assigned_to_employee_id), not a task-level reference.
       const [asset] = await db
         .select({ id: hr_assets.id })
         .from(hr_assets)
-        .where(eq(hr_assets.id, assetId))
+        .where(eq(hr_assets.assigned_to_employee_id, instance.employee_id))
         .limit(1);
-      if (!asset) throw new AppError("Linked asset not found", 422, "ASSET_NOT_FOUND");
+      if (!asset) {
+        throw new AppError("Assign the asset before completing this task", 422, "ASSET_MISSING");
+      }
       return;
     }
 
@@ -432,6 +434,16 @@ export async function skipTask(actorUserId: number, taskId: number, notes: strin
     throw new AppError("A note is required when skipping a task", 422, "SKIP_NOTE_REQUIRED");
   }
   await assertCanActOnTask(db, actorUserId, task);
+
+  // Every employee must sign their employment contract — unlike other kinds, this gate has no
+  // legitimate waiver, so skip is refused outright rather than left to a free-text note.
+  if (task.kind === "contract_signing") {
+    throw new AppError(
+      "Contract signing cannot be skipped — link a contract and send it for signature instead",
+      422,
+      "CONTRACT_SIGNING_NOT_SKIPPABLE",
+    );
+  }
 
   // Blocking work can only be waived by HR — an assignee cannot skip past a gate.
   if (task.is_blocking && !(await isHrOrAdmin(db, actorUserId))) {

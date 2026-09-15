@@ -63,8 +63,8 @@ export function EmploymentStatusCard() {
               style={{
                 width: "72px",
                 height: "72px",
-                top: "152px",
-                left: "84px",
+                top: "145px",
+                left: "90px",
                 backgroundColor: "rgba(21, 128, 61, 0.75)",
               }}
             >

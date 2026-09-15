@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+
 import { MoreHorizontal, Info } from "lucide-react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
@@ -60,10 +62,10 @@ export function ApplicantsCard() {
 
   return (
     <Card className="border-0 shadow-sm rounded-lg">
-      <CardContent className="p-6">
+      <CardContent>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-900">Applicants Summary</span>
+            <CardTitle className="font-bold text-slate-900">Applicants Summary</CardTitle>
             <Info size={14} className="text-slate-400 cursor-pointer" />
           </div>
           <button className="p-2 hover:bg-slate-200 rounded-full transition-colors bg-slate-100/50">

@@ -1,14 +1,49 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Edit } from "lucide-react";
+import { CheckCircle2, Edit } from "lucide-react";
+
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DocumentViewer } from "@/components/sections/documents/document-viewer";
 import { documentsService } from "@/services/documents.service";
 import { isAgreementDocumentId } from "@/lib/helpers/contract-agreement";
+import { useSignatureSequence } from "@/hooks/useSigning";
 import type { Contract, HrDocument } from "@/types/api";
+
+/** DocuSign-style "who signed this and when" card — only shown once every signer has finished. */
+function SignaturesCard({ contractId }: { contractId: string }) {
+  const { data: signers } = useSignatureSequence("contract", contractId);
+  if (!signers?.length || !signers.every((s) => s.status === "signed")) return null;
+
+  const ordered = [...signers].sort((a, b) => a.sequence_no - b.sequence_no);
+
+  return (
+    <div className="space-y-2 border-t pt-4">
+      <h4 className="text-sm font-bold text-slate-700">Signatures</h4>
+      <div className="space-y-2">
+        {ordered.map((s) => (
+          <div
+            key={s.id}
+            className="flex items-center gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2"
+          >
+            <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-slate-900">
+                {s.signer_name ?? `Signer ${s.sequence_no}`}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Signed electronically
+                {s.completed_at ? ` · ${new Date(s.completed_at).toLocaleString()}` : ""}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -150,6 +185,8 @@ export function ContractViewSheet({
             <p className="text-sm text-muted-foreground">No agreement on file.</p>
           )}
         </div>
+
+        <SignaturesCard contractId={contract.id} />
       </div>
     </ReusableSheet>
   );

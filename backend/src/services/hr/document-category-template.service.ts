@@ -4,12 +4,28 @@ import { hr_document_category_templates } from "../../db/schema/hr/document-cate
 import { AppError } from "../../middlewares/error.middleware";
 
 export type TemplateColor = "green" | "yellow" | "blue" | "orange";
+export type TemplateBorderStyle = "NONE" | "SIMPLE" | "DOUBLE" | "ACCENT";
+export type TemplateLogoPosition = "TOP_LEFT" | "BOTTOM_LEFT";
+export type TemplateCategory =
+  | "Contract Templates"
+  | "Policies & Procedures"
+  | "Forms & Applications"
+  | "Training Materials"
+  | "Compliance & Legal"
+  | "Onboarding Materials";
 
 export interface CreateDocumentCategoryTemplateInput {
   name: string;
   color: TemplateColor;
+  /** null (or omitted) means "universal" — offered regardless of the document category being
+   *  created. See the schema's own comment for why this stays nullable rather than required. */
+  category?: TemplateCategory | null;
   header_text?: string;
   description?: string;
+  titleColor?: string;
+  borderStyle?: TemplateBorderStyle;
+  logoUrl?: string;
+  logoPosition?: TemplateLogoPosition;
 }
 
 export type UpdateDocumentCategoryTemplateInput = Partial<CreateDocumentCategoryTemplateInput>;
@@ -46,8 +62,14 @@ export async function createDocumentCategoryTemplate(input: CreateDocumentCatego
     .values({
       name: input.name,
       color: input.color,
+      category: input.category ?? null,
       header_text: input.header_text ?? null,
       description: input.description ?? null,
+      // Omitted (not explicitly nulled) so the column's own default applies when unset.
+      ...(input.titleColor !== undefined && { titleColor: input.titleColor }),
+      ...(input.borderStyle !== undefined && { borderStyle: input.borderStyle }),
+      ...(input.logoUrl !== undefined && { logoUrl: input.logoUrl }),
+      ...(input.logoPosition !== undefined && { logoPosition: input.logoPosition }),
     })
     .returning();
 

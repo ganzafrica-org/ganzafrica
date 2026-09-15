@@ -59,7 +59,7 @@ export const profileApi = {
     return response.data;
   },
 
-  updateProfile: async (profileData: any) => {
+  updateProfile: async (profileData: Record<string, unknown>) => {
     const response = await apiClient.put("/users/profile/me", profileData);
     return response.data;
   },

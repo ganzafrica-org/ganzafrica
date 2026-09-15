@@ -7,7 +7,7 @@ import { screen, cleanup } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { server } from "@/tests/mocks/server";
 import { renderWithClient } from "@/tests/recruitment/test-utils";
-import MyOnboardingPage from "@/app/employees/onboarding/me/page";
+import MyOnboardingPage from "@/app/onboarding/me/page";
 
 const API = "http://localhost:3002/api";
 
@@ -72,8 +72,8 @@ describe("My onboarding page", () => {
 
     renderWithClient(<MyOnboardingPage />);
 
-    expect(await screen.findByText("Welcome to GanzAfrica")).toBeInTheDocument();
-    expect(screen.getByText("25%")).toBeInTheDocument();
+    expect(await screen.findByText("Sign your contract")).toBeInTheDocument();
+    expect(screen.getAllByText("25%").length).toBeGreaterThan(0);
     expect(screen.getByText("Your action items")).toBeInTheDocument();
     expect(screen.getByText("Being handled for you")).toBeInTheDocument();
     expect(screen.getByText("Sign your contract")).toBeInTheDocument();
@@ -117,8 +117,8 @@ describe("My onboarding page", () => {
 
     renderWithClient(<MyOnboardingPage />);
 
-    expect(await screen.findByText("You're all set")).toBeInTheDocument();
-    expect(screen.getByText(/fully active/)).toBeInTheDocument();
+    expect(await screen.findByText(/everything is done/i)).toBeInTheDocument();
+    expect(screen.getByText(/manager and hr have been notified/i)).toBeInTheDocument();
   });
 
   it("handles having no onboarding at all", async () => {
@@ -127,5 +127,39 @@ describe("My onboarding page", () => {
     renderWithClient(<MyOnboardingPage />);
 
     expect(await screen.findByText("You have no onboarding in progress")).toBeInTheDocument();
+  });
+
+  it("shows a stats header describing my own onboarding progress", async () => {
+    const mine = task({ id: 1, title: "Sign your contract" });
+    const overdueOfMine = task({
+      id: 2,
+      title: "Overdue of mine",
+      due_date: "2020-01-01",
+    });
+
+    mockProcess(
+      {
+        instance,
+        tasks: [mine, overdueOfMine],
+        progress: { done: 1, total: 4, percent: 25 },
+        can_manage: false,
+      },
+      [mine, overdueOfMine],
+    );
+
+    renderWithClient(<MyOnboardingPage />);
+
+    expect(await screen.findByText("Completed Steps")).toBeInTheDocument();
+    expect(screen.getByText("Your Action Items")).toBeInTheDocument();
+    expect(screen.getByText("Overdue")).toBeInTheDocument();
+    const progressCard = screen.getByText("Overall Progress").closest("div.bg-transparent");
+    expect(progressCard?.querySelector('svg[role="img"]')).toHaveAttribute(
+      "aria-label",
+      "25% complete",
+    );
+
+    const actionItemsCard = screen.getByText("Your Action Items").closest("div.bg-transparent");
+    // Both seeded tasks are mine and still pending.
+    expect(actionItemsCard?.querySelector(".text-4xl")?.textContent).toBe("2");
   });
 });

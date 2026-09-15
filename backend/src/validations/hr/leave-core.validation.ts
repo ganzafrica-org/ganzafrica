@@ -86,3 +86,19 @@ export const adjustBalanceSchema = z.object({
     note: z.string().min(1, "An adjustment note is required").max(2000),
   }),
 });
+
+export const setGenderLeaveStatusSchema = z.object({
+  body: z.object({ enabled: z.boolean() }),
+});
+
+const grantOnlyType = z.enum(["MATERNITY", "PATERNITY"]);
+
+export const leaveTypeGrantsQuerySchema = z.object({
+  params: z.object({ type: grantOnlyType }),
+  query: z.object({ year: z.coerce.number().int().min(2000).max(2100).optional() }),
+});
+
+export const leaveTypeGrantSchema = z.object({
+  params: z.object({ type: grantOnlyType, employeeId: z.string().uuid() }),
+  query: z.object({ year: z.coerce.number().int().min(2000).max(2100).optional() }),
+});

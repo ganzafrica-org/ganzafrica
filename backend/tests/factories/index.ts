@@ -241,6 +241,7 @@ export interface MakeEmployeeOptions {
   department?: string | null;
   homeCountry?: string | null;
   picture?: string | null;
+  workEmail?: string | null;
 }
 
 /** Insert an employees row (MOD-06 / LCM-01 tests). */
@@ -252,6 +253,7 @@ export async function makeEmployee(opts: MakeEmployeeOptions) {
       first_name: opts.firstName ?? "Test",
       last_name: opts.lastName ?? "Employee",
       personal_email: `emp_${uniq()}@test.local`,
+      work_email: opts.workEmail ?? null,
       employment_type: opts.employmentType ?? "staff",
       status: opts.status ?? "active",
       manager_id: opts.managerId ?? null,
@@ -357,10 +359,10 @@ export async function makeLeaveBalance(opts: {
   return row;
 }
 
-export async function makeHoliday(opts: { date: string; name?: string }) {
+export async function makeHoliday(opts: { date: string; name?: string; country?: string }) {
   const [row] = await db
     .insert(hr_org_holidays)
-    .values({ date: opts.date, name: opts.name ?? "Test Holiday" })
+    .values({ date: opts.date, name: opts.name ?? "Test Holiday", country: opts.country ?? "" })
     .onConflictDoNothing()
     .returning();
   return row;

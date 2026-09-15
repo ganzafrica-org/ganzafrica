@@ -8,6 +8,34 @@
       "when": 1787654206274,
       "tag": "0000_furry_dakota_north",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788160695727,
+      "tag": "0001_fine_spot",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788182735913,
+      "tag": "0002_premium_bug",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788970661260,
+      "tag": "0003_cool_young_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789063745287,
+      "tag": "0004_colossal_synch",
+      "breakpoints": true
     }
   ]
 }

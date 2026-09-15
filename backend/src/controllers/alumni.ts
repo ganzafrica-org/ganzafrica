@@ -10,7 +10,6 @@ import {
   alumni_achievements,
 } from "../db/schema";
 import { eq, and, sql, count, countDistinct, gte, or } from "drizzle-orm";
-import { AppError } from "../middlewares";
 import { Logger } from "../config";
 
 const logger = new Logger("AlumniController");
@@ -111,7 +110,7 @@ export const getAllAlumni = async (req: Request, res: Response): Promise<void> =
     const alumniRoleId = alumniRole[0].id;
 
     // Build the query
-    let query = db
+    const query = db
       .select({
         id: users.id,
         name: users.name,

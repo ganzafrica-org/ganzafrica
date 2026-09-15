@@ -299,7 +299,7 @@ export default function EventDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-4">
-              {event.speakers.map((speaker: any, index: number) => (
+              {event.speakers.map((speaker, index) => (
                 <div key={index} className="bg-slate-50 rounded-lg p-4">
                   <h4 className="font-semibold text-gray-900 mb-1">{speaker.name}</h4>
                   <p className="text-sm text-gray-700">{speaker.title}</p>
@@ -321,7 +321,7 @@ export default function EventDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {event.agenda.map((item: any, index: number) => (
+              {event.agenda.map((item, index) => (
                 <div key={index} className="flex gap-4 pb-3 border-b last:border-0">
                   <div className="flex-shrink-0 w-24 font-medium text-blue-600">{item.time}</div>
                   <div className="flex-1 text-gray-700">{item.activity}</div>

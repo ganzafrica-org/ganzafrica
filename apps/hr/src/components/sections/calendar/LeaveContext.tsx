@@ -10,9 +10,9 @@ import {
   PublicHoliday,
 } from "@/types/leave";
 import { doRangesOverlap } from "@/lib/date-utils";
-import { mock_holidays } from "@/data/leave-data";
-import { useLeaveCalendar } from "@/hooks/useLeaveBalances";
-import type { CalendarLeaveEvent } from "@/services/leave-balances.service";
+
+import { useLeaveCalendar, useRelevantHolidays } from "@/hooks/useLeaveBalances";
+import type { CalendarLeaveEvent, PublicHolidayApi } from "@/services/leave-balances.service";
 
 const LeaveContext = createContext<LeaveContextType | undefined>(undefined);
 
@@ -53,6 +53,18 @@ function toTeamMember(e: CalendarLeaveEvent): TeamMember {
   };
 }
 
+function toPublicHoliday(h: PublicHolidayApi): PublicHoliday {
+  const date = new Date(`${h.date}T00:00:00.000Z`);
+  return {
+    id: `${h.date}:${h.country}`,
+    name: h.name,
+    date,
+    startDate: date,
+    endDate: date,
+    status: date < new Date() ? "Used" : "Upcoming",
+  };
+}
+
 export function LeaveProvider({ children }: { children: React.ReactNode }) {
   // A generously wide, fixed window rather than tracking FullCalendar's live visible range as the
   // user navigates — simpler, and comfortably covers normal month/week browsing either direction.
@@ -65,10 +77,23 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const { data: events } = useLeaveCalendar(from, to);
+  const { data: holidays } = useRelevantHolidays();
 
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [publicHolidays, setPublicHolidays] = useState<PublicHoliday[]>(mock_holidays);
+  const [publicHolidays, setPublicHolidays] = useState<PublicHoliday[]>([]);
+
+  useEffect(() => {
+    setPublicHolidays((holidays ?? []).map(toPublicHoliday));
+  }, [holidays]);
+
+  useEffect(() => {
+    if (!events) return;
+    setLeaveRequests(events.map(toMockLeave).filter((l): l is LeaveRequest => l !== null));
+    const byEmployee = new Map<string, TeamMember>();
+    events.forEach((e) => byEmployee.set(e.employeeId, toTeamMember(e)));
+    setTeamMembers([...byEmployee.values()]);
+  }, [events]);
 
   useEffect(() => {
     if (!events) return;
@@ -114,22 +139,6 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const addPublicHoliday = (holiday: Omit<PublicHoliday, "id">) => {
-    const newHoliday: PublicHoliday = {
-      ...holiday,
-      id: String(Date.now()),
-    };
-    setPublicHolidays([...publicHolidays, newHoliday]);
-  };
-
-  const updatePublicHoliday = (updatedHoliday: PublicHoliday) => {
-    setPublicHolidays(publicHolidays.map((h) => (h.id === updatedHoliday.id ? updatedHoliday : h)));
-  };
-
-  const deletePublicHoliday = (id: string) => {
-    setPublicHolidays(publicHolidays.filter((h) => h.id !== id));
-  };
-
   const getFilteredLeaves = (
     selectedMemberId?: string,
     selectedLeaveType?: LeaveType,
@@ -169,9 +178,6 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
     updateLeaveRequest,
     deleteLeaveRequest,
     updateLeaveStatus,
-    addPublicHoliday,
-    updatePublicHoliday,
-    deletePublicHoliday,
     getFilteredLeaves,
     getTeamMemberById,
   };

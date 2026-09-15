@@ -52,6 +52,10 @@ const NOTIFICATION_ROUTING: Record<NotificationType, RoutingTarget> = {
   // MOD-02: setManager addresses the affected employee + the new manager directly via
   // recipientUserIds — no role fan-out.
   MANAGER_CHANGED: { it: false, hr: false, employee: false },
+
+  // DOC-signing: addresses the specific signer whose turn it is, resolved by the caller
+  // (signing.service.ts) — same "explicit recipient, no fan-out" shape as PROCESS_TASK_ASSIGNED.
+  SIGNATURE_REQUESTED: { it: false, hr: false, employee: false },
 };
 
 const LEAVE_TYPES: NotificationType[] = [

@@ -16,13 +16,17 @@ const logger = new Logger("SeedLeaveDefaults");
 
 type PolicyRow = {
   employment_type: string;
-  type: "ANNUAL" | "SICK" | "MATERNITY" | "PATERNITY";
+  type: "ANNUAL" | "SICK";
   annual_days: string;
   max_carry_over: string;
 };
 
-// Rwanda statutory minimums as the starting point: 18 working days annual, 15 sick,
-// 12 weeks maternity, 4 days paternity. HR adjusts per employment type in settings afterwards.
+// Rwanda statutory minimums as the starting point: 18 working days annual, 15 sick. HR adjusts
+// per employment type in settings afterwards.
+//
+// Maternity (84 days) and Paternity (4 days) are deliberately NOT seeded here — they're opt-in
+// per the "Leave-type grants" feature (settings/leave), turned on via setGenderLeaveEnabled and
+// granted to specific employees, not a default every employee gets just for existing.
 const DEFAULT_POLICIES: PolicyRow[] = [
   "fellow",
   "analyst",
@@ -32,8 +36,6 @@ const DEFAULT_POLICIES: PolicyRow[] = [
 ].flatMap((employment_type) => [
   { employment_type, type: "ANNUAL" as const, annual_days: "18", max_carry_over: "5" },
   { employment_type, type: "SICK" as const, annual_days: "15", max_carry_over: "0" },
-  { employment_type, type: "MATERNITY" as const, annual_days: "84", max_carry_over: "0" },
-  { employment_type, type: "PATERNITY" as const, annual_days: "4", max_carry_over: "0" },
 ]);
 
 async function main() {

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { db } from "../db/client";
 import { alumni_achievements, achievement_likes, achievement_comments } from "../db/schema";
 import { users } from "../db/schema";
-import { eq, and, or, ilike, sql, desc, asc, count, countDistinct } from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, count } from "drizzle-orm";
 import { Logger } from "../config";
 
 const logger = new Logger("AchievementsController");
@@ -134,26 +134,27 @@ export const getAllAchievements = async (req: Request, res: Response): Promise<v
         userAvatar: users.avatar_url,
       })
       .from(alumni_achievements)
-      .leftJoin(users, eq(alumni_achievements.user_id, users.id));
+      .leftJoin(users, eq(alumni_achievements.user_id, users.id))
+      .$dynamic();
 
     // Apply where clause if exists
     if (whereClause) {
-      query = query.where(whereClause) as any;
+      query = query.where(whereClause);
     }
 
     // Apply sort order
     switch (sort) {
       case "oldest":
-        query = query.orderBy(asc(alumni_achievements.date)) as any;
+        query = query.orderBy(asc(alumni_achievements.date));
         break;
       case "most-liked":
-        query = query.orderBy(desc(alumni_achievements.created_at)) as any;
+        query = query.orderBy(desc(alumni_achievements.created_at));
         break;
       case "most-viewed":
-        query = query.orderBy(desc(alumni_achievements.views)) as any;
+        query = query.orderBy(desc(alumni_achievements.views));
         break;
       default:
-        query = query.orderBy(desc(alumni_achievements.created_at)) as any;
+        query = query.orderBy(desc(alumni_achievements.created_at));
     }
 
     // Apply pagination
@@ -162,8 +163,8 @@ export const getAllAchievements = async (req: Request, res: Response): Promise<v
     // Get likes and comments counts for each achievement
     const achievementIds = achievements.map((a) => a.id);
 
-    let likesMap: Record<number, number> = {};
-    let commentsMap: Record<number, number> = {};
+    const likesMap: Record<number, number> = {};
+    const commentsMap: Record<number, number> = {};
 
     if (achievementIds.length > 0) {
       // Use IN instead of ANY for better compatibility
@@ -493,7 +494,7 @@ export const updateAchievement = async (req: Request, res: Response): Promise<vo
     const { title, description, category, type, date, organization, location, link, tags } =
       req.body;
 
-    const updateData: Record<string, any> = {};
+    const updateData: Partial<typeof alumni_achievements.$inferInsert> = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (category !== undefined) {

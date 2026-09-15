@@ -28,7 +28,7 @@ export type DocumentStatus = "PUBLISHED" | "DRAFT" | "ARCHIVED";
 
 export type DocumentAccessContext = AccessContext;
 
-/** Metadata for a file already stored by the `privateUpload` middleware (multer-s3). */
+/** Metadata for a file already stored by the `privateUpload` middleware (Azure Blob Storage). */
 export interface UploadedFile {
   key: string;
   size: number;
@@ -53,7 +53,11 @@ export interface CreateDocumentInput {
   description: string;
   department: string;
   status?: DocumentStatus;
-  file: UploadedFile;
+  /** Exactly one of `file` / `sourceDocumentId` must be given — never both, never neither. */
+  file?: UploadedFile;
+  /** Clone an existing (non-archived) document's stored file into this new row instead of
+   *  uploading a fresh one — e.g. reusing a saved contract template. */
+  sourceDocumentId?: string;
   createdById: string;
   access?: DocumentACL;
   contractId?: string;
@@ -120,6 +124,17 @@ async function assertLeaveExists(leaveId: string): Promise<void> {
     .where(eq(hr_leaves.id, leaveId))
     .limit(1);
   if (!rows.length) throw new AppError("Linked leave request not found in DB", 404);
+}
+
+/** The document being cloned as the basis for a new one (e.g. "use a saved template"). Archived
+ *  documents are excluded — cloning a soft-deleted document would resurrect it under a new id. */
+async function getCloneSource(id: string): Promise<DocumentRow> {
+  const rows = await db.select().from(hr_documents).where(eq(hr_documents.id, id)).limit(1);
+  if (!rows.length) throw new AppError("Source document not found", 404);
+  if (rows[0].status === "ARCHIVED") {
+    throw new AppError("Cannot use an archived document as a template", 400);
+  }
+  return rows[0];
 }
 
 async function contractOwnerEmployeeId(contractId: string | null): Promise<string | null> {
@@ -475,10 +490,22 @@ export async function createDocument(input: CreateDocumentInput) {
     throw new AppError(`Invalid category. Must be one of: ${VALID_CATEGORIES.join(", ")}`, 400);
   }
 
-  if (input.category === "Contract Templates") {
-    if (!input.contractId) {
-      throw new AppError("Contract details must be linked. contractId is required.", 400);
-    }
+  const hasFile = !!input.file;
+  const hasSource = !!input.sourceDocumentId;
+  if (hasFile === hasSource) {
+    throw new AppError(
+      hasFile
+        ? "Choose either a file upload or an existing document to reuse, not both."
+        : "A file upload or an existing document to reuse is required.",
+      400,
+    );
+  }
+
+  // "Contract Templates" no longer requires a contractId at creation: a row left unlinked (no
+  // contractId) is a reusable template in the pool (see listDocumentTemplates); one created with
+  // a contractId — the normal path when HR uploads a specific employee's signed agreement — stays
+  // scoped to that contract exactly as before.
+  if (input.category === "Contract Templates" && input.contractId) {
     await assertContractExists(input.contractId);
   }
 
@@ -488,6 +515,26 @@ export async function createDocument(input: CreateDocumentInput) {
     }
     await assertLeaveExists(input.leaveId);
   }
+
+  const {
+    key: filePath,
+    size: fileSizeHuman,
+    originalName,
+  } = input.file
+    ? {
+        key: input.file.key,
+        size: bytesToHuman(input.file.size),
+        originalName: input.file.originalName,
+      }
+    : await (async () => {
+        const source = await getCloneSource(input.sourceDocumentId!);
+        return {
+          key: source.file_path,
+          size: source.file_size,
+          originalName: path.basename(source.file_path),
+        };
+      })();
+
   const inserted = await db
     .insert(hr_documents)
     .values({
@@ -497,13 +544,14 @@ export async function createDocument(input: CreateDocumentInput) {
       description: input.description,
       department: input.department,
       status: input.status ?? "PUBLISHED",
-      file_path: input.file.key,
-      file_size: bytesToHuman(input.file.size),
+      file_path: filePath,
+      file_size: fileSizeHuman,
       downloads: 0,
       versions: [],
       created_by_employee_id: input.createdById,
       access: input.access ?? {},
-      contract_id: input.category === "Contract Templates" ? input.contractId : null,
+      contract_id: input.category === "Contract Templates" ? (input.contractId ?? null) : null,
+
       leave_id: input.category === "Leave Attachment" ? input.leaveId : null,
     })
     .returning();
@@ -511,11 +559,41 @@ export async function createDocument(input: CreateDocumentInput) {
   if (!inserted.length) throw new AppError("Failed to create document", 400);
 
   // Index the file text out-of-band so a slow/large extraction never blocks the upload response.
-  void indexDocumentText(inserted[0].id, input.file.key, input.file.originalName).catch((err) =>
+  void indexDocumentText(inserted[0].id, filePath, originalName).catch((err) =>
     logger.warn("Document text indexing failed (non-fatal)", err as Error),
   );
 
   return inserted[0];
+}
+
+/**
+ * The reusable-template pool for a category: non-archived rows with no contract/leave linkage.
+ * For "Contract Templates" this is the only safe source for a "pick a saved template" picker —
+ * every OTHER row in that category is one specific employee's actual signed agreement (contract_id
+ * set), and must never be surfaced as a pickable template. For categories that never set
+ * contract_id/leave_id anyway (Policies, Forms, etc.) this is simply "every document in the
+ * category" — letting the Documents page's create form reuse any existing document as a starting
+ * point with no extra filtering needed.
+ */
+export async function listDocumentTemplates(category: DocumentCategory) {
+  return db
+    .select({
+      id: hr_documents.id,
+      document_name: hr_documents.document_name,
+      description: hr_documents.description,
+      department: hr_documents.department,
+      updated_at: hr_documents.updated_at,
+    })
+    .from(hr_documents)
+    .where(
+      and(
+        eq(hr_documents.category, category),
+        ne(hr_documents.status, "ARCHIVED"),
+        isNull(hr_documents.contract_id),
+        isNull(hr_documents.leave_id),
+      ),
+    )
+    .orderBy(desc(hr_documents.updated_at));
 }
 
 export async function updateDocument(id: string, input: UpdateDocumentInput) {
@@ -636,7 +714,7 @@ const MAX_INLINE_TEXT_BYTES = 2 * 1024 * 1024;
 
 /**
  * ACL check + presigned URL for *inline viewing* (not a download): does not increment
- * `downloads`, and returns the real stored filename (the S3 key's basename) rather than the
+ * `downloads`, and returns the real stored filename (the blob key's basename) rather than the
  * user-facing document_name, since the caller needs the actual extension to pick a renderer.
  */
 export async function getViewUrl(
@@ -650,10 +728,10 @@ export async function getViewUrl(
 
 /**
  * ACL-checked raw text content for formats the frontend renders itself (csv/txt/json/xml/css/js)
- * rather than embedding. Goes through our own API (not a direct S3 fetch from the browser) so it
- * works regardless of whether the Spaces bucket has CORS configured for cross-origin `fetch()` —
+ * rather than embedding. Goes through our own API (not a direct blob fetch from the browser) so
+ * it works regardless of whether the container has CORS configured for cross-origin `fetch()` —
  * <img>/<iframe>/<video> tags don't need CORS to load a URL, but reading a response body via JS
- * does, and DO Spaces buckets don't have CORS enabled by default.
+ * does, and Azure Blob Storage containers don't have CORS enabled by default.
  */
 export async function getViewableText(
   id: string,

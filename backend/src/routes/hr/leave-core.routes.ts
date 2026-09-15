@@ -74,4 +74,33 @@ router.delete("/holidays/:id", ...manage, validate(v.policyIdSchema), c.deleteHo
 
 router.patch("/leave-balances/:id", ...manage, validate(v.adjustBalanceSchema), c.adjustBalance);
 
+// Leave-type grants: Maternity/Paternity opt-in. status is readable by any authenticated user
+// (the request-leave dropdown needs to know whether these types are even configurable); everything
+// that changes who can use them is HR-only.
+router.get("/leave-type-grants/status", authenticate, c.getGenderLeaveStatus);
+router.post(
+  "/leave-type-grants/status",
+  ...manage,
+  validate(v.setGenderLeaveStatusSchema),
+  c.setGenderLeaveStatus,
+);
+router.get(
+  "/leave-type-grants/:type",
+  ...manage,
+  validate(v.leaveTypeGrantsQuerySchema),
+  c.listLeaveTypeGrants,
+);
+router.post(
+  "/leave-type-grants/:type/:employeeId",
+  ...manage,
+  validate(v.leaveTypeGrantSchema),
+  c.grantLeaveType,
+);
+router.delete(
+  "/leave-type-grants/:type/:employeeId",
+  ...manage,
+  validate(v.leaveTypeGrantSchema),
+  c.revokeLeaveType,
+);
+
 export default router;

@@ -47,8 +47,8 @@ router.post("/file", publicUpload.single("file"), (req: Request, res: Response) 
       });
     }
 
-    // Get file details - multer-s3 provides different properties
-    const file = req.file as any; // multer-s3 extends the standard multer file object
+    // Get file details - the upload middleware provides different properties
+    const file = req.file as any; // the upload middleware extends the standard multer file object
     const { key, originalname, size, mimetype, location } = file;
 
     // Get subdirectory based on file type
@@ -57,7 +57,7 @@ router.post("/file", publicUpload.single("file"), (req: Request, res: Response) 
     // Extract filename from the key (removes the uploads/subdir/ prefix)
     const filename = key.split("/").pop();
 
-    // Get the public URL (uses CDN if configured, otherwise direct Spaces URL)
+    // Get the public URL (uses CDN if configured, otherwise the direct blob URL)
     const fileUrl = getFileUrl(location);
 
     // Return success response
@@ -68,7 +68,7 @@ router.post("/file", publicUpload.single("file"), (req: Request, res: Response) 
         name: originalname,
         filename,
         url: fileUrl,
-        path: key, // S3 key acts as the path
+        path: key, // blob key acts as the path
         size,
         type: mimetype,
         category: subdir,
@@ -119,7 +119,7 @@ router.post("/files", publicUpload.array("files", 10), (req: Request, res: Respo
       });
     }
 
-    // Process uploaded files - multer-s3 provides different properties
+    // Process uploaded files - the upload middleware provides different properties
     const files = (req.files as any[]).map((file) => {
       const { key, originalname, size, mimetype, location } = file;
 
@@ -129,14 +129,14 @@ router.post("/files", publicUpload.array("files", 10), (req: Request, res: Respo
       // Extract filename from the key
       const filename = key.split("/").pop();
 
-      // Get the public URL (uses CDN if configured, otherwise direct Spaces URL)
+      // Get the public URL (uses CDN if configured, otherwise the direct blob URL)
       const fileUrl = getFileUrl(location);
 
       return {
         name: originalname,
         filename,
         url: fileUrl,
-        path: key, // S3 key acts as the path
+        path: key, // blob key acts as the path
         size,
         type: mimetype,
         category: subdir,

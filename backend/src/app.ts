@@ -6,11 +6,10 @@ import cookieParser from "cookie-parser";
 import "express-async-errors";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpecs from "./swagger/specs";
-import { env, Logger, constants } from "./config";
+import { env, Logger } from "./config";
 import { checkDatabaseConnection } from "./db/client";
 import { errorHandler, notFoundHandler } from "./middlewares";
 import { csrfProtection } from "./middlewares/csrf.middleware";
-import path from "path";
 
 // Import routes - corrected to match your existing import
 import apiRoutes from "./routes";
@@ -92,7 +91,7 @@ app.use(notFoundHandler);
 // Global error handler
 app.use(errorHandler);
 
-// Files are served from Azure Blob Storage
+// Files are now served from Azure Blob Storage
 logger.info("File uploads configured to use Azure Blob Storage");
 
 export default app;

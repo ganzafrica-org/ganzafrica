@@ -14,13 +14,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AccessBuilder } from "@/components/sections/documents/access-builder";
+import { QuillEditor } from "@/components/sections/documents/quill-editor";
 import { useCreateDocument, useUpdateDocument } from "@/hooks/useDocuments";
+
+import { useDocumentCategoryTemplates } from "@/hooks/useDocumentCategoryTemplates";
+
 import {
   DOCUMENT_CATEGORIES,
   type DocumentACL,
   type DocumentCategory,
   type HrDocument,
 } from "@/types/api";
+import { cn } from "@/lib/utils";
+import { renderBrandedDocumentHtml } from "@/lib/helpers/document-branding";
+
+/** Plain-text emptiness check for Quill's HTML output — an untouched editor still emits
+ *  "<p><br></p>", which .trim() alone wouldn't catch. */
+function isBlankHtml(html: string): boolean {
+  return !html.replace(/<[^>]*>/g, "").trim();
+}
 
 interface DocumentFormSheetProps {
   document: HrDocument | null;
@@ -50,7 +62,26 @@ export function DocumentFormSheet({ document, onDone }: DocumentFormSheetProps) 
   const [access, setAccess] = useState<DocumentACL>(document?.access ?? EMPTY_ACL);
   const [contractId, setContractId] = useState(document?.contract_id ?? "");
   const [file, setFile] = useState<File | null>(null);
+  // "Use a saved template" only makes sense when creating — editing already has its own
+  // "leave blank to keep the current file" / replace-with-a-new-file flow.
+  const [fileSource, setFileSource] = useState<"upload" | "existing">("upload");
+  const [templateId, setTemplateId] = useState("");
+  const [templateContent, setTemplateContent] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const { data: allTemplates } = useDocumentCategoryTemplates();
+  // A template applies here if it's scoped to the category being created, or left universal
+  // (category === null) — see category-template-sheet.tsx's own Category field.
+  const templates = allTemplates?.filter((t) => t.category === null || t.category === category);
+  const selectedTemplate = templates?.find((t) => t.id === templateId) ?? null;
+
+  // If the category changes to something the picked template no longer applies to, drop the
+  // (now invalid) selection — but keep any content already written, so switching category by
+  // mistake doesn't lose work.
+  useEffect(() => {
+    if (templateId && !templates?.some((t) => t.id === templateId)) setTemplateId("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category]);
 
   useEffect(() => {
     setName(document?.document_name ?? "");
@@ -63,6 +94,9 @@ export function DocumentFormSheet({ document, onDone }: DocumentFormSheetProps) 
     setAccess(document?.access ?? EMPTY_ACL);
     setContractId(document?.contract_id ?? "");
     setFile(null);
+    setFileSource("upload");
+    setTemplateId("");
+    setTemplateContent("");
   }, [document]);
 
   const isSaving = createDocument.isPending || updateDocument.isPending;
@@ -73,13 +107,21 @@ export function DocumentFormSheet({ document, onDone }: DocumentFormSheetProps) 
       setError("Name, category, description and department are required.");
       return;
     }
-    if (category === "Contract Templates" && !contractId.trim()) {
-      setError("Contract Templates must specify a linked contractId.");
-      return;
-    }
-    if (!isEditing && !file) {
-      setError("A file is required.");
-      return;
+    if (!isEditing) {
+      if (fileSource === "upload" && !file) {
+        setError("A file is required.");
+        return;
+      }
+      if (fileSource === "existing") {
+        if (!selectedTemplate) {
+          setError("Select an existing template to use.");
+          return;
+        }
+        if (isBlankHtml(templateContent)) {
+          setError("Add the document's contents.");
+          return;
+        }
+      }
     }
 
     try {
@@ -93,11 +135,20 @@ export function DocumentFormSheet({ document, onDone }: DocumentFormSheetProps) 
             department,
             status,
             access,
-            contractId: category === "Contract Templates" ? contractId : undefined,
+            contractId: category === "Contract Templates" ? contractId || undefined : undefined,
           },
           file,
         });
       } else {
+        const generatedFile =
+          fileSource === "existing" && selectedTemplate
+            ? new File(
+                [renderBrandedDocumentHtml(selectedTemplate, name, templateContent)],
+                `${name || "document"}.html`,
+                { type: "text/html" },
+              )
+            : (file as File);
+
         await createDocument.mutateAsync({
           payload: {
             document_name: name,
@@ -106,9 +157,9 @@ export function DocumentFormSheet({ document, onDone }: DocumentFormSheetProps) 
             department,
             status,
             access,
-            contractId: category === "Contract Templates" ? contractId : undefined,
+            contractId: category === "Contract Templates" ? contractId || undefined : undefined,
           },
-          file: file as File,
+          file: generatedFile,
         });
       }
       onDone();
@@ -200,51 +251,128 @@ export function DocumentFormSheet({ document, onDone }: DocumentFormSheetProps) 
         {category === "Contract Templates" && (
           <div className="space-y-2">
             <Label htmlFor="contractId" className="text-sm font-medium">
-              Linked Contract ID *
+              Linked Contract ID
             </Label>
             <Input
               id="contractId"
               value={contractId}
               onChange={(e) => setContractId(e.target.value)}
-              placeholder="Contract UUID this document is attached to"
+              placeholder="Contract UUID this document is attached to — leave blank for a reusable template"
               className="border-slate-200 focus:border-blue-400"
             />
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">
-            Document File {isEditing ? "(leave blank to keep the current file)" : "*"}
-          </Label>
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="cursor-pointer border-2 border-dashed border-blue-300 rounded-lg p-8 text-center bg-blue-50 hover:bg-blue-100/60 transition-colors"
-          >
-            {file ? (
-              <div className="flex items-center justify-center gap-2 text-sm text-slate-700">
-                <FileText className="h-5 w-5 text-blue-500" />
-                {file.name}
-              </div>
-            ) : (
-              <>
-                <Upload className="h-12 w-12 mx-auto mb-4 text-blue-400" />
-                <div className="text-sm">
-                  <span className="text-blue-600 hover:text-blue-700 font-medium">
-                    Click to upload
-                  </span>
-                  <span className="text-gray-500"> or drag and drop</span>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">Stored privately — never a public URL.</p>
-              </>
-            )}
+        {!isEditing && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Source</Label>
+            <div className="inline-flex rounded-lg border border-slate-200 p-1" role="radiogroup">
+              <button
+                type="button"
+                data-testid="file-source-upload"
+                aria-pressed={fileSource === "upload"}
+                onClick={() => {
+                  setFileSource("upload");
+                  setTemplateId("");
+                  setTemplateContent("");
+                }}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  fileSource === "upload" ? "bg-brand-accent text-white" : "text-slate-600",
+                )}
+              >
+                Upload a file
+              </button>
+              <button
+                type="button"
+                data-testid="file-source-existing"
+                aria-pressed={fileSource === "existing"}
+                onClick={() => {
+                  setFileSource("existing");
+                  setFile(null);
+                }}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  fileSource === "existing" ? "bg-brand-accent text-white" : "text-slate-600",
+                )}
+              >
+                Use a saved template
+              </button>
+            </div>
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-        </div>
+        )}
+
+        {fileSource === "existing" && !isEditing ? (
+          <>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Existing Template *</Label>
+              <Select value={templateId} onValueChange={setTemplateId}>
+                <SelectTrigger className="border-slate-200">
+                  <SelectValue placeholder="Select a template to use" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(templates ?? []).map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!templates?.length && (
+                <p className="text-xs text-gray-500">
+                  No design templates yet — create one from the Categories tab, or upload a file
+                  instead.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Document Content *</Label>
+              <div className="rounded-md border border-slate-200 bg-white">
+                <QuillEditor
+                  onChange={setTemplateContent}
+                  placeholder="Write the document's contents…"
+                />
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Document File {isEditing ? "(leave blank to keep the current file)" : "*"}
+            </Label>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="cursor-pointer border-2 border-dashed border-blue-300 rounded-lg p-8 text-center bg-blue-50 hover:bg-blue-100/60 transition-colors"
+            >
+              {file ? (
+                <div className="flex items-center justify-center gap-2 text-sm text-slate-700">
+                  <FileText className="h-5 w-5 text-blue-500" />
+                  {file.name}
+                </div>
+              ) : (
+                <>
+                  <Upload className="h-12 w-12 mx-auto mb-4 text-blue-400" />
+                  <div className="text-sm">
+                    <span className="text-blue-600 hover:text-blue-700 font-medium">
+                      Click to upload
+                    </span>
+                    <span className="text-gray-500"> or drag and drop</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Stored privately — never a public URL.
+                  </p>
+                </>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+          </div>
+        )}
 
         <AccessBuilder value={access} onChange={setAccess} />
       </div>

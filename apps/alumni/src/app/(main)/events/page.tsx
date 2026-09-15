@@ -27,7 +27,7 @@ import {
   ChevronRight,
   CalendarDays,
 } from "lucide-react";
-import { eventsApi, type Event } from "@/lib/api/alumni";
+import { eventsApi, type Event, type EventsQueryParams } from "@/lib/api/alumni";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar as BigCalendar, momentLocalizer } from "react-big-calendar";
@@ -35,6 +35,13 @@ import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 const localizer = momentLocalizer(moment);
+
+interface CalendarEvent {
+  title: string;
+  start: Date;
+  end: Date;
+  resource: Event;
+}
 
 const getDepartmentColor = (type: string) => {
   const colors = [
@@ -121,7 +128,7 @@ export default function AlumniEvents() {
     const fetchEvents = async () => {
       setIsLoading(true);
       try {
-        const params: any = {
+        const params: EventsQueryParams = {
           page: currentPage,
           limit: pageLimit,
         };
@@ -129,7 +136,7 @@ export default function AlumniEvents() {
         if (debouncedSearch) params.search = debouncedSearch;
         if (selectedType !== "all") params.type = selectedType;
         if (selectedCategory !== "all") params.category = selectedCategory;
-        if (myEventsOnly) params.myEvents = "true";
+        if (myEventsOnly) params.myEvents = true;
 
         const { events: eventList, pagination: paginationData } = await eventsApi.getAll(params);
         setEvents(eventList);
@@ -200,14 +207,14 @@ export default function AlumniEvents() {
     try {
       await eventsApi.toggleRegistration(eventId);
       // Refresh events
-      const params: any = {
+      const params: EventsQueryParams = {
         page: currentPage,
         limit: pageLimit,
       };
       if (debouncedSearch) params.search = debouncedSearch;
       if (selectedType !== "all") params.type = selectedType;
       if (selectedCategory !== "all") params.category = selectedCategory;
-      if (myEventsOnly) params.myEvents = "true";
+      if (myEventsOnly) params.myEvents = true;
 
       const { events: eventList, pagination: paginationData } = await eventsApi.getAll(params);
       setEvents(eventList);
@@ -577,7 +584,7 @@ export default function AlumniEvents() {
               events={calendarEvents}
               startAccessor="start"
               endAccessor="end"
-              onSelectEvent={async (event: any) => {
+              onSelectEvent={async (event: CalendarEvent) => {
                 try {
                   const { event: eventDetail } = await eventsApi.getOne(event.resource.id);
                   setSelectedEvent(eventDetail);
@@ -585,7 +592,7 @@ export default function AlumniEvents() {
                   console.error("Failed to fetch event details:", error);
                 }
               }}
-              eventPropGetter={(event: any) => ({
+              eventPropGetter={(event: CalendarEvent) => ({
                 style: {
                   backgroundColor: event.resource.isRegistered ? "#10b981" : "#3b82f6",
                 },

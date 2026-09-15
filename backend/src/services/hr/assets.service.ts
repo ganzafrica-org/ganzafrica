@@ -449,7 +449,7 @@ export async function deactivateAssetCategory(id: string): Promise<void> {
   if (!updated) throw new AppError("Category not found", 404);
 }
 
-// Delete a specific image from an asset (also used when removing from DO Spaces)
+// Delete a specific image from an asset (also used when removing from Azure Blob Storage)
 export async function deleteAssetImage(imageId: string): Promise<{ storage_key: string }> {
   const [deleted] = await db
     .delete(hr_asset_images)

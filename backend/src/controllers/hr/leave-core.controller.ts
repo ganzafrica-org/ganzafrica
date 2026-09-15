@@ -70,7 +70,7 @@ export const validateMyLeave = async (req: Request, res: Response) => {
     // be told they have none remaining.
     await leave.ensureBalances(employeeId, year).catch(() => {});
 
-    const days = await leave.computeWorkingDays(startDate, endDate);
+    const days = await leave.computeWorkingDays(startDate, endDate, employeeId);
     const remaining = await leave.remainingDays(employeeId, year, type);
     return res.json({ days, remaining, sufficient: days <= remaining });
   } catch (e) {
@@ -99,7 +99,8 @@ export const cancelLeave = async (req: Request, res: Response) => {
   }
 };
 
-/** multer-s3 augments the uploaded file with `location`/`key` (not part of Express.Multer.File). */
+/** the upload middleware augments the uploaded file with `location`/`key` (not part of Express.Multer.File). */
+
 function uploadedFile(req: Request) {
   const file = req.file as unknown as { key?: string; size?: number; originalname?: string };
   if (!file?.key) return undefined;
@@ -263,5 +264,58 @@ export const adjustBalance = async (req: Request, res: Response) => {
     return res.json({ balance });
   } catch (e) {
     return handleError(res, e, "Adjust Balance Error");
+  }
+};
+
+// --- Leave-type grants: Maternity/Paternity opt-in ---
+
+export const getGenderLeaveStatus = async (_req: Request, res: Response) => {
+  try {
+    return res.json({ enabled: await leave.isGenderLeaveEnabled() });
+  } catch (e) {
+    return handleError(res, e, "Get Gender Leave Status Error");
+  }
+};
+
+export const setGenderLeaveStatus = async (req: Request, res: Response) => {
+  try {
+    await leave.setGenderLeaveEnabled(!!req.body.enabled);
+    return res.json({ enabled: !!req.body.enabled });
+  } catch (e) {
+    return handleError(res, e, "Set Gender Leave Status Error");
+  }
+};
+
+function grantYear(req: Request): number {
+  const y = Number(req.query.year);
+  return Number.isInteger(y) ? y : new Date().getUTCFullYear();
+}
+
+export const listLeaveTypeGrants = async (req: Request, res: Response) => {
+  try {
+    const type = req.params.type as "MATERNITY" | "PATERNITY";
+    return res.json({ grants: await leave.listGrantedEmployees(type, grantYear(req)) });
+  } catch (e) {
+    return handleError(res, e, "List Leave Type Grants Error");
+  }
+};
+
+export const grantLeaveType = async (req: Request, res: Response) => {
+  try {
+    const type = req.params.type as "MATERNITY" | "PATERNITY";
+    await leave.grantLeaveType(req.params.employeeId, type, grantYear(req));
+    return res.status(201).json({ granted: true });
+  } catch (e) {
+    return handleError(res, e, "Grant Leave Type Error");
+  }
+};
+
+export const revokeLeaveType = async (req: Request, res: Response) => {
+  try {
+    const type = req.params.type as "MATERNITY" | "PATERNITY";
+    await leave.revokeLeaveType(req.params.employeeId, type, grantYear(req));
+    return res.json({ revoked: true });
+  } catch (e) {
+    return handleError(res, e, "Revoke Leave Type Error");
   }
 };

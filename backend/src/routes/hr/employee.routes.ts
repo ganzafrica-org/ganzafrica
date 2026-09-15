@@ -15,7 +15,7 @@ import * as assetsController from "@/controllers/hr/assets.controller";
 import * as assetsValidation from "@/validations/hr/assets.validation";
 import * as orgController from "@/controllers/hr/org.controller";
 import * as orgValidation from "@/validations/hr/org.validation";
-import { publicUpload } from "@/middlewares/upload";
+import upload from "@/middlewares/upload";
 
 const router: Router = Router();
 
@@ -23,11 +23,14 @@ router.use(authenticate);
 
 // Self-service — must precede /:id so "me" is not parsed as a uuid.
 router.get("/me", c.getMe);
-// Profile photos are public display images (publicUpload). The middleware is a no-op when the
-// request is plain JSON with no "picture" file part.
+
+// upload.single("picture") is a no-op when the request is plain JSON (no "picture" file part) —
+// same upload middleware assets.routes.ts uses for asset images, reused here rather than
+// standing up separate upload infrastructure for a single profile-photo field.
 router.patch(
   "/me/profile",
-  publicUpload.single("picture"),
+  upload.single("picture"),
+
   validate(v.updateProfileSchema),
   c.updateMyProfile,
 );

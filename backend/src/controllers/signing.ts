@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import * as signing from "../services/signing.service";
-import { sendEmail } from "../services/email.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 
@@ -67,21 +66,25 @@ export const createRequest = async (req: Request, res: Response) => {
 };
 export const sendRequest = async (req: Request, res: Response) => {
   try {
-    const { request, link } = await signing.sendRequest(Number(req.params.id));
-    // Notify the signer. Internal signers sign in-app; external signers get the token link.
-    if (request.signer_email) {
-      const body = link
-        ? `<p>You have a document to sign: <strong>${request.subject}</strong>.</p><p><a href="${link}">Open &amp; sign</a></p>`
-        : `<p>You have a document to sign: <strong>${request.subject}</strong>. Sign in to GanzAfrica to complete it.</p>`;
-      await sendEmail(request.signer_email, `Please sign: ${request.subject}`, body).catch((err) =>
-        logger.error("sign email failed (non-fatal)", err),
-      );
-    }
+    // Notifying the signer (email + in-app) is handled inside signing.service.ts's sendRequest
+    // itself now, so every caller — this route, and service-to-service callers like the
+    // onboarding contract co-sign flow — gets the same behavior.
+    const { request } = await signing.sendRequest(Number(req.params.id));
     return res.json({ request });
   } catch (e) {
     return handleError(res, e, "Send Request Error");
   }
 };
+/** HR-chosen, arbitrary-length signer list for one contract/document — sequential or parallel. */
+export const createSequence = async (req: Request, res: Response) => {
+  try {
+    const requests = await signing.createSignerSequence(req.body, Number(req.user!.id));
+    return res.status(201).json({ requests });
+  } catch (e) {
+    return handleError(res, e, "Create Signer Sequence Error");
+  }
+};
+
 export const voidRequest = async (req: Request, res: Response) => {
   try {
     return res.json({ request: await signing.voidRequest(Number(req.params.id)) });
@@ -172,5 +175,33 @@ export const signExternal = async (req: Request, res: Response) => {
     return res.json({ signed: true });
   } catch (e) {
     return handleError(res, e, "Sign Error");
+  }
+};
+
+// --- Designated co-signer pool ---
+
+export const listSignerPool = async (_req: Request, res: Response) => {
+  try {
+    return res.json({ pool: await signing.listSignerPool() });
+  } catch (e) {
+    return handleError(res, e, "List Signer Pool Error");
+  }
+};
+
+export const addToSignerPool = async (req: Request, res: Response) => {
+  try {
+    await signing.addToSignerPool(req.params.employeeId, Number(req.user!.id));
+    return res.status(201).json({ added: true });
+  } catch (e) {
+    return handleError(res, e, "Add To Signer Pool Error");
+  }
+};
+
+export const removeFromSignerPool = async (req: Request, res: Response) => {
+  try {
+    await signing.removeFromSignerPool(req.params.employeeId);
+    return res.json({ removed: true });
+  } catch (e) {
+    return handleError(res, e, "Remove From Signer Pool Error");
   }
 };

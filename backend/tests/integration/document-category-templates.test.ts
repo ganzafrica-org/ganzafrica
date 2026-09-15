@@ -74,6 +74,121 @@ describe("document category templates", () => {
       expect(res.status).toBe(400);
     });
 
+    it("defaults the four branding fields when none are provided", async () => {
+      const { agent } = await loginAsManager();
+      const res = await agent.post(API).send({ name: "No Branding", color: "green" });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.titleColor).toBe("#1a1a1a");
+      expect(res.body.data.borderStyle).toBe("NONE");
+      expect(res.body.data.logoUrl).toBe("");
+      expect(res.body.data.logoPosition).toBe("TOP_LEFT");
+    });
+
+    it("defaults category to null (universal) when not provided", async () => {
+      const { agent } = await loginAsManager();
+      const res = await agent.post(API).send({ name: "No Category", color: "green" });
+      expect(res.status).toBe(201);
+      expect(res.body.data.category).toBeNull();
+    });
+
+    for (const category of [
+      "Contract Templates",
+      "Policies & Procedures",
+      "Forms & Applications",
+      "Training Materials",
+      "Compliance & Legal",
+      "Onboarding Materials",
+    ] as const) {
+      it(`accepts category "${category}"`, async () => {
+        const { agent } = await loginAsManager();
+        const res = await agent
+          .post(API)
+          .send({ name: `Category for ${category}`, color: "green", category });
+        expect(res.status).toBe(201);
+        expect(res.body.data.category).toBe(category);
+      });
+    }
+
+    it("rejects a category outside the allowed set", async () => {
+      const { agent } = await loginAsManager();
+      const res = await agent
+        .post(API)
+        .send({ name: "Bad Category", color: "green", category: "Leave Attachment" });
+      expect(res.status).toBe(400);
+    });
+
+    it("accepts a data: URI logoUrl well over the old 2000-char cap", async () => {
+      const { agent } = await loginAsManager();
+      const bigDataUri = `data:image/png;base64,${"A".repeat(50_000)}`;
+      const res = await agent
+        .post(API)
+        .send({ name: "Big Logo", color: "green", logoUrl: bigDataUri });
+      expect(res.status).toBe(201);
+      expect(res.body.data.logoUrl).toBe(bigDataUri);
+    });
+
+    it("accepts explicit branding fields", async () => {
+      const { agent } = await loginAsManager();
+      const res = await agent.post(API).send({
+        name: "Branded",
+        color: "blue",
+        titleColor: "#ff00aa",
+        borderStyle: "ACCENT",
+        logoUrl: "https://example.com/logo.png",
+        logoPosition: "BOTTOM_LEFT",
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.titleColor).toBe("#ff00aa");
+      expect(res.body.data.borderStyle).toBe("ACCENT");
+      expect(res.body.data.logoUrl).toBe("https://example.com/logo.png");
+      expect(res.body.data.logoPosition).toBe("BOTTOM_LEFT");
+    });
+
+    it("accepts a data: URI for logoUrl", async () => {
+      const { agent } = await loginAsManager();
+      const res = await agent.post(API).send({
+        name: "Data URI Logo",
+        color: "green",
+        logoUrl: "data:image/png;base64,iVBORw0KGgo=",
+      });
+      expect(res.status).toBe(201);
+      expect(res.body.data.logoUrl).toBe("data:image/png;base64,iVBORw0KGgo=");
+    });
+
+    it("rejects a titleColor that isn't a 6-digit hex string", async () => {
+      const { agent } = await loginAsManager();
+      const res = await agent
+        .post(API)
+        .send({ name: "Bad Title Color", color: "green", titleColor: "red" });
+      expect(res.status).toBe(400);
+    });
+
+    it("rejects a borderStyle outside the four allowed values", async () => {
+      const { agent } = await loginAsManager();
+      const res = await agent
+        .post(API)
+        .send({ name: "Bad Border", color: "green", borderStyle: "FANCY" });
+      expect(res.status).toBe(400);
+    });
+
+    it("rejects a logoPosition outside the two allowed values", async () => {
+      const { agent } = await loginAsManager();
+      const res = await agent
+        .post(API)
+        .send({ name: "Bad Logo Position", color: "green", logoPosition: "CENTER" });
+      expect(res.status).toBe(400);
+    });
+
+    it("rejects a relative logoUrl (won't resolve at server-side render time)", async () => {
+      const { agent } = await loginAsManager();
+      const res = await agent
+        .post(API)
+        .send({ name: "Bad Logo Url", color: "green", logoUrl: "/uploads/logo.png" });
+      expect(res.status).toBe(400);
+    });
+
     it("rejects a missing name", async () => {
       const { agent } = await loginAsManager();
       const res = await agent.post(API).send({ color: "green" });
@@ -166,6 +281,83 @@ describe("document category templates", () => {
         .patch(`${API}/${created.body.data.id}`)
         .send({ color: "blue" });
       expect(res.status).toBe(403);
+    });
+
+    it("lets HR update just the branding fields, leaving color/name/description untouched", async () => {
+      const { agent } = await loginAsManager();
+      const created = await agent
+        .post(API)
+        .send({ name: "Rebrand Me", color: "yellow", description: "keep me" });
+
+      const res = await agent.patch(`${API}/${created.body.data.id}`).send({
+        titleColor: "#00aabb",
+        borderStyle: "DOUBLE",
+        logoUrl: "https://example.com/l.png",
+        logoPosition: "BOTTOM_LEFT",
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.color).toBe("yellow");
+      expect(res.body.data.description).toBe("keep me");
+      expect(res.body.data.titleColor).toBe("#00aabb");
+      expect(res.body.data.borderStyle).toBe("DOUBLE");
+      expect(res.body.data.logoUrl).toBe("https://example.com/l.png");
+      expect(res.body.data.logoPosition).toBe("BOTTOM_LEFT");
+    });
+
+    it("rejects an invalid titleColor on update", async () => {
+      const { agent } = await loginAsManager();
+      const created = await agent.post(API).send({ name: "Update Bad Color", color: "green" });
+
+      const res = await agent
+        .patch(`${API}/${created.body.data.id}`)
+        .send({ titleColor: "not-a-hex-color" });
+      expect(res.status).toBe(400);
+    });
+
+    it("lets HR set the category after creation", async () => {
+      const { agent } = await loginAsManager();
+      const created = await agent.post(API).send({ name: "Assign Category Later", color: "green" });
+      expect(created.body.data.category).toBeNull();
+
+      const res = await agent
+        .patch(`${API}/${created.body.data.id}`)
+        .send({ category: "Training Materials" });
+      expect(res.status).toBe(200);
+      expect(res.body.data.category).toBe("Training Materials");
+    });
+
+    it("lets HR clear the category back to null (universal)", async () => {
+      const { agent } = await loginAsManager();
+      const created = await agent
+        .post(API)
+        .send({ name: "Clear Category", color: "green", category: "Forms & Applications" });
+
+      const res = await agent.patch(`${API}/${created.body.data.id}`).send({ category: null });
+      expect(res.status).toBe(200);
+      expect(res.body.data.category).toBeNull();
+    });
+  });
+
+  describe("backward compatibility", () => {
+    it("a template created before branding fields existed still returns the default branding values on read", async () => {
+      // Simulates a pre-existing row: insert directly at the DB layer with only the original
+      // (pre-branding) columns, exactly like a template created before this migration ran.
+      const [row] = await db
+        .insert(hr_document_category_templates)
+        .values({ name: "Legacy Template", color: "blue", header_text: "Old header" })
+        .returning();
+
+      const { agent } = await loginAsManager();
+      const res = await agent.get(`${API}/${row.id}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.header_text).toBe("Old header");
+      expect(res.body.data.titleColor).toBe("#1a1a1a");
+      expect(res.body.data.borderStyle).toBe("NONE");
+      expect(res.body.data.logoUrl).toBe("");
+      expect(res.body.data.logoPosition).toBe("TOP_LEFT");
+      expect(res.body.data.category).toBeNull();
     });
   });
 

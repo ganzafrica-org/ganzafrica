@@ -16,7 +16,7 @@ import {
   offers,
   users,
 } from "../../src/db/schema";
-import { instantiateProcess, completeTask } from "../../src/services/hr/process.service";
+import { instantiateProcess, completeTask, skipTask } from "../../src/services/hr/process.service";
 import {
   makeEmployeeUser,
   makeProcessTemplate,
@@ -103,6 +103,25 @@ describe("LCM-01 kind side-effects", () => {
     const task = await taskNamed(instance.id, "Sign contract");
 
     await expect(completeTask(hrUserId, task.id)).rejects.toMatchObject({ statusCode: 422 });
+  });
+
+  it("refuses to skip contract_signing, even for HR and even when not blocking", async () => {
+    const subject = await makeEmployeeUser({ employmentType: "staff" });
+    await makeProcessTemplate({
+      createdBy: hrUserId,
+      employmentTypes: null,
+      tasks: [{ title: "Sign contract", kind: "contract_signing", is_blocking: false }],
+    });
+
+    const instance = await instantiateProcess("onboarding", subject.employee.id, {
+      actorUserId: hrUserId,
+    });
+    const task = await taskNamed(instance.id, "Sign contract");
+
+    await expect(skipTask(hrUserId, task.id, "Waived")).rejects.toMatchObject({
+      statusCode: 422,
+      code: "CONTRACT_SIGNING_NOT_SKIPPABLE",
+    });
   });
 
   it("leave_setup materializes MOD-06 balances on completion", async () => {

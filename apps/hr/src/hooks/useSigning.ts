@@ -44,3 +44,57 @@ export function useSignDocument() {
     },
   });
 }
+
+/** HR-only: templates available to send for signature (e.g. the seeded Employment Contract). */
+export function useSigningTemplates() {
+  return useQuery({
+    queryKey: ["signing", "templates"],
+    queryFn: () => signingService.listTemplates(),
+  });
+}
+
+/** HR-only: send one document to an arbitrary, HR-chosen set of signers (sequential or parallel). */
+export function useSendSignatureSequence() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: signingService.sendSequence,
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["signing", "by-ref", variables.ref_kind, variables.ref_id],
+      });
+      toast.success("Sent for signature");
+    },
+    onError: () => toast.danger("Couldn't send for signature"),
+  });
+}
+
+// --- Designated co-signer pool ---
+
+export function useSignerPool() {
+  return useQuery({
+    queryKey: ["signing", "signer-pool"],
+    queryFn: () => signingService.listSignerPool(),
+  });
+}
+
+export function useAddToSignerPool() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (employeeId: string) => signingService.addToSignerPool(employeeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["signing", "signer-pool"] });
+      toast.success("Added to signer pool");
+    },
+  });
+}
+
+export function useRemoveFromSignerPool() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (employeeId: string) => signingService.removeFromSignerPool(employeeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["signing", "signer-pool"] });
+      toast.success("Removed from signer pool");
+    },
+  });
+}

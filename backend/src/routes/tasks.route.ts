@@ -25,7 +25,7 @@ router.post("/:id/comments", authenticate, taskController.addTaskComment);
 router.put("/:id/comments/:commentId", authenticate, taskController.updateTaskComment);
 router.delete("/:id/comments/:commentId", authenticate, taskController.deleteTaskComment);
 
-// Task File Uploads - uses Digital Ocean Spaces (same as portal)
+// Task File Uploads - uses Azure Blob Storage
 router.post(
   "/:id/upload",
   authenticate,

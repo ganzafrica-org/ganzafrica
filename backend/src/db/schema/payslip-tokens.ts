@@ -4,7 +4,7 @@ import { payrolls } from "./payroll";
 /**
  * Long-lived, revocable access tokens for payslip download links sent by email. The raw token
  * lives only in the emailed URL; we store its sha256 hash. Redeeming a valid token 302-redirects
- * to a fresh short-lived presigned Spaces URL (see payslip-token.service.ts).
+ * to a fresh short-lived presigned Azure Blob Storage SAS URL (see payslip-token.service.ts).
  */
 export const payslip_access_tokens = pgTable(
   "payslip_access_tokens",

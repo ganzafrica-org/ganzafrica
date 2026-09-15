@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
-import { useState, useEffect } from "react";
-import { LayoutGrid, DollarSign, FileText, LogOut } from "lucide-react";
+import { DollarSign, FileText, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-provider";
 
 interface SidebarProps {

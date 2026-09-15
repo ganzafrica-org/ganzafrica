@@ -1,8 +1,10 @@
 ﻿import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { hr_contracts } from "@/db/schema";
+import { hr_documents } from "@/db/schema/hr/document";
 import { AppError } from "@/middlewares";
 import { requireEmployee } from "./employee-context";
+import { getObjectBuffer } from "../storage.service";
 import {
   HR_SETTABLE_CONTRACT_STATUSES,
   type CompensationType,
@@ -223,16 +225,20 @@ export async function updateContract(
  * signature request is the same (arguably stronger) evidence that guard exists to require, and
  * the Contracts-tab manual create/edit path is left completely unchanged for contracts outside
  * the onboarding flow.
+ *
+ * `agreementDocumentId` must be an hr_documents id (from recordSignedContractDocument) or null —
+ * never a raw storage key. isAgreementDocumentId on the frontend only recognizes an hr_documents
+ * id here; a raw key would silently break the Contract view's document preview.
  */
 export async function activateViaSignature(
   contractId: string,
-  signedFileKey: string | null,
+  agreementDocumentId: string | null,
 ): Promise<ContractRecord> {
   const [updated] = await db
     .update(hr_contracts)
     .set({
       status: "ACTIVE",
-      employment_agreement_url: signedFileKey,
+      employment_agreement_url: agreementDocumentId,
       updated_at: new Date(),
     })
     .where(eq(hr_contracts.id, contractId))
@@ -240,6 +246,71 @@ export async function activateViaSignature(
 
   if (!updated) throw new AppError("Contract not found", 404);
   return mapContract(updated);
+}
+
+function bytesToHuman(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+  return `${value.toFixed(1)} ${units[unitIndex]}`;
+}
+
+/**
+ * Gives a fully-executed e-signature its own hr_documents row, so it counts and shows up
+ * alongside every other document about the employee (see employees-core.service.ts's document
+ * count, which unions on hr_documents.contract_id), and returns its id so the caller can point
+ * hr_contracts.employment_agreement_url at it (the Contract view's document preview only
+ * recognizes an hr_documents id there, not a raw storage key). Only called once a real base file
+ * backs the signature (signing.service.ts's completeSequenceStep checks the template has a
+ * file_key) — a fields-only template's fabricated `signed/request-N.json` key has nothing behind
+ * it in storage, so it would create a broken/undownloadable document row.
+ */
+export async function recordSignedContractDocument(
+  contractId: string,
+  signedFileKey: string,
+): Promise<string> {
+  const [existing] = await db
+    .select({ id: hr_documents.id })
+    .from(hr_documents)
+    .where(and(eq(hr_documents.contract_id, contractId), eq(hr_documents.file_path, signedFileKey)))
+    .limit(1);
+  if (existing) return existing.id;
+
+  const [contract] = await db
+    .select()
+    .from(hr_contracts)
+    .where(eq(hr_contracts.id, contractId))
+    .limit(1);
+  if (!contract?.employee_ref_id) {
+    throw new AppError("Contract has no employee to attach the signed document to", 404);
+  }
+
+  const buf = await getObjectBuffer(signedFileKey);
+
+  const [inserted] = await db
+    .insert(hr_documents)
+    .values({
+      document_name: `${contract.job_title} — Signed Employment Contract`,
+      category: "Contract Templates",
+      version: "1",
+      description: "Signed via e-signature.",
+      department: contract.department ?? "General",
+      file_path: signedFileKey,
+      file_size: bytesToHuman(buf.length),
+      downloads: 0,
+      versions: [],
+      created_by_employee_id: contract.employee_ref_id,
+      access: {},
+      contract_id: contractId,
+    })
+    .returning({ id: hr_documents.id });
+
+  return inserted.id;
 }
 
 export async function deleteContract(employeeId: string, contractId: string): Promise<void> {

@@ -5,7 +5,7 @@ import * as documentService from "../../services/hr/document.service";
 import * as retentionService from "../../services/hr/document-retention.service";
 import { AppError } from "@/middlewares";
 
-/** multer-s3 augments the uploaded file with `location`/`key` (not part of Express.Multer.File). */
+/** the upload middleware augments the uploaded file with `location`/`key` (not part of Express.Multer.File). */
 function uploadedFile(req: Request): documentService.UploadedFile | undefined {
   const file = req.file as unknown as { key?: string; size?: number; originalname?: string };
   if (!file?.key) return undefined;
@@ -184,7 +184,16 @@ export const createDocument = async (
 ): Promise<void> => {
   try {
     const file = uploadedFile(req);
-    if (!file) throw new AppError("A file is required", 400);
+    const sourceDocumentId = req.body.sourceDocumentId as string | undefined;
+    if (file && sourceDocumentId) {
+      throw new AppError(
+        "Choose either a file upload or an existing document to reuse, not both.",
+        400,
+      );
+    }
+    if (!file && !sourceDocumentId) {
+      throw new AppError("A file upload or an existing document to reuse is required.", 400);
+    }
 
     // The creator is the authenticated user's employee record, not the platform user id.
     const { employeeId } = await getEmployeeForUser(Number(req.user!.id));
@@ -194,6 +203,7 @@ export const createDocument = async (
       access: parseAccessField(req.body.access),
       createdById: employeeId,
       file,
+      sourceDocumentId,
     });
 
     res.status(201);
@@ -201,6 +211,24 @@ export const createDocument = async (
       success: true,
       message: "Document created successfully",
       data: created,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const listDocumentTemplates = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const category = req.query.category as documentService.DocumentCategory;
+    const templates = await documentService.listDocumentTemplates(category);
+    sendResponse(res, {
+      success: true,
+      message: "Document templates fetched successfully",
+      data: templates,
     });
   } catch (err) {
     next(err);

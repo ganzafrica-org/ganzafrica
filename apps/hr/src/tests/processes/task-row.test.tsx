@@ -260,3 +260,85 @@ describe("TaskRow — contract_signing: view before sign + sign action", () => {
     });
   });
 });
+
+describe("TaskRow — contract_signing cannot be skipped", () => {
+  it("hides the Skip button for a contract_signing task even when the viewer can manage", async () => {
+    mockCommon();
+    renderWithClient(
+      <TaskRow task={contractSigningTask} canManage isMine={false} employeeId="emp-1" />,
+    );
+
+    // Wait for the row's async data (contract, signatures) to settle before asserting absence.
+    await screen.findByRole("button", { name: /view/i });
+    expect(screen.queryByRole("button", { name: /^skip$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^done$/i })).toBeInTheDocument();
+  });
+
+  it("still shows Skip for a manageable, non-contract_signing task", async () => {
+    mockCommon();
+    renderWithClient(
+      <TaskRow
+        task={task({ id: 2, title: "Upload ID", kind: "document_upload" })}
+        canManage
+        isMine={false}
+      />,
+    );
+
+    expect(await screen.findByRole("button", { name: /^skip$/i })).toBeInTheDocument();
+  });
+});
+
+describe("TaskRow — asset_assignment: 'Go to Assets' on a failed complete", () => {
+  it("shows a link to the Assets page alongside the error when completing fails for lack of an asset", async () => {
+    mockCommon();
+    server.use(
+      http.post(`${API}/hr/process-tasks/3/complete`, () =>
+        HttpResponse.json(
+          { message: "Assign the asset before completing this task", code: "ASSET_MISSING" },
+          { status: 422 },
+        ),
+      ),
+    );
+
+    renderWithClient(
+      <TaskRow
+        task={task({ id: 3, title: "Issue laptop and accessories", kind: "asset_assignment" })}
+        canManage
+        isMine={false}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: /^done$/i }));
+
+    expect(
+      await screen.findByText(/assign the asset before completing this task/i),
+    ).toBeInTheDocument();
+    const assetsLink = screen.getByRole("link", { name: /go to assets/i });
+    expect(assetsLink).toHaveAttribute("href", "/asset");
+  });
+
+  it("does not show the Assets link for a non-asset task's failed complete", async () => {
+    mockCommon();
+    server.use(
+      http.post(`${API}/hr/process-tasks/4/complete`, () =>
+        HttpResponse.json(
+          { message: "Upload the document before completing this task", code: "DOCUMENT_MISSING" },
+          { status: 422 },
+        ),
+      ),
+    );
+
+    renderWithClient(
+      <TaskRow
+        task={task({ id: 4, title: "Upload ID", kind: "document_upload" })}
+        canManage
+        isMine={false}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: /^done$/i }));
+
+    await screen.findByText(/upload the document before completing this task/i);
+    expect(screen.queryByRole("link", { name: /go to assets/i })).not.toBeInTheDocument();
+  });
+});

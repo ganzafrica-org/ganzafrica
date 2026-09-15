@@ -19,14 +19,19 @@ import {
   Trophy,
 } from "lucide-react";
 export type HeaderStat = {
-  icon: LucideIcon | React.ReactElement;
+  /** Required unless `content` is set. */
+  icon?: LucideIcon | React.ReactElement;
   label: string;
-  value: string;
+  /** Required unless `content` is set. */
+  value?: string;
   delta?: {
     direction: "up" | "down";
     value: string;
   };
   comparison?: string;
+  /** When set, replaces the default icon/value layout for this card entirely (e.g. a progress
+   *  ring instead of a number) — `icon`/`value`/`delta`/`comparison` are ignored. */
+  content?: React.ReactNode;
 };
 
 export const defaultStats: HeaderStat[] = [
@@ -148,33 +153,6 @@ export const HelpDeskStats: HeaderStat[] = [
     value: "4.6",
     delta: { direction: "up", value: "" },
     comparison: "Out of 5.0 rating",
-  },
-];
-
-export const TimeOffStats: HeaderStat[] = [
-  {
-    icon: Clock,
-    label: "Exlent",
-    value: "15",
-    delta: { direction: "up", value: "84%" },
-  },
-  {
-    icon: CircleCheckBig,
-    label: "Good",
-    value: "5",
-    delta: { direction: "up", value: "6%" },
-  },
-  {
-    icon: Calendar,
-    label: "Fair",
-    value: "4",
-    delta: { direction: "down", value: "8%" },
-  },
-  {
-    icon: FileCog,
-    label: "Poor",
-    value: "2",
-    delta: { direction: "down", value: "2%" },
   },
 ];
 

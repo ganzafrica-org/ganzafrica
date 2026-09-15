@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { documentsService } from "@/services/documents.service";
-import type { CreateDocumentRequest, UpdateDocumentRequest } from "@/types/api";
+import type { CreateDocumentRequest, DocumentCategory, UpdateDocumentRequest } from "@/types/api";
 import { toast } from "@/lib/toast";
 
 export function useDocuments(params?: {
@@ -37,12 +37,21 @@ export function useDocument(id: string | null) {
 export function useCreateDocument() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ payload, file }: { payload: CreateDocumentRequest; file: File }) =>
+    mutationFn: ({ payload, file }: { payload: CreateDocumentRequest; file?: File | null }) =>
       documentsService.createDocument(payload, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
       toast.success("Document uploaded");
     },
+  });
+}
+
+/** The "use a saved template instead of uploading" picker source for a given category. */
+export function useDocumentTemplates(category: DocumentCategory | "") {
+  return useQuery({
+    queryKey: ["documents", "templates", category],
+    queryFn: () => documentsService.getDocumentTemplates(category),
+    enabled: !!category,
   });
 }
 

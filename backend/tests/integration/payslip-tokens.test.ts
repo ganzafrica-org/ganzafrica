@@ -1,17 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
-// SAS download is faked so redeem returns a deterministic blob URL carrying the requested expiry.
-vi.mock("../../src/services/storage.service", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../src/services/storage.service")>();
-  return {
-    ...actual,
-    getPresignedDownload: vi.fn(
-      async (key: string, expiresIn = 300) =>
-        `https://teststorage.blob.core.windows.net/uploads/${key}?sig=test&se=exp-${expiresIn}`,
-    ),
-  };
-});
-
+// No mock needed here: Azure SAS URL generation (StorageSharedKeyCredential + generateSasUrl) is
+// a local HMAC signing operation, not a network call — it runs for real against the fake test
+// account set up in tests/setup.ts and produces a real (if uncallable) SAS query string.
 import supertest from "supertest";
 import { eq } from "drizzle-orm";
 import app from "../../src/app";
@@ -45,13 +36,19 @@ describe("payslip access tokens", () => {
     expect(rows[0].token_hash).not.toContain(raw);
   });
 
-  it("valid token → 302 to a blob URL with 5-min expiry", async () => {
+  it("valid token → 302 to an Azure Blob SAS URL expiring ~300s out", async () => {
     const payroll = await seedPayroll();
     const token = await payslipTokenService.mintPayslipToken(payroll.id);
     const res = await supertest(app).get(`/api/payslips/view/${token}`);
     expect(res.status).toBe(302);
-    expect(res.headers.location).toContain("blob.core.windows.net");
-    expect(res.headers.location).toContain("se=exp-300");
+
+    const location = new URL(res.headers.location);
+    expect(location.hostname).toContain("blob.core.windows.net");
+    expect(location.searchParams.get("sp")).toBe("r"); // read-only permission
+    const expiresAt = new Date(location.searchParams.get("se")!).getTime();
+    const deltaSeconds = (expiresAt - Date.now()) / 1000;
+    expect(deltaSeconds).toBeGreaterThan(290);
+    expect(deltaSeconds).toBeLessThan(310);
   });
 
   it("redeeming bumps access_count and sets last_accessed_at", async () => {

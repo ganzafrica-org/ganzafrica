@@ -1,6 +1,7 @@
 import { httpClient } from "@/services/http.service";
 import type {
   CreateDocumentRequest,
+  DocumentTemplateOption,
   HrDocument,
   PaginatedResponse,
   UpdateDocumentRequest,
@@ -50,10 +51,20 @@ export const documentsService = {
     return result.data.data;
   },
 
-  /** file is required by the backend contract (privateUpload middleware mounted unconditionally). */
-  async createDocument(payload: CreateDocumentRequest, file: File): Promise<HrDocument> {
+  /** Exactly one of `file` or `payload.sourceDocumentId` must be set — never both, never neither
+   *  (enforced server-side too; see document.service.ts's createDocument). */
+  async createDocument(payload: CreateDocumentRequest, file?: File | null): Promise<HrDocument> {
     const form = toFormData(payload as unknown as Record<string, unknown>, file);
     const result = await httpClient.post<{ data: HrDocument }>(BASE, form);
+    return result.data.data;
+  },
+
+  /** The reusable-template pool for a category — safe to offer as a "use existing" picker source
+   *  (never another employee's actual linked document; see backend's listDocumentTemplates). */
+  async getDocumentTemplates(category: string): Promise<DocumentTemplateOption[]> {
+    const result = await httpClient.get<{ data: DocumentTemplateOption[] }>(`${BASE}/templates`, {
+      params: { category },
+    });
     return result.data.data;
   },
 

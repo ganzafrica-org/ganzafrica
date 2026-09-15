@@ -27,55 +27,24 @@
  * (`jsonb_typeof` assertion) and the create-then-verify visibility behavior are asserted below.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { fakeAzureStorageBlobModule, type FakeUploadInfo } from "../helpers/mock-azure-storage";
 
 // `vi.mock` factories are hoisted above every other statement in the file (including plain
 // `const` declarations that appear earlier in source order), so anything a factory closes over
 // must itself be declared via `vi.hoisted` — otherwise it's a TDZ ReferenceError the moment the
 // mocked module is first imported.
 const { uploadedObjects } = vi.hoisted(() => ({
-  uploadedObjects: [] as Array<{ Bucket?: string; Key?: string; ACL?: string }>,
+  uploadedObjects: [] as FakeUploadInfo[],
 }));
 
-// The document routes upload through `privateUpload` (src/middlewares/upload.ts), a multer
-// instance backed by `multer-s3`. multer-s3 itself does the real write via `@aws-sdk/lib-storage`
-// -> `@aws-sdk/client-s3`, both loaded as plain node_modules CJS requires *inside* multer-s3's
-// own module — outside Vitest's module graph, so `vi.mock`ing those SDK packages from this test
-// file never reaches them (proven experimentally: it still made a real DNS lookup for
-// "digitaloceanspaces.com"). `upload.ts`'s own `import multerS3 from "multer-s3"` **is** inside
-// Vitest's graph, so mocking the "multer-s3" package itself — a real multer StorageEngine that
-// just buffers to memory instead of writing to S3 — is what actually keeps this test network-free
-// while still exercising the real Express route, real multer parsing, and real controller/service
-// code the ACL bug lived in.
-// The upload middleware streams into Azure Blob via `@azure/storage-blob`. Mock the client so
-// uploads buffer in memory (no network) while still exercising the real route/multer/controller.
-vi.mock("@azure/storage-blob", () => {
-  const makeBlockBlobClient = (containerName: string, key: string) => ({
-    url: `https://teststorage.blob.core.windows.net/${containerName}/${key}`,
-    async uploadData(data: Buffer) {
-      uploadedObjects.push({ Bucket: containerName, Key: key, ACL: "private" });
-      return { requestId: "test", size: data.length };
-    },
-    async deleteIfExists() {
-      return { succeeded: true };
-    },
-    async downloadToBuffer() {
-      return Buffer.from("");
-    },
-  });
-  const makeContainerClient = (containerName: string) => ({
-    getBlockBlobClient: (key: string) => makeBlockBlobClient(containerName, key),
-  });
-  return {
-    BlobServiceClient: {
-      fromConnectionString: () => ({
-        getContainerClient: (name: string) => makeContainerClient(name),
-      }),
-    },
-    BlobSASPermissions: { parse: () => ({}) },
-    generateBlobSASQueryParameters: () => ({ toString: () => "sig=test" }),
-    StorageSharedKeyCredential: class {},
-  };
-});
+// The document routes upload through `privateUpload` (src/middlewares/upload.ts), which
+// constructs a `BlobServiceClient` directly at module scope — that call is inside Vitest's module
+// graph, so mocking `@azure/storage-blob` itself (a fake that buffers to memory instead of
+// writing to Azure) is what keeps this test network-free while still exercising the real Express
+// route, real multer parsing, and real controller/service code the ACL bug lived in.
+vi.mock("@azure/storage-blob", () =>
+  fakeAzureStorageBlobModule((info) => uploadedObjects.push(info)),
+);
 
 // Background text-indexing (fire-and-forget after create) would otherwise try a real DO Spaces
 // GET with fake test credentials — stub it out, same as documents-policies.test.ts.
@@ -145,7 +114,9 @@ describe("create-document ACL — real multipart route, create then verify", () 
       const documentId = createRes.body.data.id;
       expect(documentId).toBeTruthy();
       expect(createRes.body.data.access).toEqual({ departments: ["Programs"] });
-      expect(uploadedObjects.length).toBe(1); // multer-s3 really went through the upload path
+
+      expect(uploadedObjects.length).toBe(1); // the real upload middleware went through the upload path
+
       // The storage-level bug this test guards: previously `access` was persisted as a jsonb
       // *string* scalar (double-encoded), not a jsonb object — see file header.
       expect(await accessJsonbType(documentId)).toBe("object");

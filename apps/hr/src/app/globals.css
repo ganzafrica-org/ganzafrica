@@ -230,3 +230,27 @@ body {
   animation: dropdown-out 0.15s ease-in forwards;
   transform-origin: top right;
 }
+
+/* FullCalendar (LeaveCalendar) ships its own dark/black button theme by default, injected as a
+   runtime <style> tag that loads after this stylesheet — so at equal ".fc" specificity it wins
+   the cascade unless these are !important. Retheme via FullCalendar's own documented CSS
+   variables rather than fighting its button classes directly. */
+.fc {
+  --fc-button-bg-color: var(--brand-accent) !important;
+  --fc-button-border-color: var(--brand-accent) !important;
+  --fc-button-hover-bg-color: var(--brand-dark) !important;
+  --fc-button-hover-border-color: var(--brand-dark) !important;
+  --fc-button-active-bg-color: var(--brand-dark) !important;
+  --fc-button-active-border-color: var(--brand-dark) !important;
+  --fc-button-text-color: var(--brand-dark) !important;
+}
+.fc .fc-button:hover,
+.fc .fc-button-active {
+  color: #fff !important;
+}
+
+/* HeroUI's toast region defaults to z-index: 50, which sits behind every sheet/dialog in this
+   app (z-[100]/z-[101]) — a toast fired while a sheet is open is invisible underneath it. */
+[data-slot="toast-region"] {
+  z-index: 100 !important;
+}

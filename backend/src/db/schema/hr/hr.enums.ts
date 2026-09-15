@@ -62,6 +62,18 @@ export const documentCategoryTemplateColorEnum = pgEnum("document_category_templ
   "orange",
 ]);
 
+// Branding fields (v1.1, additive — see document-category-template.ts): how the outer page
+// container and logo of documents in this category are laid out.
+export const documentCategoryTemplateBorderStyleEnum = pgEnum(
+  "document_category_template_border_style",
+  ["NONE", "SIMPLE", "DOUBLE", "ACCENT"],
+);
+
+export const documentCategoryTemplateLogoPositionEnum = pgEnum(
+  "document_category_template_logo_position",
+  ["TOP_LEFT", "BOTTOM_LEFT"],
+);
+
 export const documentCategoryEnum = pgEnum("policy_category", [
   "Contract Templates",
   "Policies & Procedures",
@@ -121,6 +133,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "PROCESS_TASK_OVERDUE",
   "PROCESS_COMPLETED",
   "MANAGER_CHANGED",
+  "SIGNATURE_REQUESTED",
 ]);
 
 export const notificationStatusEnum = pgEnum("notification_status", ["UNREAD", "READ", "ARCHIVED"]);

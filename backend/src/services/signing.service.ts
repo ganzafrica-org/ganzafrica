@@ -7,19 +7,24 @@ import crypto from "crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { AppError } from "../middlewares";
-import { env } from "../config";
-import { users, roles, user_roles } from "../db/schema";
+import { env, Logger } from "../config";
+import { users, roles, user_roles, hr_contracts, hr_documents, employees } from "../db/schema";
 import {
   signature_templates,
   signature_template_fields,
   signature_requests,
   signature_events,
+  hr_signer_pool,
   type SignatureRequest,
 } from "../db/schema/signing";
 import { mintLink, consumeLink, peekLink, revokeLinks } from "./secure-links.service";
-import { activateViaSignature } from "./hr/contract.service";
+import { activateViaSignature, recordSignedContractDocument } from "./hr/contract.service";
 import { getPresignedDownload } from "./storage.service";
+import { sendEmail, combineRecipients } from "./email.service";
+import { signatureRequestedEmail } from "./hr/signature-emails";
+import { sendNotification } from "../modules/hr/notifications/notification.service";
 
+const logger = new Logger("SigningService");
 const DEFAULT_SIGN_TTL_DAYS = 30;
 // Inline preview needs to outlast a quick glance — the signer may read the document before
 // filling anything in. Mirrors document.service.ts's VIEW_URL_EXPIRY_SECONDS.
@@ -43,6 +48,13 @@ export async function createTemplate(
     })
     .returning();
   return row;
+}
+
+export async function setTemplateFileKey(templateId: number, fileKey: string): Promise<void> {
+  await db
+    .update(signature_templates)
+    .set({ file_key: fileKey, updated_at: new Date() })
+    .where(eq(signature_templates.id, templateId));
 }
 
 export async function listTemplates() {
@@ -186,16 +198,20 @@ export async function getTemplateByName(name: string) {
 
 /**
  * Creates one signature_request per signer, in order, all sharing (ref_kind, ref_id,
- * template_id). Only the first is sent immediately; the rest stay 'draft' until their turn —
- * completeSequenceStep advances the chain as each signer finishes.
+ * template_id). `mode: "sequential"` sends only the first (the rest stay 'draft' until their
+ * turn — completeSequenceStep advances the chain as each signer finishes); `mode: "parallel"`
+ * sends all of them immediately, so any signer may act in any order — completeSequenceStep's
+ * existing "no draft left? check everyone signed" logic handles that case unchanged, since a
+ * fully-parallel-sent sequence never has a draft to advance through in the first place.
  */
-export async function createSequentialRequests(
+export async function createSignerSequence(
   input: {
     template_id: number;
     subject: string;
     ref_kind: string;
     ref_id: string;
     signerUserIds: number[];
+    mode: "sequential" | "parallel";
   },
   createdBy: number,
 ): Promise<SignatureRequest[]> {
@@ -219,9 +235,27 @@ export async function createSequentialRequests(
     );
     created.push(req);
   }
-
-  await sendRequest(created[0].id);
+  if (input.mode === "parallel") {
+    for (const req of created) await sendRequest(req.id);
+  } else {
+    await sendRequest(created[0].id);
+  }
   return created;
+}
+
+/** Thin wrapper kept for the existing onboarding HR+new-hire co-sign flow (process.service.ts's
+ *  startContractSigning) — always exactly 2 signers, always sequential. */
+export async function createSequentialRequests(
+  input: {
+    template_id: number;
+    subject: string;
+    ref_kind: string;
+    ref_id: string;
+    signerUserIds: number[];
+  },
+  createdBy: number,
+): Promise<SignatureRequest[]> {
+  return createSignerSequence({ ...input, mode: "sequential" }, createdBy);
 }
 
 /** Every request sharing (ref_kind, ref_id, template_id), in sequence order, freshly read. */
@@ -273,10 +307,24 @@ async function completeSequenceStep(requestId: number): Promise<void> {
   if (!allSigned) return; // someone declined/voided/expired — not a clean full execution
 
   if (signedReq.ref_kind === "contract") {
+    // Only give the signature its own hr_documents row when a real base file backs it — a
+    // fields-only template's fabricated `signed/request-N.json` key has nothing in storage, so
+    // there's nothing real to reference and the contract's agreement pointer stays null rather
+    // than a dead key nothing can resolve.
+    const [template] = await db
+      .select({ file_key: signature_templates.file_key })
+      .from(signature_templates)
+      .where(eq(signature_templates.id, signedReq.template_id))
+      .limit(1);
+    const agreementDocId =
+      template?.file_key && signedReq.signed_file_key
+        ? await recordSignedContractDocument(signedReq.ref_id, signedReq.signed_file_key)
+        : null;
+
     // Deliberate cross-module call, not an event bus: this is the only place a contract's full
     // signature sequence completes, and the contract needs to know. See contract.service.ts's
     // activateViaSignature for why this bypasses the manual employment_agreement_url guard.
-    await activateViaSignature(signedReq.ref_id, signedReq.signed_file_key);
+    await activateViaSignature(signedReq.ref_id, agreementDocId);
   }
 }
 
@@ -306,7 +354,52 @@ export async function sendRequest(requestId: number): Promise<SentRequest> {
     .set({ status: "sent", sent_at: new Date(), expires_at: expiresAt, updated_at: new Date() })
     .where(eq(signature_requests.id, requestId))
     .returning();
+
+  await notifySigner(updated, link).catch((err) =>
+    logger.error("signature notify failed (non-fatal)", err),
+  );
+
   return { request: updated, token, link };
+}
+
+/** Emails + notifies the signer that a request is now theirs to act on. Internal signers get an
+ *  in-app link + a system notification; external signers (no platform user id to notify) get only
+ *  the emailed token link. A send failure must never fail the request itself — see sendRequest. */
+async function notifySigner(req: SignatureRequest, externalLink: string | null): Promise<void> {
+  if (!req.signer_email) return;
+
+  // Internal signers may also have a work_email on their employees row, distinct from
+  // signer_email (their login/personal address) — a document to sign should reach both.
+  let recipient = req.signer_email;
+  if (req.signer_type === "internal" && req.signer_user_id) {
+    const [employee] = await db
+      .select({ workEmail: employees.work_email })
+      .from(employees)
+      .where(eq(employees.user_id, req.signer_user_id))
+      .limit(1);
+    recipient = combineRecipients(req.signer_email, employee?.workEmail);
+  }
+
+  const link = externalLink ?? `${env.PORTAL_URL.replace(/\/$/, "")}/signing`;
+  const firstName = req.signer_name?.split(" ")[0] ?? null;
+  const { subject, html, text } = signatureRequestedEmail({
+    signerFirstName: firstName,
+    subject: req.subject,
+    link,
+  });
+  await sendEmail(recipient, subject, html, text);
+
+  if (req.signer_type === "internal" && req.signer_user_id) {
+    await sendNotification({
+      type: "SIGNATURE_REQUESTED",
+      triggeredBy: req.created_by,
+      relatedEntity: req.ref_kind === "contract" && req.ref_id ? { contractId: req.ref_id } : {},
+      recipientUserIds: [req.signer_user_id],
+      title: "Document awaiting your signature",
+      message: `${req.subject} is ready for you to sign.`,
+      priority: "NORMAL",
+    });
+  }
 }
 
 export async function voidRequest(requestId: number) {
@@ -487,15 +580,51 @@ export async function listForSigner(userId: number) {
   );
 }
 
+const AGREEMENT_DOC_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The specific contract's own uploaded agreement (hr_contracts.employment_agreement_url, set by
+ * the contract form's file upload — an hr_documents id, per isAgreementDocumentId on the frontend)
+ * — this is the exact document HR attached for this employee, distinct from the signing
+ * template's generic base file. Null once the field no longer holds an hr_documents id (not
+ * uploaded, a legacy raw URL, or already overwritten with the final signed key post-completion).
+ */
+async function contractAgreementFileKey(contractId: string): Promise<string | null> {
+  const [contract] = await db
+    .select({ agreementUrl: hr_contracts.employment_agreement_url })
+    .from(hr_contracts)
+    .where(eq(hr_contracts.id, contractId))
+    .limit(1);
+  const agreementUrl = contract?.agreementUrl;
+  if (!agreementUrl || !AGREEMENT_DOC_ID_RE.test(agreementUrl)) return null;
+
+  const [doc] = await db
+    .select({ file_path: hr_documents.file_path })
+    .from(hr_documents)
+    .where(eq(hr_documents.id, agreementUrl))
+    .limit(1);
+  return doc?.file_path ?? null;
+}
+
 /**
  * The base document a request's template is signing — what the signer should read before filling
- * in fields. `file_key` is nullable (a fields-only template has no document to preview).
+ * in fields. For a contract_signing request, prefers the contract's own uploaded agreement over
+ * the template's generic base file, since that's the exact document for this employee; falls
+ * back to the template's file_key otherwise. `file_key` is nullable (a fields-only template with
+ * no per-contract agreement has nothing to preview).
  */
-async function requestDocumentUrl(templateId: number): Promise<string | null> {
+async function requestDocumentUrl(req: SignatureRequest): Promise<string | null> {
+  const contractFileKey =
+    req.ref_kind === "contract" && req.ref_id ? await contractAgreementFileKey(req.ref_id) : null;
+
+  if (contractFileKey) {
+    return getPresignedDownload(contractFileKey, DOCUMENT_VIEW_URL_EXPIRY_SECONDS);
+  }
+
   const [tpl] = await db
     .select({ file_key: signature_templates.file_key })
     .from(signature_templates)
-    .where(eq(signature_templates.id, templateId))
+    .where(eq(signature_templates.id, req.template_id))
     .limit(1);
   if (!tpl?.file_key) return null;
   return getPresignedDownload(tpl.file_key, DOCUMENT_VIEW_URL_EXPIRY_SECONDS);
@@ -510,7 +639,7 @@ export async function getRequestDocumentUrl(
   if (req.signer_user_id !== viewerUserId && !(await hasAnyRole(viewerUserId, ["hr", "admin"]))) {
     throw new AppError("You cannot view this document", 403);
   }
-  return { url: await requestDocumentUrl(req.template_id) };
+  return { url: await requestDocumentUrl(req) };
 }
 
 /** External signer: the document behind a token, without consuming it (mirrors viewByToken). */
@@ -523,7 +652,7 @@ export async function getTokenDocumentUrl(
   if (peek.state === "expired" || peek.state === "revoked") return { state: "expired" };
 
   const req = await getRequest(peek.subjectId!);
-  return { state: "valid", url: await requestDocumentUrl(req.template_id) };
+  return { state: "valid", url: await requestDocumentUrl(req) };
 }
 
 /** The full audit trail for a request (HR / signer view). */
@@ -582,3 +711,35 @@ export async function listByRefForViewer(viewerUserId: number, refKind: string, 
 }
 
 export { documentHash };
+
+// --- Designated co-signer pool ---
+
+/** Everyone currently in the pool, newest first, with the display info the picker needs. */
+export async function listSignerPool() {
+  return db
+    .select({
+      employeeId: hr_signer_pool.employee_id,
+      userId: employees.user_id,
+      firstName: employees.first_name,
+      lastName: employees.last_name,
+      jobTitle: employees.job_title,
+      addedAt: hr_signer_pool.created_at,
+    })
+    .from(hr_signer_pool)
+    .innerJoin(employees, eq(employees.id, hr_signer_pool.employee_id))
+    .orderBy(desc(hr_signer_pool.created_at));
+}
+
+export async function addToSignerPool(employeeId: string, addedBy: number) {
+  const [employee] = await db.select().from(employees).where(eq(employees.id, employeeId)).limit(1);
+  if (!employee) throw new AppError("Employee not found", 404);
+
+  await db
+    .insert(hr_signer_pool)
+    .values({ employee_id: employeeId, added_by: addedBy })
+    .onConflictDoNothing();
+}
+
+export async function removeFromSignerPool(employeeId: string) {
+  await db.delete(hr_signer_pool).where(eq(hr_signer_pool.employee_id, employeeId));
+}

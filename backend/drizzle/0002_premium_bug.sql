@@ -1,0 +1,1 @@
+ALTER TABLE "hr_document_category_templates" ADD COLUMN "category" "policy_category";

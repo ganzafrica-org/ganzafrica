@@ -108,4 +108,45 @@ describe("RequestLeaveDialog", () => {
     expect(await screen.findByText(/overlaps an existing leave request/)).toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
+
+  it("hides Maternity/Paternity when the employee has no balance row for them (not granted)", async () => {
+    server.use(
+      http.get(`${API}/hr/me/leave`, () => HttpResponse.json({ balances: [], requests: [] })),
+    );
+
+    renderWithClient(<RequestLeaveDialog open onOpenChange={() => {}} />);
+    await screen.findByLabelText("First day"); // renders past loading
+
+    fireEvent.click(screen.getByRole("combobox"));
+    expect(screen.queryByText("Maternity leave")).not.toBeInTheDocument();
+    expect(screen.queryByText("Paternity leave")).not.toBeInTheDocument();
+  });
+
+  it("shows Maternity once the employee has an actual balance row for it (granted)", async () => {
+    server.use(
+      http.get(`${API}/hr/me/leave`, () =>
+        HttpResponse.json({
+          balances: [
+            {
+              id: 1,
+              employee_id: "e1",
+              year: 2026,
+              type: "MATERNITY",
+              entitled_days: "84",
+              carried_over_days: "0",
+              used_days: "0",
+            },
+          ],
+          requests: [],
+        }),
+      ),
+    );
+
+    renderWithClient(<RequestLeaveDialog open onOpenChange={() => {}} />);
+    await screen.findByLabelText("First day");
+
+    fireEvent.click(screen.getByRole("combobox"));
+    expect(await screen.findByText("Maternity leave")).toBeInTheDocument();
+    expect(screen.queryByText("Paternity leave")).not.toBeInTheDocument();
+  });
 });

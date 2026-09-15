@@ -49,8 +49,9 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const isDashboardPage = pathname === "/";
-  const useExpandedNavbar = isDashboardPage && !scrolled;
+
+  // Gapped/rounded until the user actually scrolls — on every page, not just the dashboard.
+  const useExpandedNavbar = !scrolled;
   const { data: unreadCount } = useUnreadNotificationCount();
   const markAllRead = useMarkAllNotificationsRead();
 
@@ -107,7 +108,7 @@ export function Navbar() {
     // director, program_manager, finance) gets the self-service nav.
     return [
       { id: "home", label: "Home", href: "/" },
-      { id: "my-onboarding", label: "My Onboarding", href: "/employees/onboarding/me" },
+      { id: "my-onboarding", label: "My Onboarding", href: "/onboarding/me" },
       { id: "leave", label: "Time Off", href: "/leave" },
       { id: "documents", label: "Documents", href: "/documents" },
       { id: "signing", label: "Sign", href: "/signing" },
@@ -171,7 +172,11 @@ export function Navbar() {
       }`}
     >
       {/* Desktop Navbar (md and up) */}
-      <div className="hidden md:flex px-10 h-[72px] w-full max-w-[80%] items-center bg-brand-dark justify-between gap-25 rounded-t-lg mt-5">
+      <div
+        className={`hidden md:flex px-10 h-[72px] w-full max-w-[80%] items-center bg-brand-dark justify-between gap-25 transition-all duration-300 ${
+          useExpandedNavbar ? "mt-5 rounded-t-lg" : "mt-0 rounded-none"
+        }`}
+      >
         {/* Logo and Main Nav */}
         <div className="flex justify-between items-center gap-6 lg:gap-9 w-[60%]">
           <Link href="/" className="flex items-center gap-2">

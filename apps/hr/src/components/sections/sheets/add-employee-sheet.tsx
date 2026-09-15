@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -34,6 +34,11 @@ import { saveContractWithAgreement } from "@/lib/helpers/contract-agreement";
 import { useProcesses, useProcess, usePatchTask } from "@/hooks/useProcesses";
 import { ContractSigningStatus } from "@/components/processes/contract-signing-status";
 import type { CreateEmployeeRequest, EmploymentType, Contract } from "@/types/api";
+
+// Same shape the backend's zod schema accepts (z.string().email()) — a simple, permissive
+// format check so a typo is caught here with a clear message instead of surfacing as the
+// generic 422 from the create-employee request.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type StepType = "profile" | "contract";
 
@@ -101,10 +106,15 @@ interface CreatedResult {
 /**
  * Shown once employee + DRAFT contract creation both succeed. The contract_signing task and its
  * signature request already exist server-side the moment the onboarding instance is instantiated
- * (createEmployee now does this) — this just links the freshly-created contract to that task via
- * the existing PATCH /process-tasks/:id (usePatchTask), the same mechanism the onboarding task
- * card's own contract picker uses. No new signing/onboarding backend logic — this only calls
- * endpoints that already exist and were already exercised from a different entry point.
+ * (createEmployee now does this) — this links the freshly-created contract to that task via the
+ * existing PATCH /process-tasks/:id (usePatchTask), the same mechanism the onboarding task card's
+ * own contract picker uses. No new signing/onboarding backend logic — this only calls endpoints
+ * that already exist and were already exercised from a different entry point.
+ *
+ * Fires automatically the moment the signing task resolves — signing an employment contract isn't
+ * optional (LCM-01 punch-list #3), so this is no longer a button HR can decline to click. The
+ * `firedRef` guard keeps it to exactly one PATCH even though `signingTask` is recomputed on every
+ * render.
  */
 function SendForSignaturePanel({ employeeId, contract }: CreatedResult) {
   const queryClient = useQueryClient();
@@ -113,6 +123,7 @@ function SendForSignaturePanel({ employeeId, contract }: CreatedResult) {
   const { data: detail, isLoading: loadingDetail } = useProcess(instanceId);
   const patchTask = usePatchTask();
   const [sent, setSent] = useState(false);
+  const firedRef = useRef(false);
 
   const signingTask = detail?.tasks.find(
     (t) =>
@@ -120,17 +131,21 @@ function SendForSignaturePanel({ employeeId, contract }: CreatedResult) {
       !(t.link_ref as { contract_id?: string } | null)?.contract_id,
   );
 
-  async function handleSend() {
-    if (!signingTask) return;
-    await patchTask.mutateAsync({
-      taskId: signingTask.id,
-      link_ref: { contract_id: contract.id },
-    });
-    await queryClient.invalidateQueries({
-      queryKey: ["signing", "by-ref", "contract", contract.id],
-    });
-    setSent(true);
-  }
+  useEffect(() => {
+    if (!signingTask || firedRef.current) return;
+    firedRef.current = true;
+    void (async () => {
+      await patchTask.mutateAsync({
+        taskId: signingTask.id,
+        link_ref: { contract_id: contract.id },
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["signing", "by-ref", "contract", contract.id],
+      });
+      setSent(true);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signingTask]);
 
   return (
     <div className="rounded-lg border border-gray-200 p-4 space-y-3">
@@ -147,18 +162,15 @@ function SendForSignaturePanel({ employeeId, contract }: CreatedResult) {
         </p>
       )}
 
-      <Button
-        size="sm"
-        onClick={handleSend}
-        disabled={!signingTask || patchTask.isPending || sent}
-        className="bg-brand-accent hover:bg-brand-accent/90 text-white"
-      >
+      <p className="text-xs text-gray-500">
         {sent
-          ? "Sent to HR for signature"
+          ? "Sent for signature — the employee must sign before onboarding can complete."
           : patchTask.isPending
-            ? "Sending…"
-            : "Send for signature"}
-      </Button>
+            ? "Sending for signature…"
+            : patchTask.isError
+              ? "Couldn't send for signature — try again from the onboarding task card."
+              : ""}
+      </p>
     </div>
   );
 }
@@ -170,6 +182,9 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   const [managerName, setManagerName] = useState<string | null>(null);
   const [contract, setContract] = useState<ContractFormState>({ currency: "RWF" });
   const [agreementFile, setAgreementFile] = useState<File | null>(null);
+  const [agreementTemplateId, setAgreementTemplateId] = useState<string | null>(null);
+  const [agreementTemplateContent, setAgreementTemplateContent] = useState("");
+
   const [error, setError] = useState<string | null>(null);
   const [createdResult, setCreatedResult] = useState<CreatedResult | null>(null);
 
@@ -183,16 +198,31 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
     setManagerName(null);
     setContract({ currency: "RWF" });
     setAgreementFile(null);
+    setAgreementTemplateId(null);
+    setAgreementTemplateContent("");
     setError(null);
     setCreatedResult(null);
   };
 
-  const profileValid = !!(profile.first_name && profile.last_name && profile.personal_email);
+  /** Required fields, plus email format — a specific message per failure. */
+  function profileError(): string | null {
+    if (!profile.first_name || !profile.last_name || !profile.personal_email) {
+      return "First name, last name and personal email are required.";
+    }
+    if (!EMAIL_RE.test(profile.personal_email)) {
+      return "Enter a valid personal email address.";
+    }
+    if (profile.work_email && !EMAIL_RE.test(profile.work_email)) {
+      return "Enter a valid work email address, or leave it blank.";
+    }
+    return null;
+  }
 
   const handleNext = () => {
     if (currentStep === "profile") {
-      if (!profileValid) {
-        setError("First name, last name and personal email are required.");
+      const message = profileError();
+      if (message) {
+        setError(message);
         return;
       }
       setError(null);
@@ -219,7 +249,10 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   };
 
   const handleSubmit = async () => {
-    const missingContractFields = getMissingContractFields(contract, !!agreementFile);
+    const missingContractFields = getMissingContractFields(
+      contract,
+      !!agreementFile || !!(agreementTemplateId && agreementTemplateContent),
+    );
     if (missingContractFields.length > 0) {
       setError(
         `Missing required contract field${missingContractFields.length > 1 ? "s" : ""}: ` +
@@ -256,6 +289,8 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
           employeeId: employee.id,
           form: contract,
           agreementFile,
+          agreementTemplateId,
+          agreementTemplateContent,
         });
       } finally {
         setIsSubmittingContract(false);
@@ -286,7 +321,7 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
           onOpenChange(v);
         }}
         title="Employee created"
-        description="A draft contract was attached — route it for signature now, or do it later from the Contracts tab."
+        description="A draft contract was attached and is being routed for signature automatically."
         footer={
           <Button
             className="w-full bg-black text-white hover:bg-gray-900"
@@ -548,6 +583,11 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
                       onChange={(patch) => setContract((c) => ({ ...c, ...patch }))}
                       agreementFile={agreementFile}
                       onAgreementFileChange={setAgreementFile}
+                      agreementTemplateId={agreementTemplateId}
+                      onAgreementTemplateIdChange={setAgreementTemplateId}
+                      agreementTemplateContent={agreementTemplateContent}
+                      onAgreementTemplateContentChange={setAgreementTemplateContent}
+                      employeeName={`${profile.first_name} ${profile.last_name}`.trim()}
                     />
                   </>
                 )}

@@ -352,7 +352,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
       if (decoded.type !== constants.TOKEN_TYPES.REFRESH) {
         throw new Error("Invalid token type");
       }
-    } catch (error) {
+    } catch {
       // Clear cookies on invalid token
       res.clearCookie(constants.AUTH_COOKIE_NAME, constants.COOKIE_OPTIONS);
       res.clearCookie(constants.REFRESH_COOKIE_NAME, constants.COOKIE_OPTIONS);
@@ -368,7 +368,7 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
     let user;
     try {
       user = await userService.getUserById(Number(decoded.id));
-    } catch (error) {
+    } catch {
       throw new AppError("User not found", 404);
     }
 
@@ -538,7 +538,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     let user;
     try {
       user = await userService.getUserByEmail(email);
-    } catch (error) {
+    } catch {
       // We return success even if the email is not found for security reasons
       res.status(200).json({
         message: constants.SUCCESS_MESSAGES.PASSWORD_RESET_SENT,
@@ -717,7 +717,7 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
     let decoded;
     try {
       decoded = await authService.verifyToken(token);
-    } catch (error) {
+    } catch {
       throw new AppError(constants.ERROR_MESSAGES.INVALID_TOKEN, 400);
     }
 

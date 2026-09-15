@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   leaveBalancesService,
   type EmploymentType,
+  type GrantOnlyType,
   type LeaveDraft,
   type LeaveTypeName,
   type SummaryWindow,
@@ -15,6 +16,8 @@ const APPROVALS = "leave-approvals";
 const CALENDAR = "leave-calendar";
 const POLICIES = "leave-policies";
 const HOLIDAYS = "org-holidays";
+const GENDER_LEAVE_STATUS = "gender-leave-status";
+const LEAVE_TYPE_GRANTS = "leave-type-grants";
 
 export function useMyLeave(year?: number) {
   return useQuery({
@@ -172,7 +175,7 @@ export function useRelevantHolidays(year?: number) {
 export function useCreateHoliday() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { date: string; name: string }) =>
+    mutationFn: (payload: { date: string; name: string; country?: string }) =>
       leaveBalancesService.createHoliday(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [HOLIDAYS] });
@@ -188,6 +191,58 @@ export function useDeleteHoliday() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [HOLIDAYS] });
       toast.success("Holiday removed");
+    },
+  });
+}
+
+// --- Leave-type grants: Maternity/Paternity opt-in ---
+
+export function useGenderLeaveStatus() {
+  return useQuery({
+    queryKey: [GENDER_LEAVE_STATUS],
+    queryFn: () => leaveBalancesService.getGenderLeaveStatus(),
+  });
+}
+
+export function useSetGenderLeaveStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (enabled: boolean) => leaveBalancesService.setGenderLeaveStatus(enabled),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [GENDER_LEAVE_STATUS] });
+      qc.invalidateQueries({ queryKey: [LEAVE_TYPE_GRANTS] });
+    },
+  });
+}
+
+export function useLeaveTypeGrants(type: GrantOnlyType) {
+  return useQuery({
+    queryKey: [LEAVE_TYPE_GRANTS, type],
+    queryFn: () => leaveBalancesService.listLeaveTypeGrants(type),
+  });
+}
+
+export function useGrantLeaveType() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ type, employeeId }: { type: GrantOnlyType; employeeId: string }) =>
+      leaveBalancesService.grantLeaveType(type, employeeId),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: [LEAVE_TYPE_GRANTS, variables.type] });
+      toast.success("Leave type granted");
+    },
+    onError: () => toast.danger("Couldn't grant leave type"),
+  });
+}
+
+export function useRevokeLeaveType() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ type, employeeId }: { type: GrantOnlyType; employeeId: string }) =>
+      leaveBalancesService.revokeLeaveType(type, employeeId),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: [LEAVE_TYPE_GRANTS, variables.type] });
+      toast.success("Grant revoked");
     },
   });
 }

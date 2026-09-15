@@ -38,6 +38,7 @@ import {
   type Resource,
   type ResourceStats,
   type ResourceFilters,
+  type CreateResourceData,
   type Pagination,
 } from "@/lib/api/alumni";
 import { uploadFile, formatFileSize, getFileCategory } from "@/lib/api/upload";
@@ -263,7 +264,7 @@ const ContributeResourceForm = ({
 }: {
   categories: string[];
   types: string[];
-  onSubmit: (data: any) => void;
+  onSubmit: (data: CreateResourceData) => void;
   onCancel: () => void;
 }) => {
   const [formData, setFormData] = useState({
@@ -766,7 +767,7 @@ export default function AlumniResources() {
     setCurrentPage(1);
   };
 
-  const handleContributeResource = async (data: any) => {
+  const handleContributeResource = async (data: CreateResourceData) => {
     try {
       await resourcesApi.create(data);
       setShowContributeForm(false);

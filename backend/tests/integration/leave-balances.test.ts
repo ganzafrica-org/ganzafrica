@@ -2,7 +2,7 @@
  * MOD-06 §6.2/§6.3/§6.5 — balance instantiation from policy, request guards, and the
  * approve/cancel effects on used_days. Real DB, real service.
  */
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { and, eq } from "drizzle-orm";
 import { resetDb } from "../setup";
 import { db } from "../../src/db/client";
@@ -14,8 +14,17 @@ import {
   cancelLeaveRequest,
   computeWorkingDays,
 } from "../../src/services/hr/leave.service";
-import { makeEmployeeUser, makeLeavePolicy, makeHoliday, ensureRole } from "../factories";
+import { makeEmployeeUser, makeLeavePolicy, ensureRole } from "../factories";
 import { AppError } from "../../src/middlewares";
+
+// computeWorkingDays now sources holidays from live Nager.Date (via holidays-api.service), scoped
+// to the employee's own country — mock that boundary rather than hitting the real external API.
+let holidaysByCountry: Record<string, { date: string; name: string }[]> = {};
+vi.mock("../../src/services/hr/holidays-api.service", () => ({
+  publicHolidaysForYear: (country: string) => Promise.resolve(holidaysByCountry[country] ?? []),
+  publicHolidaysInRange: (country: string) => Promise.resolve(holidaysByCountry[country] ?? []),
+  countryCode: (country: string) => (holidaysByCountry[country] ? "XX" : null),
+}));
 
 const YEAR = 2026;
 const d = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
@@ -40,6 +49,7 @@ describe("MOD-06 balances", () => {
     await resetDb();
     await ensureRole("employee");
     await ensureRole("hr");
+    holidaysByCountry = {};
   });
 
   it("instantiates balances from the policy matching the employee's employment type", async () => {
@@ -79,10 +89,36 @@ describe("MOD-06 balances", () => {
     await expect(ensureBalances(employee.id, YEAR)).rejects.toBeInstanceOf(AppError);
   });
 
-  it("subtracts org holidays from the requested day count", async () => {
-    await makeHoliday({ date: "2026-01-07", name: "Test Day" });
+  it("subtracts the employee's own country's real holidays from the requested day count", async () => {
+    const { employee } = await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
+    holidaysByCountry.Rwanda = [{ date: "2026-01-07", name: "Test Day" }];
     // Mon 01-05 → Fri 01-09 with Wed a holiday.
-    await expect(computeWorkingDays(d("2026-01-05"), d("2026-01-09"))).resolves.toBe(4);
+    await expect(computeWorkingDays(d("2026-01-05"), d("2026-01-09"), employee.id)).resolves.toBe(
+      4,
+    );
+  });
+
+  it("with no employee context, no holidays are subtracted — weekends only", async () => {
+    holidaysByCountry.Rwanda = [{ date: "2026-01-07", name: "Test Day" }];
+    await expect(computeWorkingDays(d("2026-01-05"), d("2026-01-09"))).resolves.toBe(5);
+  });
+
+  it("a different country's holiday does NOT shorten this employee's leave", async () => {
+    const { employee } = await makeEmployeeUser({ employmentType: "staff", homeCountry: "Rwanda" });
+    holidaysByCountry.Kenya = [{ date: "2026-01-07", name: "Kenya Day" }];
+    await expect(computeWorkingDays(d("2026-01-05"), d("2026-01-09"), employee.id)).resolves.toBe(
+      5,
+    );
+  });
+
+  it("an employee whose country has no ISO mapping gets weekends-only, not an error", async () => {
+    const { employee } = await makeEmployeeUser({
+      employmentType: "staff",
+      homeCountry: "Atlantis",
+    });
+    await expect(computeWorkingDays(d("2026-01-05"), d("2026-01-09"), employee.id)).resolves.toBe(
+      5,
+    );
   });
 });
 

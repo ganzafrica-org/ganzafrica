@@ -8,39 +8,17 @@
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
+import { fakeAzureStorageBlobModule, type FakeUploadInfo } from "../helpers/mock-azure-storage";
+
 const { uploadedObjects } = vi.hoisted(() => ({
-  uploadedObjects: [] as Array<{ Key?: string }>,
+  uploadedObjects: [] as FakeUploadInfo[],
 }));
 
-// Same approach as create-document-acl.test.ts — mock @azure/storage-blob so uploads buffer in
-// memory instead of hitting real Blob, while still exercising the real route/middleware/service.
-vi.mock("@azure/storage-blob", () => {
-  const makeBlockBlobClient = (containerName: string, key: string) => ({
-    url: `https://teststorage.blob.core.windows.net/${containerName}/${key}`,
-    async uploadData(data: Buffer) {
-      uploadedObjects.push({ Key: key });
-      return { requestId: "test", size: data.length };
-    },
-    async deleteIfExists() {
-      return { succeeded: true };
-    },
-    async downloadToBuffer() {
-      return Buffer.from("");
-    },
-  });
-  return {
-    BlobServiceClient: {
-      fromConnectionString: () => ({
-        getContainerClient: (name: string) => ({
-          getBlockBlobClient: (key: string) => makeBlockBlobClient(name, key),
-        }),
-      }),
-    },
-    BlobSASPermissions: { parse: () => ({}) },
-    generateBlobSASQueryParameters: () => ({ toString: () => "sig=test" }),
-    StorageSharedKeyCredential: class {},
-  };
-});
+// Same fake Azure Blob module as create-document-acl.test.ts — buffers in memory instead of
+// hitting real Azure Blob Storage, while still exercising the real route/middleware/controller/service.
+vi.mock("@azure/storage-blob", () =>
+  fakeAzureStorageBlobModule((info) => uploadedObjects.push(info)),
+);
 
 vi.mock("../../src/services/storage.service", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/services/storage.service")>();
@@ -51,7 +29,9 @@ vi.mock("../../src/services/storage.service", async (importOriginal) => {
   };
 });
 
-vi.mock("../../src/services/email.service", () => ({
+vi.mock("../../src/services/email.service", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../src/services/email.service")>()),
+
   sendEmail: vi.fn(async () => ({ id: "x" })),
 }));
 

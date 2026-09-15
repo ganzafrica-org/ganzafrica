@@ -3,7 +3,7 @@
  * mounting hazards: the legacy `/leave` → `/leaves` 308 alias must not swallow these paths, and
  * managers (who lack leave:manage) must still be able to decide their reports' requests.
  */
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import supertest from "supertest";
 import app from "../../src/app";
 import { resetDb } from "../setup";
@@ -17,6 +17,15 @@ import { eq } from "drizzle-orm";
 
 const API = "/api/hr";
 
+// computeWorkingDays sources real holidays from live Nager.Date (via holidays-api.service),
+// scoped by the employee's home country — not from the admin-managed hr_org_holidays table.
+let holidaysByCountry: Record<string, { date: string; name: string }[]> = {};
+vi.mock("../../src/services/hr/holidays-api.service", () => ({
+  publicHolidaysForYear: (country: string) => Promise.resolve(holidaysByCountry[country] ?? []),
+  publicHolidaysInRange: (country: string) => Promise.resolve(holidaysByCountry[country] ?? []),
+  countryCode: (country: string) => (holidaysByCountry[country] ? "XX" : null),
+}));
+
 async function grantRole(userId: number, roleName: string) {
   const [role] = await db.select().from(roles).where(eq(roles.name, roleName)).limit(1);
   await db.insert(user_roles).values({ user_id: userId, role_id: role.id }).onConflictDoNothing();
@@ -26,7 +35,10 @@ async function grantRole(userId: number, roleName: string) {
  * An authenticated agent whose user also has an employees row. Logging in warms the 60s
  * permission cache, so roles granted afterwards need the cache dropped to take effect.
  */
-async function loginAsEmployee(role = "employee", opts: { managerId?: string } = {}) {
+async function loginAsEmployee(
+  role = "employee",
+  opts: { managerId?: string; homeCountry?: string } = {},
+) {
   const { agent, user } = await loginAs(role);
   if (role !== "employee") await grantRole(user.id, "employee");
   clearPermissionCache(user.id);
@@ -35,12 +47,14 @@ async function loginAsEmployee(role = "employee", opts: { managerId?: string } =
     userId: user.id,
     employmentType: "staff",
     managerId: opts.managerId ?? null,
+    homeCountry: opts.homeCountry ?? null,
   });
   return { agent, user, employee };
 }
 
 describe("MOD-06 API", () => {
   beforeEach(async () => {
+    holidaysByCountry = {};
     await resetDb();
     clearPermissionCache(); // ids are recycled by RESTART IDENTITY; stale entries would leak across tests
     await ensureRole("employee");
@@ -126,6 +140,8 @@ describe("MOD-06 API", () => {
 
     const queue = await manager.agent.get(`${API}/leave/pending-approvals`);
     expect(queue.body.leaves.map((l: { id: string }) => l.id)).toContain(created.body.leave.id);
+    const queued = queue.body.leaves.find((l: { id: string }) => l.id === created.body.leave.id);
+    expect(queued.employeeName).toBe(`${report.employee.first_name} ${report.employee.last_name}`);
 
     const approved = await manager.agent
       .post(`${API}/leave/${created.body.leave.id}/approve`)
@@ -180,14 +196,18 @@ describe("MOD-06 API", () => {
     expect(Number(allowed.body.policy.annual_days)).toBe(10);
   });
 
-  it("lets HR manage holidays and reflects them in the day count", async () => {
+  it("still lets HR administer the legacy holidays table (unused by day-count math now)", async () => {
     const hr = await loginAsEmployee("hr");
-    const employee = await loginAsEmployee();
 
     const created = await hr.agent
       .post(`${API}/holidays`)
       .send({ date: "2026-03-03", name: "Test Holiday" });
     expect(created.status).toBe(201);
+  });
+
+  it("reflects the employee's country's real public holidays in the day count", async () => {
+    holidaysByCountry.Rwanda = [{ date: "2026-03-03", name: "Test Holiday" }];
+    const employee = await loginAsEmployee("employee", { homeCountry: "Rwanda" });
 
     const check = await employee.agent
       .post(`${API}/me/leave/validate`)

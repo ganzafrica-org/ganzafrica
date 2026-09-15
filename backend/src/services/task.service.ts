@@ -640,7 +640,8 @@ export const getTaskTeamProjects = async (userId?: number) => {
         created_at: task_team_projects.created_at,
         updated_at: task_team_projects.updated_at,
       })
-      .from(task_team_projects);
+      .from(task_team_projects)
+      .$dynamic();
 
     // If userId is provided, filter to only show projects the user has access to
     if (userId) {
@@ -674,7 +675,7 @@ export const getTaskTeamProjects = async (userId?: number) => {
       const allAccessibleProjectIds = [...new Set([...directProjectIds, ...teamProjectIds])];
 
       if (allAccessibleProjectIds.length > 0) {
-        query = query.where(inArray(task_team_projects.id, allAccessibleProjectIds)) as any;
+        query = query.where(inArray(task_team_projects.id, allAccessibleProjectIds));
       } else {
         // User has no access to any projects, return empty array
         return [];

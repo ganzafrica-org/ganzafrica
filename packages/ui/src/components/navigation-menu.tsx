@@ -2,7 +2,9 @@ import * as React from "react";
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import { cva } from "class-variance-authority";
 import { ChevronDown } from "lucide-react";
-const SafeChevronDown = ChevronDown as unknown as React.ComponentType<any>;
+const SafeChevronDown = ChevronDown as unknown as React.ComponentType<
+  React.SVGProps<SVGSVGElement>
+>;
 
 import { cn } from "@workspace/ui/lib/utils";
 

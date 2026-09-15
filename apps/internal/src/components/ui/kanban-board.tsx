@@ -24,7 +24,14 @@ export interface KanbanItem {
     name: string;
     avatar?: string;
   };
-  metadata?: Record<string, any>;
+  metadata?: {
+    cvScore?: number;
+    email?: string;
+    phone?: string;
+    location?: string;
+    experience?: string;
+    [key: string]: unknown;
+  };
   tags?: string[];
   date?: string;
 }

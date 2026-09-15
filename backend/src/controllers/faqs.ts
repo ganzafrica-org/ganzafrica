@@ -42,8 +42,6 @@ const logger = new Logger("FaqController");
  */
 export const createFaq = async (req: Request, res: Response) => {
   try {
-    const userId = req.user && req.user.id ? Number(req.user.id) : 1;
-
     const faqData = {
       question: req.body.question,
       answer: req.body.answer,
@@ -57,7 +55,17 @@ export const createFaq = async (req: Request, res: Response) => {
       faq,
     });
   } catch (error) {
-    // ... rest of error handling code
+    logger.error("Create FAQ error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "FAQ Creation Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "FAQ Creation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
   }
 };
 

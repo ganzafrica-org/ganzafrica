@@ -4,6 +4,17 @@ export type LeaveTypeName = "ANNUAL" | "SICK" | "MATERNITY" | "PATERNITY" | "UNP
 export type LeaveStatusName = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 export type EmploymentType = "fellow" | "analyst" | "staff" | "contractor" | "intern";
 
+/** The two leave types that are opt-in rather than a default — see "Leave-type grants". */
+export type GrantOnlyType = "MATERNITY" | "PATERNITY";
+
+export interface LeaveTypeGrant {
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  entitledDays: string;
+  usedDays: string;
+}
+
 export interface LeaveBalance {
   id: number;
   employee_id: string;
@@ -26,6 +37,9 @@ export interface LeaveRequest {
   approver_note: string | null;
   reviewed_at: string | null;
   created_at: string;
+  /** Only present on GET /hr/leave/pending-approvals — the approve/reject sheet's plain
+   *  create/decide endpoints don't join it. */
+  employeeName?: string;
 }
 
 export interface LeavePolicy {
@@ -41,6 +55,13 @@ export interface OrgHoliday {
   date: string;
   name: string;
   /** "" = universal (applies regardless of country); otherwise matches employees.home_country. */
+  country: string;
+}
+
+/** A real public holiday from the live Nager.Date API (scope=relevant) — no DB row, so no id. */
+export interface PublicHolidayApi {
+  date: string;
+  name: string;
   country: string;
 }
 
@@ -200,9 +221,10 @@ export const leaveBalancesService = {
     return data.holidays;
   },
 
-  /** Union of universal + every represented country's holidays — the Leave Calendar's display. */
+  /** Real public holidays (Nager.Date), unioned across every represented employee country —
+   *  the Leave Calendar's display. */
   async listRelevantHolidays(year?: number) {
-    const { data } = await httpClient.get<{ holidays: OrgHoliday[] }>("/hr/holidays", {
+    const { data } = await httpClient.get<{ holidays: PublicHolidayApi[] }>("/hr/holidays", {
       params: { scope: "relevant", ...(year ? { year } : undefined) },
     });
     return data.holidays;
@@ -231,5 +253,38 @@ export const leaveBalancesService = {
       payload,
     );
     return data.balance;
+  },
+
+  // --- Leave-type grants: Maternity/Paternity opt-in ---
+
+  async getGenderLeaveStatus() {
+    const { data } = await httpClient.get<{ enabled: boolean }>("/hr/leave-type-grants/status");
+    return data.enabled;
+  },
+
+  async setGenderLeaveStatus(enabled: boolean) {
+    await httpClient.post("/hr/leave-type-grants/status", { enabled });
+  },
+
+  async listLeaveTypeGrants(type: GrantOnlyType, year?: number) {
+    const { data } = await httpClient.get<{ grants: LeaveTypeGrant[] }>(
+      `/hr/leave-type-grants/${type}`,
+      { params: year ? { year } : undefined },
+    );
+    return data.grants;
+  },
+
+  async grantLeaveType(type: GrantOnlyType, employeeId: string, year?: number) {
+    await httpClient.post(
+      `/hr/leave-type-grants/${type}/${employeeId}`,
+      {},
+      { params: year ? { year } : undefined },
+    );
+  },
+
+  async revokeLeaveType(type: GrantOnlyType, employeeId: string, year?: number) {
+    await httpClient.delete(`/hr/leave-type-grants/${type}/${employeeId}`, {
+      params: year ? { year } : undefined,
+    });
   },
 };

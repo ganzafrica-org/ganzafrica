@@ -17,12 +17,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeaveProvider } from "@/components/sections/calendar/LeaveContext";
 import { LeaveCalendar } from "@/components/sections/calendar/LeaveCalendar";
 import { Button } from "@/components/ui/button";
-import { Calendar, CircleUser, ClipboardList, Plus, Search } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle2,
+  CircleUser,
+  ClipboardList,
+  Clock,
+  Plus,
+  Search,
+  Wallet,
+  XCircle,
+} from "lucide-react";
+
 import { BalanceCards } from "@/components/sections/leave/balance-cards";
 import { RequestLeaveDialog } from "@/components/sections/leave/request-leave-dialog";
 import { LeaveApprovalsSheet } from "@/components/sections/leave/leave-approvals-sheet";
 import { useMyLeave } from "@/hooks/useLeaveBalances";
-import { TimeOffStats } from "@/data/Header-data";
+import type { HeaderStat } from "@/data/Header-data";
 import { StatsHeader } from "@/components/sections/header";
 import { LeaveRequestsTable } from "@/components/sections/leave/leave-requests-table";
 import { LeaveDetailSheet } from "@/components/sections/sheets/leave-detail-sheet";
@@ -30,6 +41,7 @@ import type { EmployeeLeaveRequest } from "@/types/employee-leave";
 import type { Leave } from "@/types/api";
 import { useLeaves } from "@/hooks/useLeaves";
 import { isLeaveStatus } from "@/components/sections/leave/leave-utils";
+import { remainingDays } from "@/services/leave-balances.service";
 
 const formatLeaveTypeLabel = (type?: string) => {
   if (!type) return "—";
@@ -86,6 +98,7 @@ const Page = () => {
   const [scrolled, setScrolled] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
   const [approvalsOpen, setApprovalsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("requests");
 
   const { data: leavesResponse, isLoading, isError } = useLeaves();
   const { data: myLeave } = useMyLeave();
@@ -93,6 +106,23 @@ const Page = () => {
   const leaveList = Array.isArray(leavesResponse) ? leavesResponse : [];
 
   const leaveRequests = useMemo(() => leaveList.map(mapLeaveToRequest), [leaveList]);
+
+  // Real leave data, not the old hardcoded quality-score-shaped mock — useLeaves() is already
+  // role-scoped (every request org-wide for HR/admin, own + reports' for everyone else), so the
+  // same computation is correct for both sides of this page.
+  const timeOffStats: HeaderStat[] = useMemo(() => {
+    const pending = leaveRequests.filter((r) => r.status === "pending").length;
+    const approved = leaveRequests.filter((r) => r.status === "approved").length;
+    const rejected = leaveRequests.filter((r) => r.status === "rejected").length;
+    const myRemaining = (myLeave?.balances ?? []).reduce((sum, b) => sum + remainingDays(b), 0);
+
+    return [
+      { icon: Clock, label: "Pending", value: String(pending) },
+      { icon: CheckCircle2, label: "Approved", value: String(approved) },
+      { icon: XCircle, label: "Rejected", value: String(rejected) },
+      { icon: Wallet, label: "My Days Left", value: String(myRemaining) },
+    ];
+  }, [leaveRequests, myLeave]);
 
   const openLeaveSheet = useCallback((request: EmployeeLeaveRequest) => {
     setSelectedRequest(request);
@@ -147,11 +177,11 @@ const Page = () => {
           title="Time Off"
           subtitle="Manage GanzAfrica Leaves"
           scrolled={scrolled}
-          stats={TimeOffStats}
+          stats={timeOffStats}
           ClassName="w-full"
         />
 
-        <Tabs defaultValue="requests" className="w-full flex flex-col">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <TabsList className="h-auto w-fit gap-1 rounded-xl bg-slate-200 p-1.5">
               <TabsTrigger
@@ -261,7 +291,7 @@ const Page = () => {
             <Card className="shadow-sm bg-transparent p-0">
               <CardContent>
                 <LeaveProvider>
-                  <LeaveCalendar />
+                  <LeaveCalendar onViewAllRequests={() => setActiveTab("requests")} />
                 </LeaveProvider>
               </CardContent>
             </Card>

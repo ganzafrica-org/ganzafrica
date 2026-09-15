@@ -38,6 +38,7 @@ import {
   Achievement,
   AchievementStats,
   AchievementFilters,
+  CreateAchievementData,
   Pagination,
 } from "@/lib/api/alumni";
 import Link from "next/link";
@@ -285,7 +286,7 @@ const SubmissionForm = ({
   onCancel,
 }: {
   categories: string[];
-  onSubmit: (data: any) => void;
+  onSubmit: (data: CreateAchievementData) => void;
   onCancel: () => void;
 }) => {
   const [formData, setFormData] = useState({
@@ -599,7 +600,7 @@ export default function AlumniAchievements() {
     }
   };
 
-  const handleSubmitAchievement = async (data: any) => {
+  const handleSubmitAchievement = async (data: CreateAchievementData) => {
     try {
       await achievementsApi.create(data);
       setShowSubmissionForm(false);

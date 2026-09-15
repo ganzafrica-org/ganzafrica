@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { AlertTriangle, CalendarDays, Loader2, Upload } from "lucide-react";
 import {
+  useMyLeave,
   useRequestLeave,
   useValidateLeave,
   useUploadLeaveAttachment,
@@ -36,6 +37,11 @@ const TYPES: { value: LeaveTypeName; label: string }[] = [
   { value: "UNPAID", label: "Unpaid leave" },
   { value: "OTHER", label: "Other" },
 ];
+
+// Opt-in — only ever offered once HR has actually granted it (a real hr_leave_balances row for
+// this employee exists), not just because the type is enabled org-wide. Server-side enforcement
+// (requestLeave's LEAVE_TYPE_NOT_GRANTED) is the real guard; this just keeps the dropdown honest.
+const GRANT_ONLY: LeaveTypeName[] = ["MATERNITY", "PATERNITY"];
 
 interface Props {
   open: boolean;
@@ -54,6 +60,12 @@ export function RequestLeaveDialog({ open, onOpenChange }: Props) {
   const validate = useValidateLeave();
   const submit = useRequestLeave();
   const uploadAttachment = useUploadLeaveAttachment();
+  const { data: myLeave } = useMyLeave();
+
+  const grantedTypes = new Set((myLeave?.balances ?? []).map((b) => b.type));
+  const availableTypes = TYPES.filter(
+    (t) => !GRANT_ONLY.includes(t.value) || grantedTypes.has(t.value),
+  );
 
   const rangeComplete = Boolean(startDate && endDate);
 
@@ -135,7 +147,7 @@ export function RequestLeaveDialog({ open, onOpenChange }: Props) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TYPES.map((t) => (
+                {availableTypes.map((t) => (
                   <SelectItem key={t.value} value={t.value}>
                     {t.label}
                   </SelectItem>

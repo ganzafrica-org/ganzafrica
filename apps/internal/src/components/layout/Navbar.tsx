@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Menu, User, LogOut } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-provider";
 
 interface NavbarProps {

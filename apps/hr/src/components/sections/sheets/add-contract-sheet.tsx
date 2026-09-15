@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { Button } from "@/components/ui/button";
 import { documentsService } from "@/services/documents.service";
+import { useEmployee } from "@/hooks/useEmployees";
 import {
   ContractFormFields,
   getMissingContractFields,
@@ -51,13 +52,19 @@ export function ContractSheet({ employeeId, open, onOpenChange, contract }: Cont
   const queryClient = useQueryClient();
   const [form, setForm] = useState<ContractFormState>(toFormState(contract));
   const [agreementFile, setAgreementFile] = useState<File | null>(null);
+  const [agreementTemplateId, setAgreementTemplateId] = useState<string | null>(null);
+  const [agreementTemplateContent, setAgreementTemplateContent] = useState("");
   const [existingDocument, setExistingDocument] = useState<HrDocument | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const { data: employee } = useEmployee(employeeId);
+  const employeeName = employee ? `${employee.first_name} ${employee.last_name}`.trim() : "";
 
   useEffect(() => {
     setForm(toFormState(contract));
     setAgreementFile(null);
+    setAgreementTemplateId(null);
+    setAgreementTemplateContent("");
     setExistingDocument(null);
     setError(null);
 
@@ -69,7 +76,11 @@ export function ContractSheet({ employeeId, open, onOpenChange, contract }: Cont
     }
   }, [contract, open]);
 
-  const hasAgreement = !!agreementFile || !!existingDocument || !!contract?.employmentAgreementUrl;
+  const hasAgreement =
+    !!agreementFile ||
+    !!(agreementTemplateId && agreementTemplateContent) ||
+    !!existingDocument ||
+    !!contract?.employmentAgreementUrl;
 
   const handleViewExistingAgreement = async () => {
     if (!existingDocument) return;
@@ -91,6 +102,8 @@ export function ContractSheet({ employeeId, open, onOpenChange, contract }: Cont
         existingContract: contract,
         form,
         agreementFile,
+        agreementTemplateId,
+        agreementTemplateContent,
       });
       queryClient.invalidateQueries({ queryKey: ["contracts", employeeId] });
       queryClient.invalidateQueries({ queryKey: ["contracts", "me"] });
@@ -136,6 +149,11 @@ export function ContractSheet({ employeeId, open, onOpenChange, contract }: Cont
           onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
           agreementFile={agreementFile}
           onAgreementFileChange={setAgreementFile}
+          agreementTemplateId={agreementTemplateId}
+          onAgreementTemplateIdChange={setAgreementTemplateId}
+          agreementTemplateContent={agreementTemplateContent}
+          onAgreementTemplateContentChange={setAgreementTemplateContent}
+          employeeName={employeeName}
           existingAgreementDocument={existingDocument}
           onViewExistingAgreement={existingDocument ? handleViewExistingAgreement : undefined}
         />

@@ -72,6 +72,9 @@ const CATALOG: { resource: string; action: string; roles: string[] }[] = [
   { resource: "events", action: "manage", roles: ["hr"] },
   { resource: "alumni", action: "access", roles: ["alumni", "admin"] },
   { resource: "reports", action: "read", roles: ["hr", "finance", "director"] },
+  // Appended, not inserted earlier — permission ids are assigned positionally from this array's
+  // order (see permId below), so a new entry must always go last to keep existing ids stable.
+  { resource: "settings", action: "manage", roles: ["hr", "admin"] },
 ];
 
 async function main() {

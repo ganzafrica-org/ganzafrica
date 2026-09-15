@@ -244,18 +244,14 @@ describe("LCM-01 asset_assignment kind", () => {
     });
   });
 
-  it("requires a real asset to be linked", async () => {
+  it("requires the employee to actually have an asset assigned (hr_assets.assigned_to_employee_id) — a task-level link_ref alone is not enough", async () => {
     const subject = await makeEmployeeUser({ employmentType: "staff" });
+    const other = await makeEmployeeUser({ employmentType: "staff" });
     const instance = await instantiateProcess("onboarding", subject.employee.id, {
       actorUserId: hrUserId,
     });
     const task = await taskNamed(instance.id, "Issue laptop");
 
-    await expect(completeTask(hrUserId, task.id)).rejects.toMatchObject({ statusCode: 422 });
-
-    await reassignTask(task.id, {
-      link_ref: { asset_id: "00000000-0000-0000-0000-000000000000" },
-    });
     await expect(completeTask(hrUserId, task.id)).rejects.toMatchObject({ statusCode: 422 });
 
     const unique = Date.now();
@@ -270,10 +266,19 @@ describe("LCM-01 asset_assignment kind", () => {
         serial_number: `SN-${Date.now()}`,
         category_id: category.id,
         status: "ASSIGNED",
+        assigned_to_employee_id: other.employee.id,
       })
       .returning();
 
-    await reassignTask(task.id, { link_ref: { asset_id: asset.id } });
+    // An asset assigned to someone else must not satisfy this employee's task.
+    await expect(completeTask(hrUserId, task.id)).rejects.toMatchObject({ statusCode: 422 });
+
+    // Real assignment (same field/flow the Assets page uses) — no link_ref involved at all.
+    await db
+      .update(hr_assets)
+      .set({ assigned_to_employee_id: subject.employee.id })
+      .where(eq(hr_assets.id, asset.id));
+
     expect((await completeTask(hrUserId, task.id)).status).toBe("done");
   });
 });
